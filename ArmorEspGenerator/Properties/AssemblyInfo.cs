@@ -7,13 +7,13 @@ using System.Windows;
 // General Information about an assembly is controlled through the following
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("TESV_EspEquipmentGenerator")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyTitle("ArmorEspGenerator")]
+[assembly: AssemblyDescription("This application is used to generate Armor type esp")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("Microsoft")]
-[assembly: AssemblyProduct("TESV_EspEquipmentGenerator")]
-[assembly: AssemblyCopyright("Copyright © Microsoft 2020")]
-[assembly: AssemblyTrademark("")]
+[assembly: AssemblyCompany("Yu5h1's Studio")]
+[assembly: AssemblyProduct("ArmorEspGenerator")]
+[assembly: AssemblyCopyright("Copyright Yu5h1's Studio © Microsoft 2020")]
+[assembly: AssemblyTrademark("Yu5h1's Studio ©")]
 [assembly: AssemblyCulture("")]
 
 // Setting ComVisible to false makes the types in this assembly not visible
