@@ -50,13 +50,14 @@ namespace TESV_EspEquipmentGenerator
         protected override void OnContentRendered(EventArgs e)
         {
             base.OnContentRendered(e);
+            
             if (!IsSettingLoaded) {
 
                 GameMode_cb.Items.Add((Setup.GameMode)3);
                 GameMode_cb.Items.Add((Setup.GameMode)4);
                 Plugin_cb.Text = settings.LastPlugin;
                 GameMode_cb.SelectedItem = curremtGameMode;
-                
+                LoadPlugin();
                 IsSettingLoaded = true;
             }
         }
@@ -164,8 +165,14 @@ namespace TESV_EspEquipmentGenerator
 
         void LoadPlugin()
         {
-            plugin?.UnLoad();
-            if (File.Exists(Plugin.GetPluginFullPath(Plugin_cb.Text)))
+            if (plugin) {
+                Closed += (s, e) => {
+                    ProcessUtil.Launch(System.Reflection.Assembly.GetExecutingAssembly().Location);
+                };
+                Close();
+                
+                
+            }else if (File.Exists(Plugin.GetPluginFullPath(Plugin_cb.Text)))
             {
                 loading_lb.Visibility = Visibility.Visible;
                 //loading_lb.Refresh();
