@@ -73,11 +73,11 @@ namespace TESV_EspEquipmentGenerator
             }
         }
     }
-    public class Armatures : List<Handle>
+    public class Armatures : RecordArrayObject<Handle>
     {
         Armor armor;
         public string Name;
-        public Handle handle => armor.handle.GetElement("Armature");
+        public override Handle handle => armor.handle.GetElement("Armature");
 
         public Armatures(Armor armor)
         {
@@ -124,7 +124,6 @@ namespace TESV_EspEquipmentGenerator
                 if (armorAddon.ToString() == this[index].GetValue()) return armorAddon;
             return null;
         }
-
         public new void RemoveAt(int index)
         {
             if (index < Count) {

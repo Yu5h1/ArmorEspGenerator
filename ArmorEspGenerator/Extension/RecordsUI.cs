@@ -16,7 +16,18 @@ namespace TESV_EspEquipmentGenerator
         {
             var result = new TreeViewItem().SetTextBlockHeader(worldModel.KEYS.worldModel);
             var modelField = result.AddField("Model", worldModel.Model);
+            modelField.GetMixControl<TextBox>(1).HandleDragDrop( files=> {
+                string nif = files[0];
+                if (Plugin.IsLocateAtGameAssetsFolder(nif)) {
+                    if (Plugin.ContainMeshesFolderInPath(nif)) nif = Plugin.TrimMeshesPath(nif);
+                    modelField.GetMixControl<TextBox>(1).Text = nif;
+                    worldModel.Model = nif;
+                }
+                
+                //worldModel.Model = files[0];
+            },".nif");
             var menuitem = modelField.AddMenuItem("BodyParts to Partitions");
+            result.IsExpanded = true;
             menuitem.Click += (s, e) => {
                 worldModel.BodyPartsToPartitions();
                 MainWindow.current.ShowSelectedRecord();
@@ -38,7 +49,10 @@ namespace TESV_EspEquipmentGenerator
                     ContextMenu contextMenu = new ContextMenu();
                     foreach (var pluginName in Setup.GetLoadedFileNames())
                     {
-                        var curPluginMenuItem = contextMenu.AddMenuItem(pluginName);
+                        string menuItemName = pluginName;
+                        if (pluginName == worldModel.armorAddon.plugin.GetTempName())
+                            menuItemName = worldModel.armorAddon.plugin.PluginName;
+                        var curPluginMenuItem = contextMenu.AddMenuItem(menuItemName);
                         var textureSets = Handle.BaseHandle.GetElement(pluginName).GetElements("Texture Set");
                         foreach (var txts in textureSets)
                         {

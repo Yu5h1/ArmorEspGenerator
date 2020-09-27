@@ -52,6 +52,10 @@ namespace TESV_EspEquipmentGenerator
             get => handle.GetValue(KEYS.model);
             set {
                 if (value != Model) {
+                    if (Plugin.IsLocateAtGameAssetsFolder(value)) {
+                        if (Plugin.ContainMeshesFolderInPath(value))
+                            value = Plugin.TrimMeshesPath(value);
+                    }
                     if (handle != null) handle.SetValue(KEYS.model, value);
                     else armorAddon.handle.SetValue(KEYS.worldModel + @"\" + KEYS.model, value);
                     UpdateShapesNames();
@@ -121,7 +125,9 @@ namespace TESV_EspEquipmentGenerator
                 }
                 else if (existsElement == null)
                     Add(new AlternateTexture(this, Elements.AddArrayItem(handle, "", "", ""), shapeName, textureSet));
-                else existsElement.targetTextureSet = textureSet.ToString();
+                else {
+                    existsElement.targetTextureSet = textureSet.GetLabel();
+                }
             }
         }
         public void Remove(string shapeName) {
@@ -165,7 +171,7 @@ namespace TESV_EspEquipmentGenerator
             get => handle.GetValue("New Texture");
             set {
                 if (value == null || value == string.Empty) Delete();
-                else handle.SetValue("New Texture", value.ToString());
+                else handle.SetValue("New Texture", value);
             } 
         }
         public int ShapeIndex { get => handle.GetInteger("3D Index");

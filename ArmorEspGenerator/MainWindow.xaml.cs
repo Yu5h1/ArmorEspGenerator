@@ -72,6 +72,7 @@ namespace TESV_EspEquipmentGenerator
             var curSelectedItem = RecordsTreeView.selectedNode;
             if (curSelectedItem == null) return;
             DataInfos_tree.Items.Clear();
+
             if (curSelectedItem.Tag != null)
             {
                 switch (curSelectedItem.Tag)
@@ -92,7 +93,8 @@ namespace TESV_EspEquipmentGenerator
                             DataInfos_tree.Items.Add(item);
                             int permanentIndex = i;
                             var tb = item.GetMixControl<TextBox>(1);
-                            item.GetMixControl<TextBlock>(0).MouseUp += (tbk, tbke) => {
+                            item.GetMixControl<TextBlock>(0).MouseUp += (tbk, tbke) =>
+                            {
                                 if (tbke.ChangedButton == MouseButton.Right)
                                 {
                                     ProcessUtil.ShowInExplorer(Plugin.GetTexturesPath(tb.Text));
@@ -102,7 +104,8 @@ namespace TESV_EspEquipmentGenerator
                             {
                                 textureSet[permanentIndex] = ((TextBox)s).Text;
                             };
-                            tb.HandleDragDrop(files => {
+                            tb.HandleDragDrop(files =>
+                            {
                                 if (files.Length == 1)
                                 {
                                     if (Plugin.IsLocateAtGameAssetsFolder(files[0]))
@@ -120,6 +123,14 @@ namespace TESV_EspEquipmentGenerator
         {
             ShowSelectedRecord();
         }
+        void GenerateArmorsBySelectedArmorAddons(object sender,RoutedEventArgs routedEventHandler)
+        {
+
+        }
+        void GenerateArmorBySelectedArmorAddons(object sender, RoutedEventArgs routedEventHandler)
+        {
+
+        }
         public void CreateTreeItem<T>(TreeViewItem root,T item) where T : RecordElement<T>
         {
             var treeItem = root.AddNameField(item.EditorID,RecordsTreeView.Width-6);
@@ -134,15 +145,21 @@ namespace TESV_EspEquipmentGenerator
                     curData.Delete();
                 }
             };
+            MenuItem menuitem = null;
             switch (item)
             {
                 case Armor armor:
-                    var menuitem = treeItem.AddMenuItem("Generate Armors By Similar Diffuses");
+                    menuitem = treeItem.AddMenuItem("Generate Armors By Similar Diffuses");
                     menuitem.Click += (s, e) =>
                     {
-                        armor.GenerateArmorBySimilarDiffuses("XF_Bella_Bra");
+                        armor.GenerateArmorBySimilarDiffuses("QQ");
                     };
-
+                    break;
+                case ArmorAddon armorAddon:
+                    menuitem = treeItem.AddMenuItem("Generate Armor By Selected ArmorAddons");
+                    menuitem.Click += GenerateArmorBySelectedArmorAddons;
+                    menuitem = treeItem.AddMenuItem("Generate Armors By Selected ArmorAddons");
+                    menuitem.Click += GenerateArmorsBySelectedArmorAddons;
                     break;
                 case TextureSet textureSet:
                     treeItem.ToolTip += "Drop .dds files for duplicated TextureSets from it";

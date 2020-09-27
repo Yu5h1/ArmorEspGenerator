@@ -96,19 +96,16 @@ namespace TESV_EspEquipmentGenerator
         public static bool IsLocateAtGameAssetsFolder(string path)
         {
             if (!ContainDataFolderInPath(path)) return true;
-            var result = Regex.Match(path, GetGameDataPath().Replace(@"\", @"\\"), RegexOptions.IgnoreCase).Success;
-            if (!result) "The Drop files are not locate at Selected Game's folder".PromptWarnning();
+            var result = path.ToLower().Contains(GetGameDataPath().ToLower());
+            if (!result) (GetGameDataPath()+"\n\n"+path+"\n\nThe Drop files are not locate at Selected Game's folder").PromptWarnning();
             return result;
         }
 
-        
 
-        public static bool ContainDataFolderInPath(string path)
-            => Regex.Match(path, @"\\data\\", RegexOptions.IgnoreCase).Success;
-        public static bool ContainTexturesFolderInPath(string path)
-            => Regex.Match(path, @"\\textures\\", RegexOptions.IgnoreCase).Success;
-        public static bool ContainMeshesFolderInPath(string path)
-            => Regex.Match(path, @"\\meshes\\", RegexOptions.IgnoreCase).Success;
+
+        public static bool ContainDataFolderInPath(string path) => path.ToLower().Contains(@"\data\");
+        public static bool ContainTexturesFolderInPath(string path) => path.ToLower().Contains(@"\textures\");
+        public static bool ContainMeshesFolderInPath(string path) => path.ToLower().Contains(@"\meshes\");
 
         public static bool printLoadingLog = false;
         public static void LoadPlugins(Setup.GameMode gameMode, params string[] PluginsList)

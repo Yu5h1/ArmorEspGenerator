@@ -11,7 +11,9 @@ namespace TESV_EspEquipmentGenerator
     public partial class Plugin
     {
         static string TrimSourceFolderPath(string value, string folder) {
-            return Regex.Replace(value, folder.Replace(@"\", @"\\"), "", RegexOptions.IgnoreCase).RemovePrefixUtilEmpty(@"\");
+            int index = value.ToLower().IndexOf(folder.ToLower());
+            if (index >= 0) value = value.Substring(index + folder.Length).RemovePrefixUtilEmpty(@"\");
+            return value;
         }
         public static string TrimTexturesPath(string value) => TrimSourceFolderPath(value, GetTexturesPath());
         public static string TrimMeshesPath(string value) => TrimSourceFolderPath(value, GetMeshesPath());

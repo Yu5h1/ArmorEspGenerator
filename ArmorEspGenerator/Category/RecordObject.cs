@@ -13,6 +13,11 @@ namespace TESV_EspEquipmentGenerator
         public Handle handle { get; protected set; }
         public static implicit operator bool(RecordObject obj) => obj != null;
     }
+    public abstract class RecordArrayObject<T> : List<T>
+    {
+        public virtual Handle handle { get; protected set; }
+        public static implicit operator bool(RecordArrayObject<T> obj) => obj != null;
+    }
     public abstract class RecordElement : RecordObject
     {        
         public static Handle SkyrimESM => Handle.BaseHandle.GetElement("Skyrim.esm");
@@ -25,9 +30,6 @@ namespace TESV_EspEquipmentGenerator
 
         public abstract string signature { get; }
 
-
-        
-
         public RecordElement(Handle target)
         {
             handle = target;
@@ -37,6 +39,7 @@ namespace TESV_EspEquipmentGenerator
         public override string ToString() => handle.GetLabel();
         public virtual string GetDataInfo() => "";
     }
+
     public abstract class RecordElement<T> : RecordElement where T : RecordElement<T>
     {
         public PluginRecords<T> Container;
