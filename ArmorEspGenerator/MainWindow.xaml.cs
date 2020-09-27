@@ -46,6 +46,16 @@ namespace TESV_EspEquipmentGenerator
 
             WindowStartupLocation = WindowStartupLocation.CenterScreen;
             RecordsTreeView.SelectedItemChanged += RecordsTreeView_SelectedItemChanged;
+            Plugin_lb.MouseDown += (s, e) => {
+                if (e.ClickCount == 2 && e.ChangedButton == MouseButton.Left) {
+                    string pluginPath = Plugin.GetPluginFullPath(Plugin_cb.Text);
+                    if (File.Exists(pluginPath))
+                        ProcessUtil.ShowInExplorer(pluginPath);
+                    else if (Directory.Exists(Plugin.GetGameDataPath())) 
+                        ProcessUtil.ShowInExplorer(Plugin.GetGameDataPath());
+                    
+                }
+            };
         }
         protected override void OnContentRendered(EventArgs e)
         {
@@ -93,12 +103,10 @@ namespace TESV_EspEquipmentGenerator
                             DataInfos_tree.Items.Add(item);
                             int permanentIndex = i;
                             var tb = item.GetMixControl<TextBox>(1);
-                            item.GetMixControl<TextBlock>(0).MouseUp += (tbk, tbke) =>
+                            item.GetMixControl<TextBlock>(0).MouseDown += (tbk, tbke) =>
                             {
                                 if (tbke.ChangedButton == MouseButton.Right)
-                                {
                                     ProcessUtil.ShowInExplorer(Plugin.GetTexturesPath(tb.Text));
-                                }
                             };
                             tb.TextChanged += (s, ee) =>
                             {
@@ -247,7 +255,7 @@ namespace TESV_EspEquipmentGenerator
 
         private void GameMod_lb_MouseDown(object sender, MouseButtonEventArgs e)
         {
-            if (e.ChangedButton == MouseButton.Right)
+            if (e.ChangedButton == MouseButton.Left && e.ClickCount == 2)
                 Setup.GetGamePath(curremtGameMode).ShowInExplorer();
         }
 

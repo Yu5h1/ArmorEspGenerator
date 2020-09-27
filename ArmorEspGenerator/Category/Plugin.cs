@@ -101,8 +101,6 @@ namespace TESV_EspEquipmentGenerator
             return result;
         }
 
-
-
         public static bool ContainDataFolderInPath(string path) => path.ToLower().Contains(@"\data\");
         public static bool ContainTexturesFolderInPath(string path) => path.ToLower().Contains(@"\textures\");
         public static bool ContainMeshesFolderInPath(string path) => path.ToLower().Contains(@"\meshes\");

@@ -1,5 +1,6 @@
 ﻿using XeLib.API;
 using XeLib;
+using System.Linq;
 
 namespace TESV_EspEquipmentGenerator
 {
@@ -21,6 +22,7 @@ namespace TESV_EspEquipmentGenerator
         public static bool HasElement(this Handle handle, string path) => handle != null ? Elements.HasElement(handle, path) : false;
         public static Handle GetElement(this Handle handle, string path) => handle.HasElement(path) ? Elements.GetElement(handle, path) : null;
         public static Handle[] GetElements(this Handle handle,string path = "",bool sort = false, bool filter = false) => Elements.GetElements(handle.Value, path, sort,filter);
+        public static Handle[] GetElementsByGetSignature(this Handle handle, string Signature = "") => Elements.GetElements(handle).Where(d=>d.GetSignature() == Signature).ToArray();
         public static Handle[] GetArrayItems(this Handle handle, string itemName) 
             => handle != null && handle.HasElement(itemName) ? Elements.GetElements(handle.Value) : new Handle[0] ; 
             
@@ -53,12 +55,12 @@ namespace TESV_EspEquipmentGenerator
             return result;
         }
         public static void Delete(this Handle handle, string path = "") => Elements.RemoveElement(handle, path);
-        public static bool CompareSignature<T>(this Handle handle)
-        {
-            return handle.GetSignature() == SignatureUtil.GetSignature<T>();
-        }
+        public static bool CompareSignature<T>(this Handle handle) => handle.GetSignature() == SignatureUtil.GetSignature<T>();
         public static int Count(this Handle handle) => Elements.ElementCount(handle);
         public static string GetDisplayName(this Handle handle) => ElementValues.DisplayName(handle);
+        public static string[] GetDefineNames(this Handle handle) => handle == null ? null : Elements.GetDefNames(handle);
         public static Elements.ElementTypes GetElementType(this Handle handle) => Elements.ElementType(handle);
+
+        public static Handle[] GetRecords(this Handle handle,string search = "",bool includeOverrides = false) => Records.GetRecords(handle, search, includeOverrides);
     }
 }

@@ -53,7 +53,8 @@ namespace TESV_EspEquipmentGenerator
                         if (pluginName == worldModel.armorAddon.plugin.GetTempName())
                             menuItemName = worldModel.armorAddon.plugin.PluginName;
                         var curPluginMenuItem = contextMenu.AddMenuItem(menuItemName);
-                        var textureSets = Handle.BaseHandle.GetElement(pluginName).GetElements("Texture Set");
+                        
+                        var textureSets = Handle.BaseHandle.GetElement(pluginName).GetRecords(TextureSet.Signature);
                         foreach (var txts in textureSets)
                         {
                             var curTxtsitem = curPluginMenuItem.AddMenuItem(txts.GetEditorID());
