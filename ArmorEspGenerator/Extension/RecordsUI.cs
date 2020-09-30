@@ -7,6 +7,7 @@ using Yu5h1Tools.WPFExtension;
 using System.Windows.Input;
 using System.Windows;
 using System.Windows.Documents;
+using Yu5h1Tools.WPFExtension.CustomControls;
 
 namespace TESV_EspEquipmentGenerator
 {
@@ -15,18 +16,21 @@ namespace TESV_EspEquipmentGenerator
         public static TreeViewItem GetTreeNode(this WorldModel worldModel)
         {
             var result = new TreeViewItem().SetTextBlockHeader(worldModel.KEYS.worldModel);
-            var modelField = result.AddField("Model", worldModel.Model);
-            modelField.GetMixControl<TextBox>(1).HandleDragDrop( files=> {
-                string nif = files[0];
-                if (Plugin.IsLocateAtGameAssetsFolder(nif)) {
-                    if (Plugin.ContainMeshesFolderInPath(nif)) nif = Plugin.TrimMeshesPath(nif);
-                    modelField.GetMixControl<TextBox>(1).Text = nif;
-                    worldModel.Model = nif;
-                }
-                
-                //worldModel.Model = files[0];
-            },".nif");
-            var menuitem = modelField.AddMenuItem("BodyParts to Partitions");
+
+            var pathSelector = new PathSelector() {
+                InitialDirectory = Plugin.GetMeshesPath(),
+                label = "Model",
+                Text = worldModel.Model,
+                FileFilter = new PathSelector.FileTypeFilter("Nif File", ".nif").ToString(),
+            };
+            pathSelector.Background = null;
+            pathSelector.GetPathBy += (txt) => Plugin.GetMeshesPath(txt);
+            pathSelector.SetPathBy += (txt) => Plugin.TrimMeshesPath(txt);
+
+            var modelTreeitem = new TreeViewItem() { Header = pathSelector };
+            result.Items.Add(modelTreeitem);
+
+            var menuitem = modelTreeitem.AddMenuItem("BodyParts to Partitions");
             result.IsExpanded = true;
             menuitem.Click += (s, e) => {
                 worldModel.BodyPartsToPartitions();
@@ -78,17 +82,17 @@ namespace TESV_EspEquipmentGenerator
                     }
                     contextMenu.IsOpen = true;
                 };
-                var item = AlternateTexturesRoot.AddTitleControl("", btn);
-                var tbk = item.GetMixControl<TextBlock>(0);
+                var shapeField = AlternateTexturesRoot.AddTitleControl("", btn);
+                var tbk = shapeField.GetMixControl<TextBlock>(0);
                 tbk.Inlines.Add(new Run(i.ToString()+" . ") { FontWeight = FontWeights.Bold });
                 tbk.Inlines.Add(shapeName);
                 tbk.IsHitTestVisible = false;
             }
-            
             return result;
         }
         public static TreeViewItem GetPartitionsFieldTreeItem(Handle handle)
         {
+            if (handle == null) return null;
             var comboBox = new ComboBox();
             var datas = PartitionsUtil.GetPartitionFlags(handle);
             var displayItem = new ComboBoxItem() { Content = Armor.GetDisplayPartitionFlags(datas) };

@@ -36,12 +36,12 @@ namespace TESV_EspEquipmentGenerator
             if (!File.Exists(fullPluginPath)) return null;
             if (AsTemp)
             {
-                espName = GetTempName(pluginName);                
+                espName = GetTempName(pluginName);
                 var tempPath = GetPluginFullPath(espName);
-                File.Copy(fullPluginPath, tempPath, true);
-                LoadPlugins(gameMode,espName);
+                if (IsFileNotLockedElsePrompt(tempPath))
+                    File.Copy(fullPluginPath, tempPath, true);
             }
-            else LoadPlugins(gameMode,espName);
+            LoadPlugins(gameMode, espName);
             return new Plugin(Elements.GetElement(Handle.BaseHandle, espName), pluginName);
         }
 

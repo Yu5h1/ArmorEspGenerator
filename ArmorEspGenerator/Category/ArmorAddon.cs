@@ -38,7 +38,7 @@ namespace TESV_EspEquipmentGenerator
         public override string GetDataInfo() => ToString()+'\n'+ FemaleWorldModel.ToString();
         public override void Clean()
         {
-            throw new NotImplementedException();
+            
         }
     }
     public class WorldModel

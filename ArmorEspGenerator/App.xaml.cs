@@ -16,6 +16,11 @@ namespace TESV_EspEquipmentGenerator
     {
         public static string[] args;
         public static bool LaunchWithoutWindow = false;
+
+        public App()
+        {
+            Win32Util.ForceSingleInstance(this);
+        }
         protected override void OnStartup(StartupEventArgs e)
         {
             args = e.Args;
@@ -48,18 +53,6 @@ namespace TESV_EspEquipmentGenerator
                 Shutdown();
             }
             base.OnStartup(e);
-        }
-        public bool SignalExternalCommandLineArgs(IList<string> args)
-        {
-            // Bring window to foreground
-            if (MainWindow.WindowState == WindowState.Minimized)
-            {
-                MainWindow.WindowState = WindowState.Normal;
-            }
-
-            MainWindow.Activate();
-
-            return true;
         }
     }
 }

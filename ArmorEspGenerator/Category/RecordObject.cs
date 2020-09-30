@@ -39,8 +39,11 @@ namespace TESV_EspEquipmentGenerator
         public override string ToString() => handle.GetLabel();
         public virtual string GetDataInfo() => "";
     }
-
-    public abstract class RecordElement<T> : RecordElement where T : RecordElement<T>
+    public interface IRecordElement
+    {
+       void Duplicate();
+    }
+    public abstract class RecordElement<T> : RecordElement, IRecordElement where T : RecordElement<T>
     {
         public PluginRecords<T> Container;
         public Plugin plugin => Container.plugin;
@@ -48,6 +51,8 @@ namespace TESV_EspEquipmentGenerator
         public RecordElement(PluginRecords<T> container, Handle target) : base(target) {
             Container = container;
         }
+        public void Duplicate() => Container.Duplicate((T)this); 
+
         public override void Delete() =>
             Container.RemoveAt(Container.FindIndex( d=>d.Equals(this)));
         public abstract void Clean();

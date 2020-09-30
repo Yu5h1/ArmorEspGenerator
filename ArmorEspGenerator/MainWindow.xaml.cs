@@ -1,17 +1,15 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Linq;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Windows;
-using XeLib;
-using XeLib.API;
 using System.Windows.Input;
-using static InformationViewer;
 using System.Windows.Controls;
+using XeLib.API;
 using Yu5h1Tools.WPFExtension;
-using System;
-using System.Threading.Tasks;
-using System.Windows.Threading;
+using Yu5h1Tools.WPFExtension.CustomControls;
+using static InformationViewer;
 
 namespace TESV_EspEquipmentGenerator
 {
@@ -39,10 +37,8 @@ namespace TESV_EspEquipmentGenerator
         {
             InitializeComponent();
             current = this;
-            if (settings.WindowWidth > 300)
-                Width = settings.WindowWidth;
-            if (settings.WindowHeight > 100)
-                Height = settings.WindowHeight;
+            if (settings.WindowWidth > 300) Width = settings.WindowWidth;
+            if (settings.WindowHeight > 100) Height = settings.WindowHeight;
 
             WindowStartupLocation = WindowStartupLocation.CenterScreen;
             RecordsTreeView.SelectedItemChanged += RecordsTreeView_SelectedItemChanged;
@@ -54,6 +50,11 @@ namespace TESV_EspEquipmentGenerator
                     else if (Directory.Exists(Plugin.GetGameDataPath())) 
                         ProcessUtil.ShowInExplorer(Plugin.GetGameDataPath());
                     
+                }
+            };
+            Plugin_cb.DropDownClosed += (s, e) => {
+                if (File.Exists(Plugin.GetPluginFullPath(Plugin_cb.Text))) {
+                    LoadPlugin();
                 }
             };
         }
@@ -74,8 +75,7 @@ namespace TESV_EspEquipmentGenerator
         private void GameMode_cb_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             curremtGameMode = (Setup.GameMode)GameMode_cb.SelectedItem;
-            Plugin_cb.sourceItems = Directory.GetFiles(Plugin.GetGameDataPath(), "*.esp").Select(d => Path.GetFileName(d)).ToArray();
-            Load_btn.IsEnabled = File.Exists(Plugin.GetPluginFullPath(Plugin_cb.Text));
+            Plugin_cb.sourceItems = Directory.GetFiles(Plugin.GetGameDataPath(), "*.esp").Select(d => Path.GetFileName(d)).ToArray();            
         }
         public void ShowSelectedRecord()
         {
@@ -99,29 +99,29 @@ namespace TESV_EspEquipmentGenerator
                         for (int i = 0; i < 8; i++)
                         {
 
-                            var item = new TreeViewItem().SetField(TextureSet.Names[i], textureSet[i], 75, DataInfos_tree.Width);
-                            DataInfos_tree.Items.Add(item);
+                            //var item = new TreeViewItem().SetField(TextureSet.Names[i], textureSet[i], 75, DataInfos_tree.Width);
+                            var item = new TreeViewItem();
+                            var pathSelector = new PathSelector() {
+                                label = TextureSet.Names[i],
+                                Text = textureSet[i],
+                                FileFilter = new PathSelector.FileTypeFilter("Direct Draw Surface", ".dds").ToString()
+                            };
+                            pathSelector.Width = 300;
+                            item.Height = pathSelector.Height + 1;
+                            pathSelector.InitialDirectory = Plugin.GetTexturesPath();
+                            pathSelector.GetPathBy += (txt) => Plugin.GetTexturesPath(txt);
+                            pathSelector.SetPathBy += (txt) => Plugin.TrimTexturesPath(txt);
+                            pathSelector.Background = null;
+                            //pathSelector.BindDragDropFileEvent(item);
                             int permanentIndex = i;
-                            var tb = item.GetMixControl<TextBox>(1);
-                            item.GetMixControl<TextBlock>(0).MouseDown += (tbk, tbke) =>
+                            pathSelector.TextChanged += (s, ee) =>
                             {
-                                if (tbke.ChangedButton == MouseButton.Right)
-                                    ProcessUtil.ShowInExplorer(Plugin.GetTexturesPath(tb.Text));
+                                textureSet[permanentIndex] = pathSelector.Text;
+                                if (textureSet[permanentIndex] != pathSelector.Text)
+                                    pathSelector.Text = textureSet[permanentIndex];
                             };
-                            tb.TextChanged += (s, ee) =>
-                            {
-                                textureSet[permanentIndex] = ((TextBox)s).Text;
-                            };
-                            tb.HandleDragDrop(files =>
-                            {
-                                if (files.Length == 1)
-                                {
-                                    if (Plugin.IsLocateAtGameAssetsFolder(files[0]))
-                                    {
-                                        tb.Text = textureSet[permanentIndex] = Plugin.TrimTexturesPath(files[0]);
-                                    }
-                                }
-                            }, ".dds");
+                            item.Header = pathSelector;
+                            DataInfos_tree.Items.Add(item);
                         }
                         break;
                 }
@@ -139,9 +139,13 @@ namespace TESV_EspEquipmentGenerator
         {
 
         }
-        public void CreateTreeItem<T>(TreeViewItem root,T item) where T : RecordElement<T>
+        public void CreateRecordTreeItem<T>(TreeViewItem root,T item) where T : RecordElement<T>
         {
-            var treeItem = root.AddNameField(item.EditorID,RecordsTreeView.Width-6);
+            var treeItem = root.AddNameField(   item.EditorID,false,
+                                                (tb)=> {
+                                                    if (item.EditorID != tb.Text) item.EditorID = tb.Text;
+                                                },
+                                                RecordsTreeView.Width-6);
             treeItem.Tag = item;
             //treeItem.ToolTip = item.FormID;
             treeItem.Unloaded += (s, e) =>
@@ -178,15 +182,18 @@ namespace TESV_EspEquipmentGenerator
                     break;
             }
         }
-        public TreeViewItem GetTreeNode<T>(PluginRecords<T> records) where T : RecordElement<T>
+        public TreeViewItem GetRecordContainerTreeNode<T>(PluginRecords<T> records) where T : RecordElement<T>
         {
             var root = new TreeViewItem().SetTextBlockHeader(typeof(T).Name + "s");
-            records.Added += item => CreateTreeItem(root, item);
-            foreach (var item in records)
-                CreateTreeItem(root, item);
+            records.Added += item => CreateRecordTreeItem(root, item);
+            var menuItem = root.AddMenuItem("New");
+            menuItem.Click += (s, e) => {
+                records.AddNewItem(("New"+typeof(T).Name).GetUniqueStringWithSuffixNumber(records,d=>d.EditorID));
+            };
+            foreach (var item in records) CreateRecordTreeItem(root, item);
+
             return root;
         }
-        private void Load_btn_Click(object sender, RoutedEventArgs e) => LoadPlugin();
 
         void LoadPlugin()
         {
@@ -195,8 +202,6 @@ namespace TESV_EspEquipmentGenerator
                     ProcessUtil.Launch(System.Reflection.Assembly.GetExecutingAssembly().Location);
                 };
                 Close();
-                
-                
             }else if (File.Exists(Plugin.GetPluginFullPath(Plugin_cb.Text)))
             {
                 loading_lb.Visibility = Visibility.Visible;
@@ -208,7 +213,7 @@ namespace TESV_EspEquipmentGenerator
                     loading_lb.Visibility = Visibility.Hidden;
                     if (plugin)
                     {
-                        var armorsNode = GetTreeNode(plugin.Armors);
+                        var armorsNode = GetRecordContainerTreeNode(plugin.Armors);
                         RecordsTreeView.DeleteIgnoreList.Add(armorsNode);
                         RecordsTreeView.Items.Add(armorsNode);
                         armorsNode.HandleDragDrop(files =>
@@ -226,13 +231,26 @@ namespace TESV_EspEquipmentGenerator
                                 }
                             }
                         }, ".nif", "folder");
-
-
-                        var ArmorAddonsNode = GetTreeNode(plugin.ArmorAddons);
+                        var ArmorAddonsNode = GetRecordContainerTreeNode(plugin.ArmorAddons);
                         RecordsTreeView.DeleteIgnoreList.Add(ArmorAddonsNode);
                         RecordsTreeView.Items.Add(ArmorAddonsNode);
+                        ArmorAddonsNode.HandleDragDrop(files =>
+                        {
+                            foreach (var path in files)
+                            {
+                                var pathInfo = new PathInfo(path);
+                                if (pathInfo.IsDirectory)
+                                {
 
-                        var textureSetsNode = GetTreeNode(plugin.TextureSets);
+                                }
+                                else
+                                {
+                                    plugin.GenerateArmorByNifFile(path);
+                                }
+                            }
+                        }, ".nif", "folder");
+
+                        var textureSetsNode = GetRecordContainerTreeNode(plugin.TextureSets);
                         textureSetsNode.ToolTip += "Drop .dds files for add new TextureSets";
                         RecordsTreeView.DeleteIgnoreList.Add(textureSetsNode);
                         textureSetsNode.HandleDragDrop(files =>
@@ -276,7 +294,24 @@ namespace TESV_EspEquipmentGenerator
 
         private void Plugin_cb_TextChanged(object sender, TextChangedEventArgs e)
         {
-            Load_btn.IsEnabled = File.Exists(Plugin.GetPluginFullPath(Plugin_cb.Text));
+            
+        }
+
+        private void RecordsTreeView_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (RecordsTreeView.selectedNodes.Count > 0) {
+                if (Keyboard.IsKeyDown(Key.LeftCtrl) && e.Key == Key.D)
+                {
+                    foreach (var item in RecordsTreeView.selectedNodes) {
+                        var curObj = item.Tag as IRecordElement;
+                        if (curObj != null) {
+                            curObj.Duplicate();
+                        }
+                    }
+                        
+                }
+            }
+
         }
     }
 }

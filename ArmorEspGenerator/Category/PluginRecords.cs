@@ -1,7 +1,8 @@
 ﻿using System;
+using System.Linq;
 using System.Collections.Generic;
 using XeLib;
-using XeLib.API;
+using Yu5h1Tools.WPFExtension;
 
 namespace TESV_EspEquipmentGenerator
 {
@@ -29,6 +30,7 @@ namespace TESV_EspEquipmentGenerator
         }
         public T AddNewItem(string editorID, T source = null)
         {
+            
             if (source == null) {
                 source = Constructor(this, RecordElement.SkyrimESM.GetElement(SignatureUtil.GetTemplateEditorID<T>()));
                 source.Clean();
@@ -42,6 +44,9 @@ namespace TESV_EspEquipmentGenerator
             }
             return null;
         }
+        public void Duplicate(T item) {
+            AddNewItem(item.EditorID.GetUniqueStringWithSuffixNumber(this,d=>d.EditorID), item);
+        } 
         public new void Remove(T item)
         {
             if (Exists(d => d.Equals(item)))
