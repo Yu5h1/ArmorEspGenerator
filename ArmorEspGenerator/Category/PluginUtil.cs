@@ -61,7 +61,8 @@ namespace TESV_EspEquipmentGenerator
             var shapesPartitions = NifUtil.GetBSDismemberBodyParts(path).GetLines();
             foreach (var item in shapesPartitions)
             {
-                item.Split(':')[1].Split(',').ToList().ForEach(obj =>
+                var infos = item.Split(':');
+                infos[infos.Length-1].Split(',').ToList().ForEach(obj =>
                 {
                     if (int.TryParse(obj, out int bsdBodyPartIndex))
                         if (!bodyPartsIndices.Contains(bsdBodyPartIndex)) bodyPartsIndices.Add(bsdBodyPartIndex);

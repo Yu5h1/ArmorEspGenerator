@@ -23,6 +23,7 @@ namespace TESV_EspEquipmentGenerator
                 Text = worldModel.Model,
                 FileFilter = new PathSelector.FileTypeFilter("Nif File", ".nif").ToString(),
             };
+            
             pathSelector.Background = null;
             pathSelector.GetPathBy += (txt) => Plugin.GetMeshesPath(txt);
             pathSelector.SetPathBy += (txt) => Plugin.TrimMeshesPath(txt);
@@ -30,7 +31,7 @@ namespace TESV_EspEquipmentGenerator
             var modelTreeitem = new TreeViewItem() { Header = pathSelector };
             result.Items.Add(modelTreeitem);
 
-            var menuitem = modelTreeitem.AddMenuItem("BodyParts to Partitions");
+            var menuitem = pathSelector.labelControl.AddMenuItem("BodyParts to Partitions");
             result.IsExpanded = true;
             menuitem.Click += (s, e) => {
                 worldModel.BodyPartsToPartitions();

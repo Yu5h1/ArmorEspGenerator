@@ -41,8 +41,10 @@ namespace TESV_EspEquipmentGenerator
                 if (IsFileNotLockedElsePrompt(tempPath))
                     File.Copy(fullPluginPath, tempPath, true);
             }
-            LoadPlugins(gameMode, espName);
-            return new Plugin(Elements.GetElement(Handle.BaseHandle, espName), pluginName);
+            if (LoadPlugins(gameMode, espName))
+                return new Plugin(Elements.GetElement(Handle.BaseHandle, espName), pluginName);
+            else
+                return null;
         }
 
 
@@ -80,7 +82,8 @@ namespace TESV_EspEquipmentGenerator
             }
         }
 
-        public static string GetGamePath() => Setup.GetGamePath(CurrentGameMode);
+        public static string GetGamePath() => Setup.GetGamePath(CurrentGameMode);        
+        public static String GetGameDataPath(Setup.GameMode gameMode) => Path.Combine(Setup.GetGamePath(gameMode), "Data");
         public static String GetGameDataPath() => Path.Combine(GetGamePath(), "Data");
         public static String GetGameDataPath(string suffix) => GetGameDataPath().CombineNoleadSlash(suffix).ReplaceRepeatFolderUtilEmpty("Data");
 
@@ -106,15 +109,23 @@ namespace TESV_EspEquipmentGenerator
         public static bool ContainMeshesFolderInPath(string path) => path.ToLower().Contains(@"\meshes\");
 
         public static bool printLoadingLog = false;
-        public static void LoadPlugins(Setup.GameMode gameMode, params string[] PluginsList)
+        public static bool LoadPlugins(Setup.GameMode gameMode, params string[] PluginsList)
         {
+            //Meta.Release(Handle.BaseHandle);
             if (printLoadingLog) print("Initializing XEditLib");
             Meta.Initialize();
             if (printLoadingLog) print("Setting game mode to " + gameMode.ToString());
             Setup.SetGameMode(gameMode);
             if (printLoadingLog) print("Loading plugins " + string.Join("&", PluginsList));
-            //xEditLib.GetGameLanguage((int)gameMode).PromptInfo();
-            Setup.LoadPlugins(string.Join("\n", PluginsList));
+            try
+            {
+                Setup.LoadPlugins(string.Join("\n", PluginsList));
+            }
+            catch (Exception error)
+            {
+                error.Message.PromptWarnning();
+                return false;
+            }
             if (printLoadingLog) print("Waiting for loader to finish");
             var state = Setup.LoaderState.IsInactive;
             while (state != Setup.LoaderState.IsDone && state != Setup.LoaderState.HasError) state = Setup.GetLoaderStatus();
@@ -125,6 +136,7 @@ namespace TESV_EspEquipmentGenerator
             }
             Messages.ClearMessages();
             print("Loader finished");
+            return true;
         }
         
     }

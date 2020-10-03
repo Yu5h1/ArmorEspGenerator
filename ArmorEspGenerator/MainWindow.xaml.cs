@@ -194,15 +194,18 @@ namespace TESV_EspEquipmentGenerator
 
             return root;
         }
-
+        void ReStartApplication() {
+            Closed += (s, e) => {
+                ProcessUtil.Launch(System.Reflection.Assembly.GetExecutingAssembly().Location);
+            };
+            Close();
+        }
         void LoadPlugin()
         {
             if (plugin) {
-                Closed += (s, e) => {
-                    ProcessUtil.Launch(System.Reflection.Assembly.GetExecutingAssembly().Location);
-                };
-                Close();
-            }else if (File.Exists(Plugin.GetPluginFullPath(Plugin_cb.Text)))
+                ReStartApplication();
+            }
+            else if (File.Exists(Plugin.GetPluginFullPath(Plugin_cb.Text)))
             {
                 loading_lb.Visibility = Visibility.Visible;
                 //loading_lb.Refresh();
@@ -257,9 +260,9 @@ namespace TESV_EspEquipmentGenerator
                         {
                             plugin.AddTextureSetsByDifuseAssets(null, files);
                         }, ".dds");
-                        RecordsTreeView.Items.Add(textureSetsNode);                        
+                        RecordsTreeView.Items.Add(textureSetsNode);
+                        save_btn.IsEnabled = true;
                     }
-                    save_btn.IsEnabled = true;
                 }).Start();
             }
             
@@ -312,6 +315,16 @@ namespace TESV_EspEquipmentGenerator
                 }
             }
 
+        }
+
+        private void Plugin_cb_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter) {
+                LoadPlugin();
+            }
+            if (e.Key == Key.Escape) {
+                Plugin_cb.Text = "";
+            }
         }
     }
 }

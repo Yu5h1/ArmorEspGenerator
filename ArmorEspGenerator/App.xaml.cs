@@ -23,6 +23,12 @@ namespace TESV_EspEquipmentGenerator
         }
         protected override void OnStartup(StartupEventArgs e)
         {
+            //if (e.Args.Length == 1 && args[0] == "Reloading") {
+            //    base.OnStartup(e);
+            //    return;
+            //} 
+
+
             args = e.Args;
             if (args.Length == 1) {
                 var fileExtension = Path.GetExtension(args[0]).ToLower();
