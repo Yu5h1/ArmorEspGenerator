@@ -110,7 +110,7 @@ namespace TESV_EspEquipmentGenerator
                             };
                             item.Height = pathSelector.Height + 1;
                             pathSelector.InitialDirectory = Plugin.GetTexturesPath();
-                            pathSelector.GetPathBy += (txt) => Plugin.GetTexturesPath(txt);
+                            pathSelector.GetPathBy += (txt) => txt == "" ? "" : Plugin.GetTexturesPath(txt);
                             pathSelector.SetPathBy += (txt) => Plugin.TrimTexturesPath(txt);
                             pathSelector.Background = null;
 

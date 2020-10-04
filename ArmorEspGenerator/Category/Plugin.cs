@@ -93,7 +93,7 @@ namespace TESV_EspEquipmentGenerator
 
         public static String GetTexturesPath() => Path.Combine(GetGameDataPath(), "Textures");
         public static String GetTexturesPath(string suffix) =>
-                                GetTexturesPath().CombineNoleadSlash(suffix).ReplaceRepeatFolderUtilEmpty("textures");
+                                GetTexturesPath().CombineNoleadSlash(suffix).ReplaceRepeatFolderUtilEmpty("Textures");
         public static string GetPluginFullPath(string fileName) => Path.Combine(GetGameDataPath(), fileName);
 
         public static bool IsLocateAtGameAssetsFolder(string path)

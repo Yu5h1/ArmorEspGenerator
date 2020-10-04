@@ -26,17 +26,17 @@ namespace TESV_EspEquipmentGenerator
             };
             pathSelector.Width = 350;
             pathSelector.Background = null;
-            pathSelector.GetPathBy += (txt) => Plugin.GetMeshesPath(txt);
+            pathSelector.GetPathBy += (txt) => txt == "" ? "" : Plugin.GetMeshesPath(txt);
             pathSelector.SetPathBy += (txt) => Plugin.TrimMeshesPath(txt);
-            pathSelector.TextChanged += (s, e) => worldModel.Model = pathSelector.Text;
+            pathSelector.TextChanged += (s, e) => {
+                worldModel.Model = pathSelector.Text;
+                MainWindow.current.ShowSelectedRecord();
+            };
             var modelTreeitem = new TreeViewItem() {
                 //HorizontalAlignment = HorizontalAlignment.Stretch,
                 Header = pathSelector,
             };
             result.Items.Add(modelTreeitem);
-
-            //pathSelector.Width = treeview.ActualWidth - modelTreeitem.GetBounds().Left;
-
             var menuitem = pathSelector.labelControl.AddMenuItem("BodyParts to Partitions");
             result.IsExpanded = true;
             menuitem.Click += (s, e) => {
@@ -63,13 +63,12 @@ namespace TESV_EspEquipmentGenerator
                         string menuItemName = pluginName;
                         if (pluginName == worldModel.armorAddon.plugin.GetTempName())
                             menuItemName = worldModel.armorAddon.plugin.PluginName;
-                        var curPluginMenuItem = contextMenu.AddMenuItem(menuItemName);
-                        
+                        var curPluginMenuItem = contextMenu.AddMenuItem(menuItemName);        
                         var textureSets = Handle.BaseHandle.GetElement(pluginName).GetRecords(TextureSet.Signature);
                         foreach (var txts in textureSets)
                         {
                             var curTxtsitem = curPluginMenuItem.AddMenuItem(txts.GetEditorID());
-                            curTxtsitem.Click += (txtsS, txtsE) =>
+                            curTxtsitem.Click += (ss, ee) =>
                             {
                                 worldModel.alternateTextures.Set(shapeName, txts);
                                 btn.Content = txts.GetLabel();

@@ -11,6 +11,7 @@ namespace TESV_EspEquipmentGenerator
     public partial class Plugin
     {
         static string TrimSourceFolderPath(string value, string folder) {
+            if (value.Equals(string.Empty)) return value;
             int index = value.ToLower().IndexOf(folder.ToLower());
             if (index >= 0) value = value.Substring(index + folder.Length).RemovePrefixUtilEmpty(@"\");
             return value;
