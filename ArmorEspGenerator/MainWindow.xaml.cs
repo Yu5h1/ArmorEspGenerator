@@ -210,10 +210,10 @@ namespace TESV_EspEquipmentGenerator
         }
         void LoadPlugin()
         {
+            if (!File.Exists(Plugin.GetPluginFullPath(Plugin_cb.Text))) return;
             if (plugin) {
                 ReStartApplication();
-            }
-            else if (File.Exists(Plugin.GetPluginFullPath(Plugin_cb.Text)))
+            }else
             {
                 loading_lb.Visibility = Visibility.Visible;
                 //loading_lb.Refresh();
@@ -273,7 +273,6 @@ namespace TESV_EspEquipmentGenerator
                     }
                 }).Start();
             }
-            
         }
         private void Save_btn_Click(object sender, RoutedEventArgs e)
         {
