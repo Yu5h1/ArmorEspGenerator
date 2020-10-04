@@ -75,7 +75,7 @@ namespace TESV_EspEquipmentGenerator
         private void GameMode_cb_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             curremtGameMode = (Setup.GameMode)GameMode_cb.SelectedItem;
-            Plugin_cb.sourceItems = Directory.GetFiles(Plugin.GetGameDataPath(), "*.esp").Select(d => Path.GetFileName(d)).ToArray();            
+            Plugin_cb.sourceItems = Directory.GetFiles(Plugin.GetGameDataPath(), "*.esp").Select(d => Path.GetFileName(d)).ToArray();
         }
         public void ShowSelectedRecord()
         {
@@ -92,8 +92,9 @@ namespace TESV_EspEquipmentGenerator
                         break;
                     case ArmorAddon armorAddon:
                         DataInfos_tree.Items.Add(RecordsUI.GetPartitionsFieldTreeItem(armorAddon.FirstPersonFlags));
-                        DataInfos_tree.Items.Add(armorAddon.MaleWorldModel.GetTreeNode());
-                        DataInfos_tree.Items.Add(armorAddon.FemaleWorldModel.GetTreeNode());
+
+                        DataInfos_tree.AddworldModelTreeNode(armorAddon.MaleWorldModel);
+                        DataInfos_tree.AddworldModelTreeNode(armorAddon.FemaleWorldModel);
                         break;
                     case TextureSet textureSet:
                         for (int i = 0; i < 8; i++)
@@ -101,17 +102,19 @@ namespace TESV_EspEquipmentGenerator
 
                             //var item = new TreeViewItem().SetField(TextureSet.Names[i], textureSet[i], 75, DataInfos_tree.Width);
                             var item = new TreeViewItem();
+                            item.HorizontalAlignment = HorizontalAlignment.Stretch;
                             var pathSelector = new PathSelector() {
                                 label = TextureSet.Names[i],
                                 Text = textureSet[i],
-                                FileFilter = new PathSelector.FileTypeFilter("Direct Draw Surface", ".dds").ToString()
+                                FileFilter = new SelectionDialogFilter("Direct Draw Surface", ".dds").ToString()
                             };
-                            pathSelector.Width = 300;
                             item.Height = pathSelector.Height + 1;
                             pathSelector.InitialDirectory = Plugin.GetTexturesPath();
                             pathSelector.GetPathBy += (txt) => Plugin.GetTexturesPath(txt);
                             pathSelector.SetPathBy += (txt) => Plugin.TrimTexturesPath(txt);
                             pathSelector.Background = null;
+
+                            pathSelector.Width = 350;
                             //pathSelector.BindDragDropFileEvent(item);
                             int permanentIndex = i;
                             pathSelector.TextChanged += (s, ee) =>
@@ -146,6 +149,7 @@ namespace TESV_EspEquipmentGenerator
                                                     if (item.EditorID != tb.Text) item.EditorID = tb.Text;
                                                 },
                                                 RecordsTreeView.Width-6);
+
             treeItem.Tag = item;
             //treeItem.ToolTip = item.FormID;
             treeItem.Unloaded += (s, e) =>
@@ -157,10 +161,14 @@ namespace TESV_EspEquipmentGenerator
                     curData.Delete();
                 }
             };
-            MenuItem menuitem = null;
+            MenuItem menuitem = treeItem.AddMenuItem("Duplicate","Ctrl + D");
+            
+            menuitem.Click += (s, e) => DuplicateSelected();
+
             switch (item)
             {
                 case Armor armor:
+                    
                     menuitem = treeItem.AddMenuItem("Generate Armors By Similar Diffuses");
                     menuitem.Click += (s, e) =>
                     {
@@ -299,19 +307,23 @@ namespace TESV_EspEquipmentGenerator
         {
             
         }
-
+        void DuplicateSelected()
+        {
+            foreach (var item in RecordsTreeView.selectedNodes)
+            {
+                var curObj = item.Tag as IRecordElement;
+                if (curObj != null)
+                {
+                    curObj.Duplicate();
+                }
+            }
+        }
         private void RecordsTreeView_KeyDown(object sender, KeyEventArgs e)
         {
             if (RecordsTreeView.selectedNodes.Count > 0) {
                 if (Keyboard.IsKeyDown(Key.LeftCtrl) && e.Key == Key.D)
                 {
-                    foreach (var item in RecordsTreeView.selectedNodes) {
-                        var curObj = item.Tag as IRecordElement;
-                        if (curObj != null) {
-                            curObj.Duplicate();
-                        }
-                    }
-                        
+                    DuplicateSelected();
                 }
             }
 

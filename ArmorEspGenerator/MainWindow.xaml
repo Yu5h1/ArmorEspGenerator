@@ -11,17 +11,19 @@
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="150*"/>
             <ColumnDefinition Width="2*"/>
-            <ColumnDefinition Width="329*"/>
+            <ColumnDefinition x:Name="Info_Column" Width="329*"/>
         </Grid.ColumnDefinitions>
         <ComboBox x:Name="GameMode_cb" Margin="59,11,2.5,0" Height="22" VerticalAlignment="Top" SelectionChanged="GameMode_cb_SelectionChanged" Padding="4,3,9,3"/>
         <Label x:Name="GameMod_lb" Content="Game :" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Height="27" Width="49" MouseDown="GameMod_lb_MouseDown"/>
 
         <CustomControls:MultiSelectTreeView x:Name="RecordsTreeView" Margin="10,38,2.535,31.96" AllowDeleteNode="True" KeyDown="RecordsTreeView_KeyDown"/>
-        <CustomControls:MultiSelectTreeView x:Name="DataInfos_tree" Grid.Column="2" Margin="2.564,38,9.822,31.96"/>
+        <CustomControls:MultiSelectTreeView x:Name="DataInfos_tree" Grid.Column="2" Margin="2.564,38,9.822,31.96">
+            
+        </CustomControls:MultiSelectTreeView>
         <Button x:Name="save_btn" Content="Save" Margin="0,0,9.822,4.96" Grid.Column="2" HorizontalAlignment="Right" Width="75" Height="22" VerticalAlignment="Bottom" Click="Save_btn_Click" IsEnabled="False"/>
         <GridSplitter x:Name="gridSplitter" HorizontalAlignment="Stretch" Margin="0.1,42,0.1,31.96" ResizeDirection="Columns" Grid.Column="1" Background="#FFB2B2B2"/>
         <Label x:Name="Plugin_lb" Content="Plugin : " Grid.Column="2" HorizontalAlignment="Left" Margin="2.564,11,0,0" VerticalAlignment="Top" Height="22" Width="55" Padding="0,0,4,0" VerticalContentAlignment="Center" HorizontalContentAlignment="Center"/>
-        <CustomControls:AautocompleteComboBox x:Name="Plugin_cb" Grid.Column="2" Margin="57.564,11,9.822,0" VerticalAlignment="Top" TextChanged="Plugin_cb_TextChanged" KeyDown="Plugin_cb_KeyDown"/>
+        <CustomControls:AutocompleteComboBox x:Name="Plugin_cb" Grid.Column="2" Margin="57.564,11,9.822,0" VerticalAlignment="Top" TextChanged="Plugin_cb_TextChanged" KeyDown="Plugin_cb_KeyDown"/>
         <Label x:Name="loading_lb" Content="Loading..." VerticalAlignment="Center" Margin="0" Grid.ColumnSpan="3" Height="{Binding ActualHeight, ElementName=grid, Mode=OneWay}" HorizontalAlignment="Center" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" Width="{Binding ActualWidth, ElementName=grid, Mode=OneWay}" Padding="0,0,0,3" FontSize="72" Panel.ZIndex="3" IsHitTestVisible="False" Visibility="Hidden"/>
 
     </Grid>

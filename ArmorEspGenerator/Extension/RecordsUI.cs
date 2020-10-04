@@ -13,23 +13,29 @@ namespace TESV_EspEquipmentGenerator
 {
     public static class RecordsUI
     {
-        public static TreeViewItem GetTreeNode(this WorldModel worldModel)
+        public static TreeViewItem AddworldModelTreeNode(this MultiSelectTreeView treeview,WorldModel worldModel)
         {
-            var result = new TreeViewItem().SetTextBlockHeader(worldModel.KEYS.worldModel);
-
+            var result = new TreeViewItem() { HorizontalAlignment = HorizontalAlignment.Stretch }.SetTextBlockHeader(worldModel.KEYS.worldModel);
+            treeview.Items.Add(result);
             var pathSelector = new PathSelector() {
+                //HorizontalAlignment = HorizontalAlignment.Stretch,
                 InitialDirectory = Plugin.GetMeshesPath(),
                 label = "Model",
                 Text = worldModel.Model,
-                FileFilter = new PathSelector.FileTypeFilter("Nif File", ".nif").ToString(),
+                FileFilter = new SelectionDialogFilter("Nif File", ".nif").ToString(),
             };
-            
+            pathSelector.Width = 350;
             pathSelector.Background = null;
             pathSelector.GetPathBy += (txt) => Plugin.GetMeshesPath(txt);
             pathSelector.SetPathBy += (txt) => Plugin.TrimMeshesPath(txt);
-
-            var modelTreeitem = new TreeViewItem() { Header = pathSelector };
+            pathSelector.TextChanged += (s, e) => worldModel.Model = pathSelector.Text;
+            var modelTreeitem = new TreeViewItem() {
+                //HorizontalAlignment = HorizontalAlignment.Stretch,
+                Header = pathSelector,
+            };
             result.Items.Add(modelTreeitem);
+
+            //pathSelector.Width = treeview.ActualWidth - modelTreeitem.GetBounds().Left;
 
             var menuitem = pathSelector.labelControl.AddMenuItem("BodyParts to Partitions");
             result.IsExpanded = true;
