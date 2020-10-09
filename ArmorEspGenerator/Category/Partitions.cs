@@ -138,40 +138,15 @@ namespace TESV_EspEquipmentGenerator
         BP_TORSOSECTION_RIGHTLEG3 = 12000, //  Torso Section | Right Leg 3
         BP_TORSOSECTION_BRAIN = 13000    //  Torso Section | Brain     
     }
-
-
     public static class PartitionsUtil {
-        public static void SetPartitionFlags(Handle handle, Partitions[] values) {
-            handle.SetValue(ConvertPartitionsToFlagsValue(GetPartitionFlags(values)));
-        }
-        public static PartitionFlag[] GetPartitionFlags()
+        public static PartitionFlag[] ToPartitionFlags(this Partitions[] partitions)
         {
-            var partitions = (Partitions[])System.Enum.GetValues(typeof(Partitions));
-            var results = new PartitionFlag[partitions.Length];
-            for (int i = 0; i < partitions.Length; i++) results[i] = new PartitionFlag(partitions[i],false);
-            return results;
-        }
-        public static PartitionFlag[] GetPartitionFlags(Handle handle)
-        {
-            var results = GetPartitionFlags();
-            if (handle != null) {
-                var FlagsValue = handle.GetValue();
-                for (int i = 0; i < results.Length; i++)
-                {
-                    results[i].IsEnable = false;
-                    if (i < FlagsValue.Length) results[i].IsEnable = FlagsValue[i] == '1';
-                }
-            }
-            return results;
-        }
-        public static PartitionFlag[] GetPartitionFlags(Partitions[] values)
-        {
-            var results = GetPartitionFlags();
-            for (int i = 0; i < values.Length; i++)
+            var results = BipedBodyTemplate.GetPartitionFlags();
+            for (int i = 0; i < partitions.Length; i++)
             {
                 for (int o = 0; o < results.Length; o++)
                 {
-                    if (results[o].Partition.Equals(values[i]))
+                    if (results[o].Partition.Equals(partitions[i]))
                     {
                         results[o].IsEnable = true;
                         break;
@@ -180,7 +155,7 @@ namespace TESV_EspEquipmentGenerator
             }
             return results;
         }
-        public static string ConvertPartitionsToFlagsValue(PartitionFlag[] value)
+        public static string ToValue(this PartitionFlag[] value)
         {
             var result = "";
             for (int i = value.Length - 1; i >= 0; i--)

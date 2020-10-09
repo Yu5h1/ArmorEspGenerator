@@ -10,10 +10,10 @@ namespace TESV_EspEquipmentGenerator
 {
     public class Armor : RecordElement<Armor>
     {
-        public PartitionFlag[] partitionFlags {
-            get => PartitionsUtil.GetPartitionFlags(handle.GetElement(@"BOD2\First Person Flags"));
-            set => handle.SetValue(@"BOD2\First Person Flags", PartitionsUtil.ConvertPartitionsToFlagsValue(value));
-        }
+        //public PartitionFlag[] partitionFlags {
+        //    get => PartitionsUtil.GetPartitionFlags(handle.GetElement(@"BOD2\First Person Flags"));
+        //    set => handle.SetValue(@"BOD2\First Person Flags", PartitionsUtil.ToValue(value));
+        //}
         public const string Signature = "ARMO";
         public override string signature => Signature;
 

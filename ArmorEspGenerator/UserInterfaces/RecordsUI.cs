@@ -50,8 +50,8 @@ namespace TESV_EspEquipmentGenerator
                             result.Items.Add(GetTreeNode(element));
                             break;
                         case Elements.ElementTypes.EtValue:
-                            if (DisplayName == "First Person Flags") {
-                                result.Items.Add(ArmorUI.PartitionsField(element));
+                            if (DisplayName == "BOD2") {
+                                //result.Items.Add(ArmorUI.BipedBodyTemplateField(element));
                             }else
                                 result.Items.Add(new TreeViewItem() { ToolTip = element.GetValueType().ToString() }.SetField(element.GetDisplayName(), element.GetValue(), 100));
                             break;

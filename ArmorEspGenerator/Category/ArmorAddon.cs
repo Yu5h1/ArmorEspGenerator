@@ -27,8 +27,7 @@ namespace TESV_EspEquipmentGenerator
                             (MaleOrFemale? "Male":"Female")+" world model",
                             "MOD"+(MaleOrFemale ? "2" : "3" ),
                             "MO"+ (MaleOrFemale ? "2" : "3" ) + "S");
-
-        public Handle FirstPersonFlags => handle.GetElement(@"BOD2\First Person Flags");
+        public BipedBodyTemplate bipedBodyTemplate;
 
         public WorldModel MaleWorldModel;
         public WorldModel FemaleWorldModel;
@@ -65,9 +64,9 @@ namespace TESV_EspEquipmentGenerator
         public string FullModelPath => Model == "" ? "" : Plugin.GetMeshesPath(Model);
         public string[] GetShapeTextures(int shapeIndex) => NifUtil.GetShapeTextures(FullModelPath, ShapesNames[shapeIndex]).GetLines();
 
-        public void BodyPartsToPartitions() {        
-            PartitionsUtil.SetPartitionFlags(armorAddon.FirstPersonFlags,
-                PartitionsUtil.ConvertIndicesToBodyParts(Plugin.GetBodyPartsIDsFromNif(FullModelPath)).BSDismemberBodyPartsToPartitions());
+        public void BodyPartsToPartitions() {
+            //armorAddon.bipedBodyTemplate.FirstPersonFlags = 
+                //PartitionsUtil.ConvertIndicesToBodyParts(Plugin.GetBodyPartsIDsFromNif(FullModelPath)).BSDismemberBodyPartsToPartitions();
         }
 
         public List<TextureSet> AddTextsetsBySimilarDiffuses(int shapeIndex) {
@@ -85,11 +84,12 @@ namespace TESV_EspEquipmentGenerator
         }
         public AlternateTextures alternateTextures;
 
-        public WorldModel(ArmorAddon armorAddon, (string , string , string ) keys)
+        public WorldModel(  ArmorAddon armorAddon, 
+                            (string worldModel, string model, string alternateTexture) keys) : 
+                     base(armorAddon.handle, armorAddon.handle.GetElement(keys.worldModel))
         {
             this.armorAddon = armorAddon;
             KEYS = keys;
-            handle = armorAddon.handle.GetElement(KEYS.worldModel);
             UpdateShapesNames();
             alternateTextures = new AlternateTextures(this, KEYS.alternateTexture);
         }
@@ -151,10 +151,11 @@ namespace TESV_EspEquipmentGenerator
     {
         public List<string> ShapesNames => list.ShapesNames;
         public AlternateTextures list { get; private set; }
-        public AlternateTexture(AlternateTextures alternateTextures, Handle handle, string shapeName = "", Handle textureSet = null)
+        public AlternateTexture(AlternateTextures alternateTextures, Handle target, string shapeName = "", Handle textureSet = null) : 
+            base(alternateTextures.handle, target)
+
         {
-            this.handle = handle;
-            this.list = alternateTextures;
+            list = alternateTextures;
             if (shapeName != "") ShapeName = shapeName;
             if (textureSet != null) targetTextureSet = textureSet.GetLabel();
         }

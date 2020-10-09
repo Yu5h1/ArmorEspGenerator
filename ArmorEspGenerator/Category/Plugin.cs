@@ -28,7 +28,7 @@ namespace TESV_EspEquipmentGenerator
         public static string GetTempFullPath(string name) => GetPluginFullPath(GetTempName(name));
         
 
-        Plugin(Handle target, string pluginName) : base(target) {
+        Plugin(Handle target, string pluginName) : base(Handle.BaseHandle,target) {
             PluginName = pluginName;
             TextureSets = new PluginRecords<TextureSet>(this, TextureSet.Create);
             ArmorAddons = new PluginRecords<ArmorAddon>(this, ArmorAddon.Create);

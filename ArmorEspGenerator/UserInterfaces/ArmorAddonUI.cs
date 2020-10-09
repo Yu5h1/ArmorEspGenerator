@@ -18,7 +18,7 @@ namespace TESV_EspEquipmentGenerator
     {
         public static void ShowArmorAddonInfos(this MultiSelectTreeView treeview, ArmorAddon armorAddon)
         {
-            treeview.Items.Add(PartitionsField(armorAddon.FirstPersonFlags));
+            treeview.Items.Add(BipedBodyTemplateField(armorAddon.bipedBodyTemplate));
             treeview.AddworldModelTreeNode(armorAddon.MaleWorldModel);
             treeview.AddworldModelTreeNode(armorAddon.FemaleWorldModel);
         }
@@ -114,43 +114,39 @@ namespace TESV_EspEquipmentGenerator
             }
             return result;
         }
-        public static string ToString(this PartitionFlag[] values)
-        {
-            var valuesArray = values.ToArray();
-            var result = "";
-            for (int i = 0; i < valuesArray.Length; i++)
-                if (valuesArray[i].IsEnable) result += ((int)valuesArray[i].Partition).ToString() + " - " + valuesArray[i].Partition.ToString() + ",";
-            return result.RemoveSuffixFrom(",");
-        }
-        public static TreeViewItem PartitionsField(Handle handle)
+        public static string ToLabel(this PartitionFlag[] values,string seperator)
+                        => values.Where(d => d.IsEnable).Select(d => d.ToString()).Join(" , ");
+
+        public static TreeViewItem BipedBodyTemplateField(BipedBodyTemplate bipedBodyTemplate)
         {
             var comboBox = new ComboBox();
-            var datas = PartitionsUtil.GetPartitionFlags(handle);
-            var LabelItem = new ComboBoxItem() { Content = ToString(datas) };
+            var LabelItem = new ComboBoxItem() {
+                           Content = bipedBodyTemplate.FirstPersonFlags.ToLabel(",")
+            };
             comboBox.Items.Add(LabelItem);
             LabelItem.Visibility = Visibility.Collapsed;
             comboBox.SelectedIndex = 0;
-            for (int i = 0; i < datas.Length; i++)
-            {
-                int index = i;
-                var partitionFlag = datas[i];
-                var cb = new CheckBox() { IsChecked = partitionFlag.IsEnable };
-                cb.Checked += (s, e) => datas[index].IsEnable = true;
-                cb.Unchecked += (s, e) => datas[index].IsEnable = false;
-                comboBox.Items.Add(new ComboBoxItem().SetControlWithLabel(
-                    " " + ((int)partitionFlag.Partition) + " - " + partitionFlag.Partition,
-                    cb, true));
-            }
-            Action ConfirmModifyParitions = () => {
-                handle.SetValue(PartitionsUtil.ConvertPartitionsToFlagsValue(datas));
-                ((ComboBoxItem)comboBox.Items[0]).Content = datas.ToString();
-                comboBox.SelectedIndex = 0;
-            };
-            comboBox.PreviewMouseRightButtonDown += (s, e) => {
-                for (int i = 0; i < datas.Length; i++) datas[i].IsEnable = false;
-                ConfirmModifyParitions();
-            };
-            comboBox.DropDownClosed += (s, e) => ConfirmModifyParitions();
+            //for (int i = 0; i < datas.Length; i++)
+            //{
+            //    int index = i;
+            //    var partitionFlag = datas[i];
+            //    var cb = new CheckBox() { IsChecked = partitionFlag.IsEnable };
+            //    cb.Checked += (s, e) => datas[index].IsEnable = true;
+            //    cb.Unchecked += (s, e) => datas[index].IsEnable = false;
+            //    comboBox.Items.Add(new ComboBoxItem().SetControlWithLabel(
+            //        " " + ((int)partitionFlag.Partition) + " - " + partitionFlag.Partition,
+            //        cb, true));
+            //}
+            //Action ConfirmModifyParitions = () => {
+            //    bipedBodyTemplate.FirstPersonFlags = datas;
+            //    ((ComboBoxItem)comboBox.Items[0]).Content = datas.ToString();
+            //    comboBox.SelectedIndex = 0;
+            //};
+            //comboBox.PreviewMouseRightButtonDown += (s, e) => {
+            //    for (int i = 0; i < datas.Length; i++) datas[i].IsEnable = false;
+            //    ConfirmModifyParitions();
+            //};
+            //comboBox.DropDownClosed += (s, e) => ConfirmModifyParitions();
             return new TreeViewItem().SetControlWithLabel("First Person Flags ", comboBox);
         }
     }

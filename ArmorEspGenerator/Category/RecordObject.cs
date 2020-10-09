@@ -10,8 +10,14 @@ namespace TESV_EspEquipmentGenerator
 {
     public abstract class RecordObject 
     {
+        public Handle parent { get; protected set; }
         public Handle handle { get; protected set; }
         public static implicit operator bool(RecordObject obj) => obj != null;
+        public RecordObject(Handle Parent,Handle target)
+        {
+            parent = Parent;
+            handle = target;
+        }
     }
     public abstract class RecordArrayObject<T> : List<T>
     {
@@ -30,10 +36,7 @@ namespace TESV_EspEquipmentGenerator
 
         public abstract string signature { get; }
 
-        public RecordElement(Handle target)
-        {
-            handle = target;
-        }
+        public RecordElement(Handle Parent,Handle target) : base(Parent, target) { }
         public virtual void Delete() => handle.Delete();
 
         public override string ToString() => handle.GetLabel();
@@ -47,7 +50,7 @@ namespace TESV_EspEquipmentGenerator
     {
         public PluginRecords<T> Container;
         public Plugin plugin => Container.plugin;
-        public RecordElement(PluginRecords<T> container, Handle target) : base(target) {
+        public RecordElement(PluginRecords<T> container, Handle target) : base(container.handle, target) {
             Container = container;
         }
         public void Duplicate() => Container.Duplicate((T)this); 
