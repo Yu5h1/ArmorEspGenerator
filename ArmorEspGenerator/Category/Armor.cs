@@ -10,20 +10,12 @@ namespace TESV_EspEquipmentGenerator
 {
     public class Armor : RecordElement<Armor>
     {
-        public static string GetDisplayPartitionFlags((Partitions partition, bool flag)[] values) {
-            var result = "";
-            for (int i = 0; i < values.Length; i++)
-                if (values[i].flag) result += ((int)values[i].partition).ToString() + " - " + values[i].partition.ToString()+",";
-            return result.RemoveSuffixFrom(",");
-        }
-        public (Partitions partition, bool flag)[] partitionFlags {
+        public PartitionFlag[] partitionFlags {
             get => PartitionsUtil.GetPartitionFlags(handle.GetElement(@"BOD2\First Person Flags"));
             set => handle.SetValue(@"BOD2\First Person Flags", PartitionsUtil.ConvertPartitionsToFlagsValue(value));
         }
         public const string Signature = "ARMO";
-        public static string TemplateEditorID = "00000D64";
         public override string signature => Signature;
-        public override string templateEditorID => TemplateEditorID;
 
         Armor(PluginRecords<Armor> container, Handle target) : base(container, target) {
             armatures = new Armatures(this);
@@ -61,11 +53,11 @@ namespace TESV_EspEquipmentGenerator
                 foreach (var textureset in textureSets)
                 {
                     var difuseSuffix = textureset.Difuse.NameWithOutExtension().RemovePrefixTo("_").MakeValidEditorID().FirstCharToUpper();
-                    var newArmorAddon = plugin.ArmorAddons.AddNewItem(targetAA.EditorID.MakeArmorAddonName(difuseSuffix), targetAA);
+                    var newArmorAddon = plugin.ArmorAddons.Duplicate(targetAA, ArmorAddon.MakeArmorAddonName(targetAA.EditorID,difuseSuffix));
                     var newWorldModel = newArmorAddon.GetWorldModel(MaleOfFemale);
                     newWorldModel.alternateTextures.Clear();
                     newWorldModel.alternateTextures.Set(worldModel.ShapesNames[targetShapeIndex], textureset);
-                    var newArmor = plugin.Armors.AddNewItem(EditorID.TrimEndNumber() + difuseSuffix, this);
+                    var newArmor = plugin.Armors.Duplicate(this,EditorID.TrimEndNumber() + difuseSuffix );
                     newArmor.FULLName = FULLName.RemoveSuffixFrom("_", " ").TrimEndNumber() + " " + difuseSuffix;
                     newArmor.armatures.Clear();
                     newArmor.armatures.Add(newArmorAddon);

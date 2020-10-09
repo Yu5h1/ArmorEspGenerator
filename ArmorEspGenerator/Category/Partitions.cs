@@ -4,173 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using XeLib;
+using Yu5h1Tools.WPFExtension;
 
 namespace TESV_EspEquipmentGenerator
 {
-    public static class PartitionsUtil {
-        public static void SetPartitionFlags(Handle handle, Partitions[] values) {
-            handle.SetValue(ConvertPartitionsToFlagsValue(GetPartitionFlags(values)));
-        }
-        public static (Partitions partition, bool flag)[] GetPartitionFlags()
-        {
-            var partitions = (Partitions[])System.Enum.GetValues(typeof(Partitions));
-            var results = new (Partitions partition, bool flag)[partitions.Length];
-            for (int i = 0; i < partitions.Length; i++) results[i].partition = partitions[i];
-            return results;
-        }
-        public static (Partitions partition, bool flag)[] GetPartitionFlags(Handle handle)
-        {
-            var FlagsValue = handle.GetValue();
-            var results = GetPartitionFlags();
-            for (int i = 0; i < results.Length; i++)
-            {
-                results[i].flag = false;
-                if (i < FlagsValue.Length) results[i].flag = FlagsValue[i] == '1';
-            }
-            return results;
-        }
-        public static (Partitions partition, bool flag)[] GetPartitionFlags(Partitions[] values)
-        {
-            var results = GetPartitionFlags();
-            for (int i = 0; i < values.Length; i++)
-            {
-                for (int o = 0; o < results.Length; o++)
-                {
-                    if (results[o].partition.Equals(values[i]))
-                    {
-                        results[o].flag = true;
-                        break;
-                    }
-                }
-            }
-            return results;
-        }
-        public static string ConvertPartitionsToFlagsValue((Partitions partition, bool flag)[] value)
-        {
-            var result = "";
-            for (int i = value.Length - 1; i >= 0; i--)
-            {
-                if (result == string.Empty)
-                {
-                    if (value[i].flag) result = "1";
-                }
-                else result = (value[i].flag ? "1" : "0") + result;
-            }
-            return result;
-        }
-        public static BSDismemberBodyPartType[] ConvertIndicesToBodyParts(this IEnumerable<int> indices)
-        {
-            BSDismemberBodyPartType[] results = new BSDismemberBodyPartType[indices.Count()];
-            for (int i = 0; i < results.Length; i++)
-                results[i] = (BSDismemberBodyPartType)indices.ElementAt(i);
-            return results;
-        }
-        public static bool Contain(this BSDismemberBodyPartType bodypart, params BSDismemberBodyPartType[] flags)
-        {
-            foreach (var flag in flags) if (bodypart.Equals(flag)) return true;
-            return false;
-        }
-        public static Partitions[] BSDismemberBodyPartsToPartitions(this IEnumerable<BSDismemberBodyPartType> bodyparts)
-        {
-            List<Partitions> results = new List<Partitions>();
-            bodyparts.ToList().ForEach(d => {
-                var curpartition = d.BSDismemberBodyPartTypeToPartitionType();
-                if (!results.Contains(curpartition)) results.Add(curpartition);
-            });
-            return results.ToArray();
-        }
-        public static Partitions BSDismemberBodyPartTypeToPartitionType(this BSDismemberBodyPartType bodypart)
-        {
-            if (bodypart.Contain(BSDismemberBodyPartType.BP_HEAD, BSDismemberBodyPartType.BP_HEAD2,
-                           BSDismemberBodyPartType.BP_SECTIONCAP_HEAD, BSDismemberBodyPartType.BP_SECTIONCAP_HEAD2,
-                           BSDismemberBodyPartType.BP_TORSOCAP_HEAD, BSDismemberBodyPartType.BP_TORSOCAP_HEAD2,
-                           BSDismemberBodyPartType.BP_TORSOSECTION_HEAD, BSDismemberBodyPartType.BP_TORSOSECTION_HEAD2,
-                           BSDismemberBodyPartType.SBP_30_HEAD, BSDismemberBodyPartType.SBP_130_HEAD,
-                           BSDismemberBodyPartType.SBP_230_HEAD))
-                return Partitions.Head;
-            else if (bodypart.Contain(BSDismemberBodyPartType.SBP_31_HAIR, BSDismemberBodyPartType.SBP_131_HAIR))
-                return Partitions.Hair;
-            else if (bodypart.Contain(BSDismemberBodyPartType.BP_TORSO, BSDismemberBodyPartType.SBP_32_BODY))
-                return Partitions.Body;
-            else if (bodypart.Contain(BSDismemberBodyPartType.SBP_33_HANDS))
-                return Partitions.Hands;
-            else if (bodypart.Contain(BSDismemberBodyPartType.SBP_34_FOREARMS))
-                return Partitions.Forearms;
-            if (bodypart.Contain(BSDismemberBodyPartType.SBP_35_AMULET, BSDismemberBodyPartType.BP_BRAIN))
-                return Partitions.Amulet;
-            else if (bodypart.Contain(BSDismemberBodyPartType.SBP_36_RING))
-                return Partitions.Ring;
-            else if (bodypart.Contain(BSDismemberBodyPartType.SBP_37_FEET))
-                return Partitions.Feet;
-            else if (bodypart.Contain(BSDismemberBodyPartType.SBP_38_CALVES))
-                return Partitions.Calves;
-            else if (bodypart.Contain(BSDismemberBodyPartType.SBP_39_SHIELD))
-                return Partitions.Shield;
-            else if (bodypart.Contain(BSDismemberBodyPartType.SBP_40_TAIL))
-                return Partitions.Tail;
-            else if (bodypart.Contain(BSDismemberBodyPartType.SBP_41_LONGHAIR, BSDismemberBodyPartType.SBP_141_LONGHAIR))
-                return Partitions.LongHair;
-            else if (bodypart.Contain(BSDismemberBodyPartType.SBP_42_CIRCLET, BSDismemberBodyPartType.SBP_142_CIRCLET))
-                return Partitions.Circlet;
-            else if (bodypart.Contain(BSDismemberBodyPartType.SBP_43_EARS, BSDismemberBodyPartType.SBP_143_EARS))
-                return Partitions.Ears;
-            else if (bodypart.Contain(BSDismemberBodyPartType.SBP_44_DRAGON_BLOODHEAD_OR_MOD_MOUTH))
-                return Partitions.FaceRomouth;
-            else if (bodypart.Contain(BSDismemberBodyPartType.SBP_45_DRAGON_BLOODWINGL_OR_MOD_NECK))
-                return Partitions.Neck;
-            else if (bodypart.Contain(BSDismemberBodyPartType.SBP_46_DRAGON_BLOODWINGR_OR_MOD_CHEST_PRIMARY))
-                return Partitions.Chest;
-            else if (bodypart.Contain(BSDismemberBodyPartType.SBP_47_DRAGON_BLOODTAIL_OR_MOD_BACK))
-                return Partitions.Back;
-            else if (bodypart.Contain(BSDismemberBodyPartType.SBP_48_MOD_MISC1))
-                return Partitions.MiscFX;
-            else if (bodypart.Contain(BSDismemberBodyPartType.SBP_49_MOD_PELVIS_PRIMARY))
-                return Partitions.Pelvis;
-            else if (bodypart.Contain(BSDismemberBodyPartType.SBP_50_DECAPITATEDHEAD, BSDismemberBodyPartType.SBP_150_DECAPITATEDHEAD))
-                return Partitions.DecapitatedHead;
-            else if (bodypart.Contain(BSDismemberBodyPartType.SBP_51_DECAPITATE))
-                return Partitions.Decapitate;
-            else if (bodypart.Contain(BSDismemberBodyPartType.SBP_52_MOD_PELVIS_SECONDARY))
-                return Partitions.Pelvis_2nd;
-            else if (bodypart.Contain(BSDismemberBodyPartType.BP_RIGHTLEG, BSDismemberBodyPartType.BP_RIGHTLEG2, BSDismemberBodyPartType.BP_RIGHTLEG3,
-                           BSDismemberBodyPartType.BP_SECTIONCAP_RIGHTLEG, BSDismemberBodyPartType.BP_SECTIONCAP_RIGHTLEG2, BSDismemberBodyPartType.BP_SECTIONCAP_RIGHTLEG3,
-                           BSDismemberBodyPartType.BP_TORSOCAP_RIGHTLEG, BSDismemberBodyPartType.BP_TORSOCAP_RIGHTLEG2, BSDismemberBodyPartType.BP_TORSOCAP_RIGHTLEG3,
-                           BSDismemberBodyPartType.BP_TORSOSECTION_RIGHTLEG, BSDismemberBodyPartType.BP_TORSOSECTION_RIGHTLEG2, BSDismemberBodyPartType.BP_TORSOSECTION_RIGHTLEG3,
-                           BSDismemberBodyPartType.SBP_53_MOD_LEG_RIGHT))
-                return Partitions.Leg_Right;
-            else if (bodypart.Contain(BSDismemberBodyPartType.BP_LEFTLEG, BSDismemberBodyPartType.BP_LEFTLEG2,
-                                       BSDismemberBodyPartType.BP_LEFTLEG3, BSDismemberBodyPartType.BP_SECTIONCAP_LEFTLEG,
-                                       BSDismemberBodyPartType.BP_SECTIONCAP_LEFTLEG2, BSDismemberBodyPartType.BP_SECTIONCAP_LEFTLEG3,
-                                       BSDismemberBodyPartType.BP_TORSOCAP_LEFTLEG, BSDismemberBodyPartType.BP_TORSOCAP_LEFTLEG2,
-                                       BSDismemberBodyPartType.BP_TORSOCAP_LEFTLEG3, BSDismemberBodyPartType.BP_TORSOSECTION_LEFTLEG,
-                                       BSDismemberBodyPartType.BP_TORSOSECTION_LEFTLEG2, BSDismemberBodyPartType.BP_TORSOSECTION_LEFTLEG3,
-                                       BSDismemberBodyPartType.SBP_54_MOD_LEG_LEFT))
-                return Partitions.Leg_Left;
-            else if (bodypart.Contain(BSDismemberBodyPartType.SBP_55_MOD_FACE_JEWELRY))
-                return Partitions.Face;
-            else if (bodypart.Contain(BSDismemberBodyPartType.SBP_56_MOD_CHEST_SECONDARY))
-                return Partitions.Chest_2nd;
-            else if (bodypart.Contain(BSDismemberBodyPartType.SBP_57_MOD_SHOULDER))
-                return Partitions.Shoulder;
-            if (bodypart.Contain(BSDismemberBodyPartType.BP_LEFTARM, BSDismemberBodyPartType.BP_LEFTARM2,
-                          BSDismemberBodyPartType.BP_SECTIONCAP_LEFTARM, BSDismemberBodyPartType.BP_SECTIONCAP_LEFTARM2,
-                          BSDismemberBodyPartType.BP_TORSOCAP_LEFTARM, BSDismemberBodyPartType.BP_TORSOCAP_LEFTARM2,
-                          BSDismemberBodyPartType.BP_TORSOSECTION_LEFTARM, BSDismemberBodyPartType.BP_TORSOSECTION_LEFTARM2,
-                          BSDismemberBodyPartType.SBP_58_MOD_ARM_LEFT))
-                return Partitions.Arm_Left;
-            else if (bodypart.Contain(BSDismemberBodyPartType.BP_RIGHTARM, BSDismemberBodyPartType.BP_RIGHTARM2,
-                          BSDismemberBodyPartType.BP_SECTIONCAP_RIGHTARM, BSDismemberBodyPartType.BP_SECTIONCAP_RIGHTARM2,
-                          BSDismemberBodyPartType.BP_TORSOCAP_RIGHTARM, BSDismemberBodyPartType.BP_TORSOCAP_RIGHTARM2,
-                          BSDismemberBodyPartType.BP_TORSOSECTION_RIGHTARM, BSDismemberBodyPartType.BP_TORSOSECTION_RIGHTARM2,
-                          BSDismemberBodyPartType.SBP_59_MOD_ARM_RIGHT))
-                return Partitions.Arm_Right;
-            else if (bodypart.Contain(BSDismemberBodyPartType.SBP_60_MOD_MISC2))
-                return Partitions.Misc_or_FX;
-            if (bodypart.Contain(BSDismemberBodyPartType.SBP_61_FX01))
-                return Partitions.FX01;
-            return 0;
-        }
-    }
     public enum Partitions
     {
         Head = 30,
@@ -300,5 +137,173 @@ namespace TESV_EspEquipmentGenerator
         BP_TORSOSECTION_RIGHTLEG2 = 11000, //  Torso Section | Right Leg 2
         BP_TORSOSECTION_RIGHTLEG3 = 12000, //  Torso Section | Right Leg 3
         BP_TORSOSECTION_BRAIN = 13000    //  Torso Section | Brain     
+    }
+
+
+    public static class PartitionsUtil {
+        public static void SetPartitionFlags(Handle handle, Partitions[] values) {
+            handle.SetValue(ConvertPartitionsToFlagsValue(GetPartitionFlags(values)));
+        }
+        public static PartitionFlag[] GetPartitionFlags()
+        {
+            var partitions = (Partitions[])System.Enum.GetValues(typeof(Partitions));
+            var results = new PartitionFlag[partitions.Length];
+            for (int i = 0; i < partitions.Length; i++) results[i] = new PartitionFlag(partitions[i],false);
+            return results;
+        }
+        public static PartitionFlag[] GetPartitionFlags(Handle handle)
+        {
+            var results = GetPartitionFlags();
+            if (handle != null) {
+                var FlagsValue = handle.GetValue();
+                for (int i = 0; i < results.Length; i++)
+                {
+                    results[i].IsEnable = false;
+                    if (i < FlagsValue.Length) results[i].IsEnable = FlagsValue[i] == '1';
+                }
+            }
+            return results;
+        }
+        public static PartitionFlag[] GetPartitionFlags(Partitions[] values)
+        {
+            var results = GetPartitionFlags();
+            for (int i = 0; i < values.Length; i++)
+            {
+                for (int o = 0; o < results.Length; o++)
+                {
+                    if (results[o].Partition.Equals(values[i]))
+                    {
+                        results[o].IsEnable = true;
+                        break;
+                    }
+                }
+            }
+            return results;
+        }
+        public static string ConvertPartitionsToFlagsValue(PartitionFlag[] value)
+        {
+            var result = "";
+            for (int i = value.Length - 1; i >= 0; i--)
+            {
+                if (result == string.Empty)
+                {
+                    if (value[i].IsEnable) result = "1";
+                }
+                else result = (value[i].IsEnable ? "1" : "0") + result;
+            }
+            return result;
+        }
+        public static BSDismemberBodyPartType[] ConvertIndicesToBodyParts(this IEnumerable<int> indices)
+        {
+            BSDismemberBodyPartType[] results = new BSDismemberBodyPartType[indices.Count()];
+            for (int i = 0; i < results.Length; i++)
+                results[i] = (BSDismemberBodyPartType)indices.ElementAt(i);
+            return results;
+        }
+        public static bool Contain(this BSDismemberBodyPartType bodypart, params BSDismemberBodyPartType[] flags)
+        {
+            foreach (var flag in flags) if (bodypart.Equals(flag)) return true;
+            return false;
+        }
+        public static Partitions[] BSDismemberBodyPartsToPartitions(this IEnumerable<BSDismemberBodyPartType> bodyparts)
+        {
+            List<Partitions> results = new List<Partitions>();
+            bodyparts.ToList().ForEach(d => {
+                var curpartition = d.BSDismemberBodyPartTypeToPartitionType();
+                if (!results.Contains(curpartition)) results.Add(curpartition);
+            });
+            return results.ToArray();
+        }
+        public static Partitions BSDismemberBodyPartTypeToPartitionType(this BSDismemberBodyPartType bodypart)
+        {
+            if (bodypart.Contain(BSDismemberBodyPartType.BP_HEAD, BSDismemberBodyPartType.BP_HEAD2,
+                           BSDismemberBodyPartType.BP_SECTIONCAP_HEAD, BSDismemberBodyPartType.BP_SECTIONCAP_HEAD2,
+                           BSDismemberBodyPartType.BP_TORSOCAP_HEAD, BSDismemberBodyPartType.BP_TORSOCAP_HEAD2,
+                           BSDismemberBodyPartType.BP_TORSOSECTION_HEAD, BSDismemberBodyPartType.BP_TORSOSECTION_HEAD2,
+                           BSDismemberBodyPartType.SBP_30_HEAD, BSDismemberBodyPartType.SBP_130_HEAD,
+                           BSDismemberBodyPartType.SBP_230_HEAD))
+                return Partitions.Head;
+            else if (bodypart.Contain(BSDismemberBodyPartType.SBP_31_HAIR, BSDismemberBodyPartType.SBP_131_HAIR))
+                return Partitions.Hair;
+            else if (bodypart.Contain(BSDismemberBodyPartType.BP_TORSO, BSDismemberBodyPartType.SBP_32_BODY))
+                return Partitions.Body;
+            else if (bodypart.Contain(BSDismemberBodyPartType.SBP_33_HANDS))
+                return Partitions.Hands;
+            else if (bodypart.Contain(BSDismemberBodyPartType.SBP_34_FOREARMS))
+                return Partitions.Forearms;
+            if (bodypart.Contain(BSDismemberBodyPartType.SBP_35_AMULET, BSDismemberBodyPartType.BP_BRAIN))
+                return Partitions.Amulet;
+            else if (bodypart.Contain(BSDismemberBodyPartType.SBP_36_RING))
+                return Partitions.Ring;
+            else if (bodypart.Contain(BSDismemberBodyPartType.SBP_37_FEET))
+                return Partitions.Feet;
+            else if (bodypart.Contain(BSDismemberBodyPartType.SBP_38_CALVES))
+                return Partitions.Calves;
+            else if (bodypart.Contain(BSDismemberBodyPartType.SBP_39_SHIELD))
+                return Partitions.Shield;
+            else if (bodypart.Contain(BSDismemberBodyPartType.SBP_40_TAIL))
+                return Partitions.Tail;
+            else if (bodypart.Contain(BSDismemberBodyPartType.SBP_41_LONGHAIR, BSDismemberBodyPartType.SBP_141_LONGHAIR))
+                return Partitions.LongHair;
+            else if (bodypart.Contain(BSDismemberBodyPartType.SBP_42_CIRCLET, BSDismemberBodyPartType.SBP_142_CIRCLET))
+                return Partitions.Circlet;
+            else if (bodypart.Contain(BSDismemberBodyPartType.SBP_43_EARS, BSDismemberBodyPartType.SBP_143_EARS))
+                return Partitions.Ears;
+            else if (bodypart.Contain(BSDismemberBodyPartType.SBP_44_DRAGON_BLOODHEAD_OR_MOD_MOUTH))
+                return Partitions.FaceRomouth;
+            else if (bodypart.Contain(BSDismemberBodyPartType.SBP_45_DRAGON_BLOODWINGL_OR_MOD_NECK))
+                return Partitions.Neck;
+            else if (bodypart.Contain(BSDismemberBodyPartType.SBP_46_DRAGON_BLOODWINGR_OR_MOD_CHEST_PRIMARY))
+                return Partitions.Chest;
+            else if (bodypart.Contain(BSDismemberBodyPartType.SBP_47_DRAGON_BLOODTAIL_OR_MOD_BACK))
+                return Partitions.Back;
+            else if (bodypart.Contain(BSDismemberBodyPartType.SBP_48_MOD_MISC1))
+                return Partitions.MiscFX;
+            else if (bodypart.Contain(BSDismemberBodyPartType.SBP_49_MOD_PELVIS_PRIMARY))
+                return Partitions.Pelvis;
+            else if (bodypart.Contain(BSDismemberBodyPartType.SBP_50_DECAPITATEDHEAD, BSDismemberBodyPartType.SBP_150_DECAPITATEDHEAD))
+                return Partitions.DecapitatedHead;
+            else if (bodypart.Contain(BSDismemberBodyPartType.SBP_51_DECAPITATE))
+                return Partitions.Decapitate;
+            else if (bodypart.Contain(BSDismemberBodyPartType.SBP_52_MOD_PELVIS_SECONDARY))
+                return Partitions.Pelvis_2nd;
+            else if (bodypart.Contain(BSDismemberBodyPartType.BP_RIGHTLEG, BSDismemberBodyPartType.BP_RIGHTLEG2, BSDismemberBodyPartType.BP_RIGHTLEG3,
+                           BSDismemberBodyPartType.BP_SECTIONCAP_RIGHTLEG, BSDismemberBodyPartType.BP_SECTIONCAP_RIGHTLEG2, BSDismemberBodyPartType.BP_SECTIONCAP_RIGHTLEG3,
+                           BSDismemberBodyPartType.BP_TORSOCAP_RIGHTLEG, BSDismemberBodyPartType.BP_TORSOCAP_RIGHTLEG2, BSDismemberBodyPartType.BP_TORSOCAP_RIGHTLEG3,
+                           BSDismemberBodyPartType.BP_TORSOSECTION_RIGHTLEG, BSDismemberBodyPartType.BP_TORSOSECTION_RIGHTLEG2, BSDismemberBodyPartType.BP_TORSOSECTION_RIGHTLEG3,
+                           BSDismemberBodyPartType.SBP_53_MOD_LEG_RIGHT))
+                return Partitions.Leg_Right;
+            else if (bodypart.Contain(BSDismemberBodyPartType.BP_LEFTLEG, BSDismemberBodyPartType.BP_LEFTLEG2,
+                                       BSDismemberBodyPartType.BP_LEFTLEG3, BSDismemberBodyPartType.BP_SECTIONCAP_LEFTLEG,
+                                       BSDismemberBodyPartType.BP_SECTIONCAP_LEFTLEG2, BSDismemberBodyPartType.BP_SECTIONCAP_LEFTLEG3,
+                                       BSDismemberBodyPartType.BP_TORSOCAP_LEFTLEG, BSDismemberBodyPartType.BP_TORSOCAP_LEFTLEG2,
+                                       BSDismemberBodyPartType.BP_TORSOCAP_LEFTLEG3, BSDismemberBodyPartType.BP_TORSOSECTION_LEFTLEG,
+                                       BSDismemberBodyPartType.BP_TORSOSECTION_LEFTLEG2, BSDismemberBodyPartType.BP_TORSOSECTION_LEFTLEG3,
+                                       BSDismemberBodyPartType.SBP_54_MOD_LEG_LEFT))
+                return Partitions.Leg_Left;
+            else if (bodypart.Contain(BSDismemberBodyPartType.SBP_55_MOD_FACE_JEWELRY))
+                return Partitions.Face;
+            else if (bodypart.Contain(BSDismemberBodyPartType.SBP_56_MOD_CHEST_SECONDARY))
+                return Partitions.Chest_2nd;
+            else if (bodypart.Contain(BSDismemberBodyPartType.SBP_57_MOD_SHOULDER))
+                return Partitions.Shoulder;
+            if (bodypart.Contain(BSDismemberBodyPartType.BP_LEFTARM, BSDismemberBodyPartType.BP_LEFTARM2,
+                          BSDismemberBodyPartType.BP_SECTIONCAP_LEFTARM, BSDismemberBodyPartType.BP_SECTIONCAP_LEFTARM2,
+                          BSDismemberBodyPartType.BP_TORSOCAP_LEFTARM, BSDismemberBodyPartType.BP_TORSOCAP_LEFTARM2,
+                          BSDismemberBodyPartType.BP_TORSOSECTION_LEFTARM, BSDismemberBodyPartType.BP_TORSOSECTION_LEFTARM2,
+                          BSDismemberBodyPartType.SBP_58_MOD_ARM_LEFT))
+                return Partitions.Arm_Left;
+            else if (bodypart.Contain(BSDismemberBodyPartType.BP_RIGHTARM, BSDismemberBodyPartType.BP_RIGHTARM2,
+                          BSDismemberBodyPartType.BP_SECTIONCAP_RIGHTARM, BSDismemberBodyPartType.BP_SECTIONCAP_RIGHTARM2,
+                          BSDismemberBodyPartType.BP_TORSOCAP_RIGHTARM, BSDismemberBodyPartType.BP_TORSOCAP_RIGHTARM2,
+                          BSDismemberBodyPartType.BP_TORSOSECTION_RIGHTARM, BSDismemberBodyPartType.BP_TORSOSECTION_RIGHTARM2,
+                          BSDismemberBodyPartType.SBP_59_MOD_ARM_RIGHT))
+                return Partitions.Arm_Right;
+            else if (bodypart.Contain(BSDismemberBodyPartType.SBP_60_MOD_MISC2))
+                return Partitions.Misc_or_FX;
+            if (bodypart.Contain(BSDismemberBodyPartType.SBP_61_FX01))
+                return Partitions.FX01;
+            return 0;
+        }
     }
 }

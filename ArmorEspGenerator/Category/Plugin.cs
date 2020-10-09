@@ -4,13 +4,19 @@ using System.Collections.Generic;
 using XeLib.API;
 using XeLib;
 using static InformationViewer;
-using System.Text.RegularExpressions;
+using Yu5h1Tools.WPFExtension;
 
 namespace TESV_EspEquipmentGenerator
 {
     public partial class Plugin : RecordElement
     {
-        public static Setup.GameMode CurrentGameMode;
+        public static string GetLoadedGameName()
+        { try { return Meta.GetGlobal("AppName"); } catch (Exception) { return ""; } }
+        public static bool IsLoaded => GetLoadedGameName() != string.Empty;
+
+        public static Setup.GameMode ParseGameMode(string modeName) =>
+                            (Setup.GameMode)Enum.Parse(typeof(Setup.GameMode), modeName);
+        public static Setup.GameMode ActiveGameMode => ParseGameMode(GetLoadedGameName());
 
         public override string signature => "TES4";
 
@@ -82,7 +88,10 @@ namespace TESV_EspEquipmentGenerator
             }
         }
 
-        public static string GetGamePath() => Setup.GetGamePath(CurrentGameMode);        
+        public static string GetGamePath() {
+            if (IsLoaded) return Setup.GetGamePath(ActiveGameMode);
+            return "";
+        } 
         public static String GetGameDataPath(Setup.GameMode gameMode) => Path.Combine(Setup.GetGamePath(gameMode), "Data");
         public static String GetGameDataPath() => Path.Combine(GetGamePath(), "Data");
         public static String GetGameDataPath(string suffix) => GetGameDataPath().CombineNoleadSlash(suffix).ReplaceRepeatFolderUtilEmpty("Data");
@@ -107,35 +116,80 @@ namespace TESV_EspEquipmentGenerator
         public static bool ContainDataFolderInPath(string path) => path.ToLower().Contains(@"\data\");
         public static bool ContainTexturesFolderInPath(string path) => path.ToLower().Contains(@"\textures\");
         public static bool ContainMeshesFolderInPath(string path) => path.ToLower().Contains(@"\meshes\");
+        public static  string[] GetMasterNames(string PluginName) {
+            var results = new string[0];
+            if (File.Exists(GetPluginFullPath(PluginName))) {
+                var header = Setup.LoadPluginHeader(PluginName);
+                var masters = header.GetElements()[0].GetElement("Master Files").GetElements();
+                results = new string[masters.Length];
+                for (int i = 0; i < results.Length; i++)
+                    results[i] = masters[i].GetValue("MAST");
+                Setup.UnloadPlugin(header);
+            }
+            return results;
+        }
+        public static string[] GetMissingMastersInfo(params string[] PluginsList) {
+            List<string> missingMasters = new List<string>();
 
-        public static bool printLoadingLog = false;
+            foreach (var pluginName in PluginsList)
+            {
+                if (File.Exists(GetPluginFullPath(pluginName)))
+                {
+                    var masters = GetMasterNames(pluginName);
+                    foreach (var master in masters)
+                    {
+                        if (!File.Exists(GetPluginFullPath(master))) {
+                            if (!missingMasters.Contains(master))
+                                missingMasters.Add(master);
+                        }
+                    }
+                }
+                else if (!missingMasters.Contains(pluginName))
+                    missingMasters.Add(pluginName);
+            }
+            return missingMasters.ToArray();
+        }
+        public static Handle GetActivePlugin(string pluginName)
+                                                    => Handle.BaseHandle.GetElement(pluginName);
+        public static Handle[] GetActivePluginRecords(string pluginName,string search = "",bool includeOverrides = false)
+                                            => GetActivePlugin(pluginName).GetRecords(search,includeOverrides);
+        public static void Reset() {
+            //Meta.ResetStore();
+            Meta.Initialize();
+        }
+        public static bool SetGameMode(Setup.GameMode gameMode) {
+            if (IsLoaded) MainWindow.current.ReStartApplication();
+            Reset();
+            try
+            {
+                Setup.SetGameMode(gameMode);
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+            return true;
+        }
         public static bool LoadPlugins(Setup.GameMode gameMode, params string[] PluginsList)
         {
-            //Meta.Release(Handle.BaseHandle);
-            if (printLoadingLog) print("Initializing XEditLib");
-            Meta.Initialize();
-            if (printLoadingLog) print("Setting game mode to " + gameMode.ToString());
-            Setup.SetGameMode(gameMode);
-            if (printLoadingLog) print("Loading plugins " + string.Join("&", PluginsList));
+            var missingMasters = GetMissingMastersInfo(PluginsList);
+            if (missingMasters.Length > 0) {
+                ("The dependent modules are missing : \n" + missingMasters.Join("\n")).PromptWarnning();
+                return false;
+            }
             try
             {
                 Setup.LoadPlugins(string.Join("\n", PluginsList));
             }
             catch (Exception error)
             {
+                
                 error.Message.PromptWarnning();
                 return false;
             }
-            if (printLoadingLog) print("Waiting for loader to finish");
             var state = Setup.LoaderState.IsInactive;
             while (state != Setup.LoaderState.IsDone && state != Setup.LoaderState.HasError) state = Setup.GetLoaderStatus();
-            if (printLoadingLog)
-            {
-                print("printing XEditLib output");
-                print(Messages.GetMessages());
-            }
             Messages.ClearMessages();
-            print("Loader finished");
             return true;
         }
         

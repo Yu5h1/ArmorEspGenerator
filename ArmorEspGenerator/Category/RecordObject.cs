@@ -47,7 +47,6 @@ namespace TESV_EspEquipmentGenerator
     {
         public PluginRecords<T> Container;
         public Plugin plugin => Container.plugin;
-        public abstract string templateEditorID { get; }
         public RecordElement(PluginRecords<T> container, Handle target) : base(target) {
             Container = container;
         }

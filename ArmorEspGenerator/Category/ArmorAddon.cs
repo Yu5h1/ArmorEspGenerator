@@ -12,9 +12,7 @@ namespace TESV_EspEquipmentGenerator
     public class ArmorAddon : RecordElement<ArmorAddon>
     {                
         public const string Signature = "ARMA";
-        public static string TemplateEditorID = "00000D67";
         public override string signature => Signature;
-        public override string templateEditorID => TemplateEditorID;
 
         ArmorAddon(PluginRecords<ArmorAddon> container, Handle target) : base(container, target) {
             MaleWorldModel = new WorldModel(this, GetWorldModelKeys(true));
@@ -38,15 +36,17 @@ namespace TESV_EspEquipmentGenerator
         public override string GetDataInfo() => ToString()+'\n'+ FemaleWorldModel.ToString();
         public override void Clean()
         {
-            
+            //handle.GetElement("BODT")?.Delete();
+            MaleWorldModel.handle?.Delete();
+            FemaleWorldModel.handle?.Delete();
         }
+        public static string MakeArmorAddonName(string txt, string suffix = "") => txt.RemoveSuffixFrom("AA").TrimEndNumber() + suffix + "AA";
     }
-    public class WorldModel
+    public class WorldModel : RecordObject
     {
         public ArmorAddon armorAddon { get; private set; }
         public (string worldModel, string model, string alternateTexture) KEYS;
         public bool MaleOrFemale => !KEYS.worldModel.Contains("Female");
-        public Handle handle => armorAddon.handle.GetElement(KEYS.worldModel);
         public List<string> ShapesNames { get; private set; }
         public string Model {
             get => handle.GetValue(KEYS.model);
@@ -65,7 +65,7 @@ namespace TESV_EspEquipmentGenerator
         public string FullModelPath => Model == "" ? "" : Plugin.GetMeshesPath(Model);
         public string[] GetShapeTextures(int shapeIndex) => NifUtil.GetShapeTextures(FullModelPath, ShapesNames[shapeIndex]).GetLines();
 
-        public void BodyPartsToPartitions() {
+        public void BodyPartsToPartitions() {        
             PartitionsUtil.SetPartitionFlags(armorAddon.FirstPersonFlags,
                 PartitionsUtil.ConvertIndicesToBodyParts(Plugin.GetBodyPartsIDsFromNif(FullModelPath)).BSDismemberBodyPartsToPartitions());
         }
@@ -89,6 +89,7 @@ namespace TESV_EspEquipmentGenerator
         {
             this.armorAddon = armorAddon;
             KEYS = keys;
+            handle = armorAddon.handle.GetElement(KEYS.worldModel);
             UpdateShapesNames();
             alternateTextures = new AlternateTextures(this, KEYS.alternateTexture);
         }

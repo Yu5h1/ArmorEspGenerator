@@ -16,13 +16,5 @@ namespace TESV_EspEquipmentGenerator
             if (type == typeof(TextureSet)) return TextureSet.Signature;
             return null;
         }
-        public static string GetTemplateEditorID<T>()
-        {
-            var type = typeof(T);
-            if (type == typeof(Armor)) return Armor.TemplateEditorID;
-            if (type == typeof(ArmorAddon)) return ArmorAddon.TemplateEditorID;
-            if (type == typeof(TextureSet)) return TextureSet.TemplateEditorID;
-            return null;
-        }
     }
 }

@@ -20,19 +20,10 @@ namespace TESV_EspEquipmentGenerator
     {
         public static MainWindow current;
         Properties.Settings settings => Properties.Settings.Default;
-        Setup.GameMode curremtGameMode {
-            get {
-                if (settings.GameMode == "") 
-                    settings.GameMode = Setup.GameMode.SSE.ToString();
-                return (Setup.GameMode)Enum.Parse(typeof(Setup.GameMode), settings.GameMode);
-            }
-            set {
-                Plugin.CurrentGameMode = value;
-                settings.GameMode = value.ToString();
-            } 
-        }
         public Plugin plugin;
         public bool IsSettingLoaded = false;
+        public Setup.GameMode SelectedGameMode => (Setup.GameMode)GameMode_cb.SelectedItem;
+
         public MainWindow()
         {
             InitializeComponent();
@@ -47,9 +38,9 @@ namespace TESV_EspEquipmentGenerator
                     string pluginPath = Plugin.GetPluginFullPath(Plugin_cb.Text);
                     if (File.Exists(pluginPath))
                         ProcessUtil.ShowInExplorer(pluginPath);
-                    else if (Directory.Exists(Plugin.GetGameDataPath())) 
+                    else if (Directory.Exists(Plugin.GetGameDataPath()))
                         ProcessUtil.ShowInExplorer(Plugin.GetGameDataPath());
-                    
+
                 }
             };
             Plugin_cb.DropDownClosed += (s, e) => {
@@ -61,22 +52,22 @@ namespace TESV_EspEquipmentGenerator
         protected override void OnContentRendered(EventArgs e)
         {
             base.OnContentRendered(e);
-            
-            if (!IsSettingLoaded) {
 
+            if (!IsSettingLoaded) {
                 GameMode_cb.Items.Add((Setup.GameMode)3);
                 GameMode_cb.Items.Add((Setup.GameMode)4);
                 Plugin_cb.Text = settings.LastPlugin;
-                GameMode_cb.SelectedItem = curremtGameMode;
+                GameMode_cb.SelectedItem = Plugin.ParseGameMode(settings.GameMode);                
                 LoadPlugin();
                 IsSettingLoaded = true;
             }
         }
         private void GameMode_cb_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            curremtGameMode = (Setup.GameMode)GameMode_cb.SelectedItem;
+            Plugin.SetGameMode(SelectedGameMode);
             Plugin_cb.sourceItems = Directory.GetFiles(Plugin.GetGameDataPath(), "*.esp").Select(d => Path.GetFileName(d)).ToArray();
         }
+
         public void ShowSelectedRecord()
         {
             var curSelectedItem = RecordsTreeView.selectedNode;
@@ -91,15 +82,11 @@ namespace TESV_EspEquipmentGenerator
                         DataInfos_tree.Items.Add(armor.handle.GetTreeNode());
                         break;
                     case ArmorAddon armorAddon:
-                        DataInfos_tree.Items.Add(RecordsUI.GetPartitionsFieldTreeItem(armorAddon.FirstPersonFlags));
-
-                        DataInfos_tree.AddworldModelTreeNode(armorAddon.MaleWorldModel);
-                        DataInfos_tree.AddworldModelTreeNode(armorAddon.FemaleWorldModel);
+                        DataInfos_tree.ShowArmorAddonInfos(armorAddon);
                         break;
                     case TextureSet textureSet:
                         for (int i = 0; i < 8; i++)
                         {
-
                             //var item = new TreeViewItem().SetField(TextureSet.Names[i], textureSet[i], 75, DataInfos_tree.Width);
                             var item = new TreeViewItem();
                             item.HorizontalAlignment = HorizontalAlignment.Stretch;
@@ -115,7 +102,6 @@ namespace TESV_EspEquipmentGenerator
                             pathSelector.Background = null;
 
                             pathSelector.Width = 350;
-                            //pathSelector.BindDragDropFileEvent(item);
                             int permanentIndex = i;
                             pathSelector.TextChanged += (s, ee) =>
                             {
@@ -151,7 +137,7 @@ namespace TESV_EspEquipmentGenerator
                                                 RecordsTreeView.Width-6);
 
             treeItem.Tag = item;
-            //treeItem.ToolTip = item.FormID;
+            treeItem.ToolTip = item.FormID;
             treeItem.Unloaded += (s, e) =>
             {
                 var itemTag = ((TreeViewItem)s).Tag;
@@ -182,7 +168,6 @@ namespace TESV_EspEquipmentGenerator
                     menuitem.Click += GenerateArmorsBySelectedArmorAddons;
                     break;
                 case TextureSet textureSet:
-                    treeItem.ToolTip += "Drop .dds files for duplicated TextureSets from it";
                     treeItem.HandleDragDrop(files =>
                     {
                         plugin.AddTextureSetsByDifuseAssets(textureSet.ToArray(), files);
@@ -202,7 +187,7 @@ namespace TESV_EspEquipmentGenerator
 
             return root;
         }
-        void ReStartApplication() {
+        public void ReStartApplication() {
             Closed += (s, e) => {
                 ProcessUtil.Launch(System.Reflection.Assembly.GetExecutingAssembly().Location);
             };
@@ -210,17 +195,17 @@ namespace TESV_EspEquipmentGenerator
         }
         void LoadPlugin()
         {
-            if (!File.Exists(Plugin.GetPluginFullPath(Plugin_cb.Text))) return;
+            if (Plugin_cb.Text == "" ) return;
+
+            if (!IsFileExistElsePrompt(Plugin.GetPluginFullPath(Plugin_cb.Text))) return;
             if (plugin) {
                 ReStartApplication();
             }else
             {
                 loading_lb.Visibility = Visibility.Visible;
-                //loading_lb.Refresh();
                 new Timer(0.1, () =>
                 {
-                    //Plugin.printLoadingLog = true;
-                    plugin = Plugin.Load(Plugin.CurrentGameMode, Plugin_cb.Text, true);
+                    plugin = Plugin.Load(SelectedGameMode, Plugin_cb.Text, true);
                     loading_lb.Visibility = Visibility.Hidden;
                     if (plugin)
                     {
@@ -256,7 +241,7 @@ namespace TESV_EspEquipmentGenerator
                                 }
                                 else
                                 {
-                                    plugin.GenerateArmorByNifFile(path);
+                                    plugin.AddArmorAddonByNifFile(path);
                                 }
                             }
                         }, ".nif", "folder");
@@ -284,14 +269,20 @@ namespace TESV_EspEquipmentGenerator
         private void GameMod_lb_MouseDown(object sender, MouseButtonEventArgs e)
         {
             if (e.ChangedButton == MouseButton.Left && e.ClickCount == 2)
-                Setup.GetGamePath(curremtGameMode).ShowInExplorer();
+                Setup.GetGamePath(SelectedGameMode).ShowInExplorer();
         }
-
-
         protected override void OnClosing(CancelEventArgs e)
         {
             if (App.LaunchWithoutWindow == false) {
-                plugin?.UnLoad();
+                try
+                {
+                    plugin?.UnLoad();
+                }
+                catch (Exception error)
+                {
+                    error.Message.PromptWarnning();
+                    throw;
+                }
                 settings.WindowWidth = Width;
                 settings.WindowHeight = Height;
                 settings.LastPlugin = Plugin_cb.Text;
@@ -300,11 +291,6 @@ namespace TESV_EspEquipmentGenerator
                 settings.Save();
             }
             base.OnClosing(e);
-        }
-
-        private void Plugin_cb_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            
         }
         void DuplicateSelected()
         {

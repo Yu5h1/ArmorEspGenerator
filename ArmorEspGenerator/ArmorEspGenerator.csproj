@@ -61,7 +61,8 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>bin\Release\XeLibSharp.dll</HintPath>
     </Reference>
-    <Reference Include="Yu5h1Tools.WPFExtension">
+    <Reference Include="Yu5h1Tools.WPFExtension, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
       <HintPath>C:\Users\Yushi\Documents\Visual Studio 2017\Projects\Yu5h1Lib\WPFExtension\Yu5h1Tools.WPFExtension\bin\Release\Yu5h1Tools.WPFExtension.dll</HintPath>
     </Reference>
   </ItemGroup>
@@ -72,6 +73,7 @@
     </ApplicationDefinition>
     <Compile Include="Category\Armor.cs" />
     <Compile Include="Category\ArmorAddon.cs" />
+    <Compile Include="Category\BipedBodyTemplate.cs" />
     <Compile Include="Category\Partitions.cs" />
     <Compile Include="Category\Plugin.cs" />
     <Compile Include="Category\PluginRecords.cs" />
@@ -80,7 +82,8 @@
     <Compile Include="Category\TextureSet.cs" />
     <Compile Include="Extension\HandleEx.cs" />
     <Compile Include="Extension\IEnumerableEx.cs" />
-    <Compile Include="Extension\RecordsUI.cs" />
+    <Compile Include="UserInterfaces\ArmorAddonUI.cs" />
+    <Compile Include="UserInterfaces\RecordsUI.cs" />
     <Compile Include="Extension\SignatureUtil.cs" />
     <Compile Include="Extension\StringEx.cs" />
     <Compile Include="NifUtil.cs" />

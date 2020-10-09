@@ -25,7 +25,7 @@ namespace TESV_EspEquipmentGenerator
             foreach (var path in files)
             {
                 if (!IsLocateAtGameAssetsFolder(path)) return null;
-                
+
                 var DifusePath = TrimTexturesPath(path);
                 var existsTextureSet = TextureSets.Find(d => d.Difuse.Equals(DifusePath, StringComparison.OrdinalIgnoreCase));
                 if (existsTextureSet == null)
@@ -51,12 +51,29 @@ namespace TESV_EspEquipmentGenerator
             var nifFiles = Directory.GetFiles(FolderPath, "*_1.nif");
 
         }
-        public void GenerateArmorByNifFile(string nif)
+        public void GenerateArmorByNifFile(string nifPath)
         {
-            var nifPathInfo = new PathInfo(nif);
-            Armors.AddNewItem(nifPathInfo.Name.RemoveSuffixFrom("_1"));
 
         }
+        public void AddArmorAddonByNifFile(string nifPath)
+        {
+            var nifPathInfo = new PathInfo(nifPath);
+            if (InformationViewer.IsFileExistElsePrompt(nifPath)) {
+                var armorAddon = ArmorAddons.AddNewItem(ArmorAddon.MakeArmorAddonName(nifPathInfo.Name));
+                var nameWithoutWeight = nifPathInfo.Name.RemoveSuffixFrom("_1");
+                if (nifPathInfo.directoryName.MatchAny("f", "female") ||
+                    nameWithoutWeight.EndsWith("F")) {
+                    armorAddon.FemaleWorldModel.Model = nifPath;
+                } else if (nifPathInfo.directoryName.MatchAny("m", "male") ||
+                             nameWithoutWeight.EndsWith("M")) {
+                    armorAddon.MaleWorldModel.Model = nifPath;
+                }
+                if (File.Exists(nifPathInfo.ChangeName(nameWithoutWeight + "_gnd"))) {
+
+                }
+            }
+        }
+
         public static List<int> GetBodyPartsIDsFromNif(string path) {
             List<int> bodyPartsIndices = new List<int>();
             var shapesPartitions = NifUtil.GetBSDismemberBodyParts(path).GetLines();

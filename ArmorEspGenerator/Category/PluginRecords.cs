@@ -9,6 +9,7 @@ namespace TESV_EspEquipmentGenerator
     public class PluginRecords<T> : List<T> where T : RecordElement<T>
     {
         public Plugin plugin;
+        public Handle handle;
         public Action<T> Added;
         Func<PluginRecords<T>, Handle, T> Constructor;
 
@@ -16,37 +17,42 @@ namespace TESV_EspEquipmentGenerator
         {
             this.plugin = plugin;
             Constructor = constructor;
+            foreach (var item in plugin.handle.GetElements())
+            {
+                if (item.GetSignature() == SignatureUtil.GetSignature<T>()) {
+                    handle = item;
+                    break;
+                }
+            }
             foreach (var item in plugin.GetRecords()) Add(item);
         }
-        public bool Add(Handle handle)
+        public T Add(Handle handle)
         {
+            T result = null;
             if (handle.CompareSignature<T>())
             {
-                Add(Constructor(this, handle));
-                return true;
-            }
-            
-            return false;
-        }
-        public T AddNewItem(string editorID, T source = null)
-        {
-            
-            if (source == null) {
-                source = Constructor(this, RecordElement.SkyrimESM.GetElement(SignatureUtil.GetTemplateEditorID<T>()));
-                source.Clean();
-            }
-            if (source != null)
-            {
-                T result = Constructor(this, source.handle.CopyAsNew(editorID, plugin.handle));
+                result = Constructor(this, handle);
                 Add(result);
-                Added?.Invoke(result);
-                return result;
             }
-            return null;
+            return result;
         }
-        public void Duplicate(T item) {
-            AddNewItem(item.EditorID.GetUniqueStringWithSuffixNumber(this,d=>d.EditorID), item);
-        } 
+
+        public T AddNewItem(string editorID)
+        {
+            editorID = editorID.MakeValidEditorID().GetUniqueStringWithSuffixNumber(this, d => d.EditorID);
+            T result = Constructor(this, handle.NewElement(SignatureUtil.GetSignature<T>()));
+            result.EditorID = editorID;
+            Add(result);
+            Added?.Invoke(result);
+            return result;
+        }
+        public T Duplicate(T source, string newEditorID = "")
+        {
+            if (newEditorID == "") newEditorID = source.EditorID;
+            newEditorID = newEditorID.GetUniqueStringWithSuffixNumber(this, d => d.EditorID);
+            return Add(source.handle.CopyAsNew(newEditorID, plugin.handle));
+        }
+
         public new void Remove(T item)
         {
             if (Exists(d => d.Equals(item)))

@@ -1,6 +1,8 @@
 ﻿using XeLib.API;
 using XeLib;
 using System.Linq;
+using System.Text.RegularExpressions;
+using Yu5h1Tools.WPFExtension;
 
 namespace TESV_EspEquipmentGenerator
 {
@@ -41,11 +43,17 @@ namespace TESV_EspEquipmentGenerator
 
         public static string GetSignature(this Handle handle) => ElementValues.Signature(handle);
 
+        public static string[] GetSignatures(this Handle handle) => Elements.GetSignaturesAllowed(handle);
+
         public static Handle Owner(this Handle handle) => Elements.GetContainer(handle);
-        public static Handle CopyAsNew(this Handle handle, string newEditorID, Handle container = null)
+
+        public static Handle NewElement(this Handle handle, string path = "")
+            => Elements.AddElement(handle,path);
+
+        public static Handle CopyAsNew(this Handle handle, string newEditorID = "", Handle container = null)
         {
            var result = Elements.CopyElement(handle, container == null ? handle.Owner() : container, true);
-            result.SetEditorID(newEditorID);
+            if (newEditorID != "") result.SetEditorID(newEditorID);
             return result;
         }
         public static Handle CopyAsOverride(this Handle handle, string newEditorID, Handle container = null)
@@ -62,5 +70,13 @@ namespace TESV_EspEquipmentGenerator
         public static Elements.ElementTypes GetElementType(this Handle handle) => Elements.ElementType(handle);
 
         public static Handle[] GetRecords(this Handle handle,string search = "",bool includeOverrides = false) => Records.GetRecords(handle, search, includeOverrides);
+
+
+        public static string MakeValidEditorID(this string txt)
+        {
+            txt = txt.Split('_').Select(d => d.FirstCharToUpper()).Join();
+            txt = txt.Split(' ').Select(d => d.FirstCharToUpper()).Join();
+            return new Regex("[^a-zA-Z0-9]").Replace(txt, "");
+        }
     }
 }

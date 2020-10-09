@@ -10,10 +10,8 @@ namespace TESV_EspEquipmentGenerator
     public class TextureSet : RecordElement<TextureSet>
     {
         public const string Signature = "TXST";
-        public static string TemplateEditorID = "00000889";
 
         public override string signature => Signature;
-        public override string templateEditorID => TemplateEditorID;
         TextureSet(PluginRecords<TextureSet> container, Handle target) : base(container, target) { }
 
         public static TextureSet Create(PluginRecords<TextureSet> container, Handle handle)

@@ -1,5 +1,6 @@
 ﻿using System.Runtime.InteropServices;
 using IEnumerable = System.Collections.IEnumerable;
+using Yu5h1Tools.WPFExtension;
 
 namespace TESV_EspEquipmentGenerator
 {
