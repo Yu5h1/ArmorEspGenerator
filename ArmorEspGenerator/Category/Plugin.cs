@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.IO;
 using System.Collections.Generic;
 using XeLib.API;
@@ -10,6 +11,8 @@ namespace TESV_EspEquipmentGenerator
 {
     public partial class Plugin : RecordElement
     {
+        public static Plugin current;
+
         public static string GetLoadedGameName()
         { try { return Meta.GetGlobal("AppName"); } catch (Exception) { return ""; } }
         public static bool IsLoaded => GetLoadedGameName() != string.Empty;
@@ -26,14 +29,29 @@ namespace TESV_EspEquipmentGenerator
         public string GetTempFullPath() => GetPluginFullPath(GetTempName());
         public static string GetTempName(string name) => name.ToLower().Replace(".esp", "_temp.esp");
         public static string GetTempFullPath(string name) => GetPluginFullPath(GetTempName(name));
-        
 
-        Plugin(Handle target, string pluginName) : base(Handle.BaseHandle,target) {
+        public FileHeader fileHeader;
+        public PluginMasters pluginMasters;
+
+        void Init(string pluginName) {
             PluginName = pluginName;
             TextureSets = new PluginRecords<TextureSet>(this, TextureSet.Create);
             ArmorAddons = new PluginRecords<ArmorAddon>(this, ArmorAddon.Create);
             Armors = new PluginRecords<Armor>(this, Armor.Create);
+            fileHeader = new FileHeader(handle);
+            pluginMasters = new PluginMasters(fileHeader);
         }
+
+        public Plugin(string pluginName, params string[] masterfiles) : base(Handle.BaseHandle, Handle.BaseHandle.AddElement(pluginName))
+        {
+            Init(pluginName);
+            pluginMasters.Add(masterfiles);
+        }
+
+        Plugin(Handle target, string pluginName) : base(Handle.BaseHandle,target) {
+            Init(pluginName);
+        }
+        
 
         public static Plugin Load(Setup.GameMode gameMode, string pluginName, bool AsTemp = false)
         {
@@ -47,13 +65,11 @@ namespace TESV_EspEquipmentGenerator
                 if (IsFileNotLockedElsePrompt(tempPath))
                     File.Copy(fullPluginPath, tempPath, true);
             }
-            if (LoadPlugins(gameMode, espName))
-                return new Plugin(Elements.GetElement(Handle.BaseHandle, espName), pluginName);
-            else
-                return null;
+            if (LoadPlugins(gameMode, espName)) {
+                current = new Plugin(Elements.GetElement(Handle.BaseHandle, espName), pluginName);
+                return current;
+            }else return null;
         }
-
-
 
         public string Author { get => GetValue(@"File Header\CNAM"); set => SetValue(@"File Header\CNAM", value); }
         public string Description { get => GetValue(@"File Header\SNAM"); set => SetValue(@"File Header\SNAM", value); }
@@ -65,7 +81,7 @@ namespace TESV_EspEquipmentGenerator
         public bool Save() {
             if (IsFileNotLockedElsePrompt(FullPath))
             {
-                using (var p = new Yu5h1Tools.WPFExtension.WaitCursorProcess())
+                using (var p = new WaitCursorProcess())
                 {
                     Files.SaveFile(handle, FullPath);
                     p.PlayCompletedSound = true;
@@ -128,6 +144,7 @@ namespace TESV_EspEquipmentGenerator
             }
             return results;
         }
+        
         public static string[] GetMissingMastersInfo(params string[] PluginsList) {
             List<string> missingMasters = new List<string>();
 
@@ -192,6 +209,46 @@ namespace TESV_EspEquipmentGenerator
             Messages.ClearMessages();
             return true;
         }
-        
+        public static bool CreateNewPlugin(string pluginName, params string[] masterfiles) {
+            if (File.Exists(GetPluginFullPath(pluginName))) {
+                "Plugin already exists".PromptWarnning();
+                return false;
+            }
+            var newPlugin = new Plugin(pluginName, masterfiles);
+            return true;
+        }
+    }
+    public class FileHeader : RecordObject
+    {
+        public static string Signature => "File Header";
+        public override string signature => Signature;
+        public FileHeader(Handle Parent) : base(Parent) {}
+
+    }
+    public class PluginMasters : RecordArrayObject<Handle>
+    {
+        public static string Signature => "Master Files";
+        public override string signature => Signature;
+        public PluginMasters(FileHeader fileHeader) : base(fileHeader.handle) {
+            AddRange(handle.GetElements());
+        }
+        public void Add(params string[] masterFiles)
+        {
+            foreach (var mast in masterFiles)
+            {
+                if (!Exists(mast)) {
+                    var newItem = handle.AddElement();
+                    newItem.SetValue("MAST", mast);
+                }
+            }
+        }
+        public void Remove(string masterFile)
+        {
+            var item = Find(d => d.GetValue("MAST").Equals(masterFile, StringComparison.OrdinalIgnoreCase));
+            if (item != null) item.Delete();
+            
+        }
+        public bool Exists(string masterfile) => Exists(d => d.GetValue("MAST") == masterfile);
+        public string[] ToMasterNames() => this.Select(d => d.GetValue("MAST")).ToArray();
     }
 }

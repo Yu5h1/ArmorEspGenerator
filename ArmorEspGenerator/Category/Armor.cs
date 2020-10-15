@@ -10,68 +10,40 @@ namespace TESV_EspEquipmentGenerator
 {
     public class Armor : RecordElement<Armor>
     {
-        //public PartitionFlag[] partitionFlags {
-        //    get => PartitionsUtil.GetPartitionFlags(handle.GetElement(@"BOD2\First Person Flags"));
-        //    set => handle.SetValue(@"BOD2\First Person Flags", PartitionsUtil.ToValue(value));
-        //}
         public const string Signature = "ARMO";
         public override string signature => Signature;
+        #region recordsPath
+        const string MWMm2 = @"Male world Model\MOD2";
+        const string FWMm4 = @"Female world Model\MOD4";
+        #endregion
+        public string FULLName { get => GetValue("FULL"); set => SetValue("FULL", value); }
+        //public string MaleModel { get => GetValue(MWMm2); set => SetValue(MWMm2, value); }
+        //public string FemaleModel { get => GetValue(FWMm4); set => SetValue(FWMm4, value); }
+        public BipedBodyTemplate bipedBodyTemplate;
+        public WorldModel MaleWorldModel;
+        public WorldModel FemaleWorldModel;
+        public Armatures armatures;
+
 
         Armor(PluginRecords<Armor> container, Handle target) : base(container, target) {
             armatures = new Armatures(this);
+            bipedBodyTemplate = new BipedBodyTemplate(handle, handle.GetElement(BipedBodyTemplate.Signature));
+            MaleWorldModel = new WorldModel(this, true);
+            FemaleWorldModel = new WorldModel(this, false);
         }
         public static Armor Create(PluginRecords<Armor> container, Handle handle) {
             if (handle.CompareSignature<Armor>()) return new Armor(container, handle);
             else return null;
         }
 
-        #region recordsPath
-        const string MWMm2 = @"Male world Model\MOD2";
-        const string FWMm4 = @"Female world Model\MOD4";
-        #endregion
-
-        public string FULLName { get => GetValue("FULL"); set => SetValue("FULL",value); }
-        public string MaleModel { get => GetValue(MWMm2); set => SetValue(MWMm2, value); }
-        public string FemaleModel { get => GetValue(FWMm4); set => SetValue(FWMm4, value); }
-
-        public Armatures armatures;
-
-        public override void Clean()
-        {
-            armatures.Clear();
-        }
-
-        public void GenerateArmorBySimilarDiffuses(string shapeName)
-        {
-            var targetAA = armatures.GetArmorAddon(0);
-            bool MaleOfFemale = false;
-            var worldModel = targetAA.GetWorldModel(MaleOfFemale);
-            int targetShapeIndex = worldModel.ShapesNames.FindIndex(shapeName);   
-            if (targetShapeIndex > -1)
-            {
-                var textureSets = worldModel.AddTextsetsBySimilarDiffuses(targetShapeIndex);
-                foreach (var textureset in textureSets)
-                {
-                    var difuseSuffix = textureset.Difuse.NameWithOutExtension().RemovePrefixTo("_").MakeValidEditorID().FirstCharToUpper();
-                    var newArmorAddon = plugin.ArmorAddons.Duplicate(targetAA, ArmorAddon.MakeArmorAddonName(targetAA.EditorID,difuseSuffix));
-                    var newWorldModel = newArmorAddon.GetWorldModel(MaleOfFemale);
-                    newWorldModel.alternateTextures.Clear();
-                    newWorldModel.alternateTextures.Set(worldModel.ShapesNames[targetShapeIndex], textureset);
-                    var newArmor = plugin.Armors.Duplicate(this,EditorID.TrimEndNumber() + difuseSuffix );
-                    newArmor.FULLName = FULLName.RemoveSuffixFrom("_", " ").TrimEndNumber() + " " + difuseSuffix;
-                    newArmor.armatures.Clear();
-                    newArmor.armatures.Add(newArmorAddon);
-                }
-            }
-        }
     }
     public class Armatures : RecordArrayObject<Handle>
     {
+        public static string Signature => "Armature";
+        public override string signature => Signature;
         Armor armor;
         public string Name;
-        public override Handle handle => armor.handle.GetElement("Armature");
-
-        public Armatures(Armor armor)
+        public Armatures(Armor armor):base(armor.handle)
         {
             this.armor = armor;            
             AddRange(handle.GetArrayItems("MODL").ToList());

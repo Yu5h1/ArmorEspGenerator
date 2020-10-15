@@ -23,10 +23,9 @@ namespace TESV_EspEquipmentGenerator
         }
         protected override void OnStartup(StartupEventArgs e)
         {
-            //if (e.Args.Length == 1 && args[0] == "Reloading") {
-            //    base.OnStartup(e);
-            //    return;
-            //} 
+            //NifUtil.GetTexturesFromAllShapes(@"G:\Hentai\The Elder Scrolls\TESV\Data\meshes\test\TestF_1.nif").PromptInfo();
+            //Shutdown();
+            //return;
 
 
             args = e.Args;
@@ -45,7 +44,7 @@ namespace TESV_EspEquipmentGenerator
                         case ".nif":
                             LaunchWithoutWindow = true;
                             if (File.Exists(args[0])) {
-                                var bodyparts = PartitionsUtil.ConvertIndicesToBodyParts(Plugin.GetBodyPartsIDsFromNif(args[0]));
+                                var bodyparts = PartitionsUtil.ConvertIndicesToBodyParts(Plugin.GetBodyPartsIndicesFromNif(args[0]));
                                 bodyparts.ToStringWithNumber().PromptInfo();
                                 bodyparts.BSDismemberBodyPartsToPartitions().ToStringWithNumber().PromptInfo();
 

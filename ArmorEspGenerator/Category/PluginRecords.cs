@@ -26,6 +26,11 @@ namespace TESV_EspEquipmentGenerator
             }
             foreach (var item in plugin.GetRecords()) Add(item);
         }
+        public new void Add(T item)
+        {
+            base.Add(item);
+            Added?.Invoke(item);
+        }
         public T Add(Handle handle)
         {
             T result = null;
@@ -37,13 +42,13 @@ namespace TESV_EspEquipmentGenerator
             return result;
         }
 
-        public T AddNewItem(string editorID)
+        public T AddNewItem(string editorID = "")
         {
+            if (editorID.Equals(string.Empty)) editorID = ("New" + typeof(T).Name);
             editorID = editorID.MakeValidEditorID().GetUniqueStringWithSuffixNumber(this, d => d.EditorID);
-            T result = Constructor(this, handle.NewElement(SignatureUtil.GetSignature<T>()));
+            T result = Constructor(this, handle.AddElement(SignatureUtil.GetSignature<T>()));
             result.EditorID = editorID;
-            Add(result);
-            Added?.Invoke(result);
+            Add(result);            
             return result;
         }
         public T Duplicate(T source, string newEditorID = "")

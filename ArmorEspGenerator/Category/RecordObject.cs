@@ -8,33 +8,53 @@ using System.Windows.Controls;
 
 namespace TESV_EspEquipmentGenerator
 {
-    public abstract class RecordObject 
-    {
+    public interface IRecordObject {
+        string signature { get; }
+        Handle parent { get; }
+        Handle handle { get; }
+        string DisplayName { get; }
+    }
+    public abstract class RecordObject : IRecordObject
+    {        
+        public abstract string signature { get; }
         public Handle parent { get; protected set; }
-        public Handle handle { get; protected set; }
+        public virtual Handle handle { get; protected set; }
+        public string DisplayName => handle.GetDisplayName();
         public static implicit operator bool(RecordObject obj) => obj != null;
-        public RecordObject(Handle Parent,Handle target)
+        public string GetValue(string path) => handle.GetValue(path);
+        public void SetValue(string path, string value) => handle.SetValue(path, value);
+        public RecordObject(Handle Parent,Handle target = null)
         {
             parent = Parent;
-            handle = target;
+            handle = target == null ? Parent.GetElement(signature) : target;
+        }
+        public void PrepareHandle()
+        {
+            if (handle == null) handle = parent.AddElement(signature);
         }
     }
-    public abstract class RecordArrayObject<T> : List<T>
+    public abstract class RecordArrayObject<T> : List<T>,IRecordObject
     {
-        public virtual Handle handle { get; protected set; }
+        public virtual string signature { get; }
+        public Handle parent { get; protected set; } 
+        public virtual Handle handle => parent.GetElement(signature);
+
+        public string DisplayName => handle.GetDisplayName();
+
         public static implicit operator bool(RecordArrayObject<T> obj) => obj != null;
+        public RecordArrayObject(Handle Parent) => parent = Parent;
+        public new void Add(T item)
+        {
+            if (handle == null) parent.AddElement(signature);
+            base.Add(item);
+        }
     }
     public abstract class RecordElement : RecordObject
     {        
         public static Handle SkyrimESM => Handle.BaseHandle.GetElement("Skyrim.esm");
-        
-        public string GetValue(string path) => handle.GetValue(path);
-        public void SetValue(string path, string value) => handle.SetValue(path, value);
 
         public string FormID => handle.GetFormID();
         public string EditorID { get => handle.GetEditorID(); set => handle.SetEditorID(value); }
-
-        public abstract string signature { get; }
 
         public RecordElement(Handle Parent,Handle target) : base(Parent, target) { }
         public virtual void Delete() => handle.Delete();
@@ -55,8 +75,6 @@ namespace TESV_EspEquipmentGenerator
         }
         public void Duplicate() => Container.Duplicate((T)this); 
 
-        public override void Delete() =>
-            Container.RemoveAt(Container.FindIndex( d=>d.Equals(this)));
-        public abstract void Clean();
+        public override void Delete() => Container.RemoveAt(Container.FindIndex( d=>d.Equals(this)));
     }
 }

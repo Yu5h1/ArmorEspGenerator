@@ -71,6 +71,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Category\AlternateTexture.cs" />
     <Compile Include="Category\Armor.cs" />
     <Compile Include="Category\ArmorAddon.cs" />
     <Compile Include="Category\BipedBodyTemplate.cs" />
@@ -80,9 +81,10 @@
     <Compile Include="Category\PluginUtil.cs" />
     <Compile Include="Category\RecordHandle.cs" />
     <Compile Include="Category\TextureSet.cs" />
+    <Compile Include="Category\WorldModel.cs" />
     <Compile Include="Extension\HandleEx.cs" />
     <Compile Include="Extension\IEnumerableEx.cs" />
-    <Compile Include="UserInterfaces\ArmorAddonUI.cs" />
+    <Compile Include="UserInterfaces\ArmorUI.cs" />
     <Compile Include="UserInterfaces\RecordsUI.cs" />
     <Compile Include="Extension\SignatureUtil.cs" />
     <Compile Include="Extension\StringEx.cs" />

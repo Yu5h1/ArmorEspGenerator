@@ -16,15 +16,9 @@ namespace TESV_EspEquipmentGenerator
 {
     public static class ArmorUI
     {
-        public static void ShowArmorAddonInfos(this MultiSelectTreeView treeview, ArmorAddon armorAddon)
+        public static TreeViewItem AddWorldModelTreeNode(this MultiSelectTreeView treeview, WorldModel worldModel)
         {
-            treeview.Items.Add(BipedBodyTemplateField(armorAddon.bipedBodyTemplate));
-            treeview.AddworldModelTreeNode(armorAddon.MaleWorldModel);
-            treeview.AddworldModelTreeNode(armorAddon.FemaleWorldModel);
-        }
-        public static TreeViewItem AddworldModelTreeNode(this MultiSelectTreeView treeview, WorldModel worldModel)
-        {
-            var result = new TreeViewItem() { HorizontalAlignment = HorizontalAlignment.Stretch }.SetTextBlockHeader(worldModel.KEYS.worldModel);
+            var result = new TreeViewItem() { HorizontalAlignment = HorizontalAlignment.Stretch }.SetTextBlockHeader(worldModel.signature);
             treeview.Items.Add(result);
             var pathSelector = new PathSelector()
             {
@@ -32,6 +26,7 @@ namespace TESV_EspEquipmentGenerator
                 label = "Model",
                 Text = worldModel.Model,
                 FileFilter = new SelectionDialogFilter("Nif File", ".nif").ToString(),
+                OnlyAllowValueFromInitialDirectory = true
             };
             pathSelector.Width = 350;
             pathSelector.Background = null;
@@ -50,11 +45,11 @@ namespace TESV_EspEquipmentGenerator
             var menuitem = pathSelector.labelControl.AddMenuItem("BodyParts to Partitions");
             result.IsExpanded = true;
             menuitem.Click += (s, e) => {
-                worldModel.BodyPartsToPartitions();
+                //worldModel.BodyPartsToPartitions();
                 MainWindow.current.ShowSelectedRecord();
             };
 
-            var AlternateTexturesRoot = result.AddTextBlock("AlternateTextures");
+            var AlternateTexturesRoot = result.AddTreeNode<TextBlock>("AlternateTextures");
             AlternateTexturesRoot.IsExpanded = true;
             for (int i = 0; i < worldModel.ShapesNames.Count; i++)
             {
@@ -63,7 +58,7 @@ namespace TESV_EspEquipmentGenerator
 
                 Button btn = new Button()
                 {
-                    Content = data ? data.targetTextureSet.ToString() : "    null    ",
+                    Content = data ? data.NewTexture.ToString() : "    null    ",
                 };
 
                 btn.PreviewMouseUp += (s, e) =>
@@ -72,8 +67,8 @@ namespace TESV_EspEquipmentGenerator
                     foreach (var pluginName in Setup.GetLoadedFileNames())
                     {
                         string menuItemName = pluginName;
-                        if (pluginName == worldModel.armorAddon.plugin.GetTempName())
-                            menuItemName = worldModel.armorAddon.plugin.PluginName;
+                        if (pluginName == Plugin.current.GetTempName())
+                            menuItemName = Plugin.current.PluginName;
                         var curPluginMenuItem = contextMenu.AddMenuItem(menuItemName);
                         var textureSets = Plugin.GetActivePluginRecords(pluginName, TextureSet.Signature);
                         foreach (var txts in textureSets)
@@ -82,7 +77,7 @@ namespace TESV_EspEquipmentGenerator
                             curTxtsitem.Click += (ss, ee) =>
                             {
                                 worldModel.alternateTextures.Set(shapeName, txts);
-                                btn.Content = txts.GetLabel();
+                                MainWindow.current.ShowSelectedRecord();
                             };
                         }
 
@@ -99,7 +94,7 @@ namespace TESV_EspEquipmentGenerator
                     }
                     contextMenu.IsOpen = true;
                 };
-                var shapeFieldTreeItem = AlternateTexturesRoot.AddTitleControl("", btn);
+                var shapeFieldTreeItem = AlternateTexturesRoot.AddTreeNode("", btn);
                 var tbk = shapeFieldTreeItem.GetMixControl<TextBlock>(0);
                 shapeFieldTreeItem.KeyDown += (s, e) => {
                     if (e.Key == Key.Delete)
@@ -109,7 +104,7 @@ namespace TESV_EspEquipmentGenerator
                     }
                 };
                 tbk.Inlines.Add(new Run(i.ToString() + " . ") { FontWeight = FontWeights.Bold });
-                tbk.Inlines.Add(shapeName);
+                tbk.Inlines.Add(shapeName+" ");
                 tbk.IsHitTestVisible = false;
             }
             return result;
@@ -119,35 +114,56 @@ namespace TESV_EspEquipmentGenerator
 
         public static TreeViewItem BipedBodyTemplateField(BipedBodyTemplate bipedBodyTemplate)
         {
-            var comboBox = new ComboBox();
-            var LabelItem = new ComboBoxItem() {
-                           Content = bipedBodyTemplate.FirstPersonFlags.ToLabel(",")
+            var result = new TreeViewItem()
+            {
+                IsExpanded = true
+            }.SetTextBlockHeader("Biped Body Template");
+
+            var partitionsComboBox = new ComboBox();
+            var LabelItem = new ComboBoxItem()
+            {
+                Content = bipedBodyTemplate.FirstPersonFlags.ToLabel(",")
             };
-            comboBox.Items.Add(LabelItem);
+            partitionsComboBox.Items.Add(LabelItem);
             LabelItem.Visibility = Visibility.Collapsed;
-            comboBox.SelectedIndex = 0;
-            //for (int i = 0; i < datas.Length; i++)
-            //{
-            //    int index = i;
-            //    var partitionFlag = datas[i];
-            //    var cb = new CheckBox() { IsChecked = partitionFlag.IsEnable };
-            //    cb.Checked += (s, e) => datas[index].IsEnable = true;
-            //    cb.Unchecked += (s, e) => datas[index].IsEnable = false;
-            //    comboBox.Items.Add(new ComboBoxItem().SetControlWithLabel(
-            //        " " + ((int)partitionFlag.Partition) + " - " + partitionFlag.Partition,
-            //        cb, true));
-            //}
-            //Action ConfirmModifyParitions = () => {
-            //    bipedBodyTemplate.FirstPersonFlags = datas;
-            //    ((ComboBoxItem)comboBox.Items[0]).Content = datas.ToString();
-            //    comboBox.SelectedIndex = 0;
-            //};
-            //comboBox.PreviewMouseRightButtonDown += (s, e) => {
-            //    for (int i = 0; i < datas.Length; i++) datas[i].IsEnable = false;
-            //    ConfirmModifyParitions();
-            //};
-            //comboBox.DropDownClosed += (s, e) => ConfirmModifyParitions();
-            return new TreeViewItem().SetControlWithLabel("First Person Flags ", comboBox);
+            partitionsComboBox.SelectedIndex = 0;
+            Action ConfirmModifyParitions = () =>
+            {
+                var results = bipedBodyTemplate.FirstPersonFlags;
+                for (int i = 1; i < partitionsComboBox.Items.Count; i++)
+                {
+                    results[i - 1].IsEnable = (bool)((ComboBoxItem)partitionsComboBox.Items[i]).GetMixControl<CheckBox>(0).IsChecked;
+                }
+                bipedBodyTemplate.FirstPersonFlags = results;
+                ((ComboBoxItem)partitionsComboBox.Items[0]).Content = results.ToLabel(",");
+                partitionsComboBox.SelectedIndex = 0;
+            };
+            var flags = bipedBodyTemplate.FirstPersonFlags;
+            for (int i = 0; i < bipedBodyTemplate.FirstPersonFlags.Length; i++)
+            {
+                var cb = new CheckBox() { IsChecked = flags[i].IsEnable };
+                cb.Checked += (s, e) => { ConfirmModifyParitions(); };
+                cb.Unchecked += (s, e) => { ConfirmModifyParitions(); };
+                partitionsComboBox.Items.Add(new ComboBoxItem().SetControlLabel(" " + flags[i].ToString(), cb, true));
+            }
+            partitionsComboBox.PreviewMouseRightButtonDown += (s, e) =>
+            {
+                for (int i = 1; i < partitionsComboBox.Items.Count; i++)
+                    ((ComboBoxItem)partitionsComboBox.Items[i]).GetMixControl<CheckBox>(0).IsChecked = false;
+                ConfirmModifyParitions();
+            };
+            partitionsComboBox.DropDownClosed += (s, e) => partitionsComboBox.SelectedIndex = 0;
+
+   
+
+            result.Items.Add(new TreeViewItem().SetControlLabel(bipedBodyTemplate.FirstPersonFlagsKey + " ", partitionsComboBox));
+
+            //var ArmorTypeComboBox = new ComboBox();
+            //ArmorTypeComboBox.Items.Add("Cloth");
+            //ArmorTypeComboBox.Items.Add("Heavy");
+            //ArmorTypeComboBox.Items.Add("Light");
+            //result.AddTreeNode("Armor Type", ArmorTypeComboBox);
+            return result;
         }
     }
 }

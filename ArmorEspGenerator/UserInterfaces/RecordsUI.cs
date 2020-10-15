@@ -15,7 +15,9 @@ namespace TESV_EspEquipmentGenerator
     {
         public static TreeViewItem GetTreeNode(this Handle handle)
         {
-            var result = new TreeViewItem().SetTextBlockHeader(handle.GetDisplayName());
+            var value = handle.GetValue();
+            string valueLabel = value == "" ? "" : " : [" + value + "]";
+            var result = new TreeViewItem().SetTextBlockHeader(handle.GetDisplayName()+ valueLabel);
             result.Tag = handle;
             result.ToolTip = handle.GetElementType().ToString();
             result.IsExpanded = true;
@@ -50,10 +52,7 @@ namespace TESV_EspEquipmentGenerator
                             result.Items.Add(GetTreeNode(element));
                             break;
                         case Elements.ElementTypes.EtValue:
-                            if (DisplayName == "BOD2") {
-                                //result.Items.Add(ArmorUI.BipedBodyTemplateField(element));
-                            }else
-                                result.Items.Add(new TreeViewItem() { ToolTip = element.GetValueType().ToString() }.SetField(element.GetDisplayName(), element.GetValue(), 100));
+                            result.Items.Add(new TreeViewItem() { ToolTip = element.GetValueType().ToString() }.SetField(element.GetDisplayName(), element.GetValue(), 100));
                             break;
                         //case Elements.ElementTypes.EtFlag:
                         //    break;

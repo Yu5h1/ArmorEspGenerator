@@ -26,9 +26,10 @@ namespace TESV_EspEquipmentGenerator
         public static Handle[] GetElements(this Handle handle,string path = "",bool sort = false, bool filter = false) => Elements.GetElements(handle.Value, path, sort,filter);
         public static Handle[] GetElementsByGetSignature(this Handle handle, string Signature = "") => Elements.GetElements(handle).Where(d=>d.GetSignature() == Signature).ToArray();
         public static Handle[] GetArrayItems(this Handle handle, string itemName) 
-            => handle != null && handle.HasElement(itemName) ? Elements.GetElements(handle.Value) : new Handle[0] ; 
-            
-        public static string GetValue(this Handle handle,string path = "") => handle != null ? ElementValues.GetValue(handle, path) : "";
+            => handle != null && handle.HasElement(itemName) ? Elements.GetElements(handle.Value) : new Handle[0] ;
+        public static Handle AddArrayItem(this Handle handle, string path = "", string subpath = "", string value = "") 
+                                                    => Elements.AddArrayItem(handle, path, subpath, value);
+        public static string GetValue(this Handle handle,string path = "") => handle == null ? "" : ElementValues.GetValue(handle, path);
         public static Elements.ValueTypes GetValueType(this Handle handle, string path = "") => handle != null ? Elements.ValueType(handle) : Elements.ValueTypes.VtUnknown;
         public static int GetInteger(this Handle handle, string path = "") => ElementValues.GetIntValue(handle, path);
         public static void SetInteger(this Handle handle, string path = "",int value = 0) => ElementValues.SetIntValue(handle, path,value);
@@ -45,9 +46,19 @@ namespace TESV_EspEquipmentGenerator
 
         public static string[] GetSignatures(this Handle handle) => Elements.GetSignaturesAllowed(handle);
 
+        public static string GetSignatureByDisplayName(this Handle handle,string displayName)
+        {
+            if (handle != null)
+                foreach (var item in handle.GetDefineNames())
+                {
+                    if (item.ToLower().Contains(displayName.ToLower())) return item;
+                }
+            return "";
+        }
+
         public static Handle Owner(this Handle handle) => Elements.GetContainer(handle);
 
-        public static Handle NewElement(this Handle handle, string path = "")
+        public static Handle AddElement(this Handle handle, string path = "")
             => Elements.AddElement(handle,path);
 
         public static Handle CopyAsNew(this Handle handle, string newEditorID = "", Handle container = null)

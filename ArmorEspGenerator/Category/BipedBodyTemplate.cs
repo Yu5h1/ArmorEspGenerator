@@ -17,18 +17,20 @@ namespace TESV_EspEquipmentGenerator
     }
     public class BipedBodyTemplate : RecordObject
     {
-        public string Key => @"BOD2";
+        public static string Signature => @"BOD2";
+        public override string signature => Signature;
+
         public string FirstPersonFlagsKey => @"First Person Flags";
 
-        public BipedBodyTemplate(Handle Parent,Handle bod2) : base(Parent,bod2)
-        {
-
-        }
+        public BipedBodyTemplate(Handle Parent,Handle target) : base(Parent,target){}
 
         public PartitionFlag[] FirstPersonFlags
         {
             get => GetPartitionFlags(handle.GetValue(FirstPersonFlagsKey));
-            set => handle.SetValue(FirstPersonFlagsKey, value.ToValue()); 
+            set {
+                PrepareHandle();
+                handle.SetValue(FirstPersonFlagsKey, value.ToValue());
+            }
         }
         public static PartitionFlag[] GetPartitionFlags(string FlagsValue = "")
         {
@@ -43,6 +45,14 @@ namespace TESV_EspEquipmentGenerator
         public void SetPartitionFlags(Partitions[] partitions)
         {
             FirstPersonFlags = partitions.ToPartitionFlags();
+        }
+
+        public void BodyPartsToPartitions(string nifFile)
+        {
+            SetPartitionFlags(
+                PartitionsUtil.ConvertIndicesToBodyParts(
+                    Plugin.GetBodyPartsIndicesFromNif(nifFile)).
+                    BSDismemberBodyPartsToPartitions());
         }
     }
 }
