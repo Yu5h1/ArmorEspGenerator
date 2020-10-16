@@ -1,11 +1,7 @@
-﻿using System.IO;
+﻿using System.Linq;
+using System.IO;
 using System.Windows;
-using XeLib;
-using XeLib.API;
-using static XeLib.API.Setup;
-using static InformationViewer;
-using System.Collections.Generic;
-using System.Runtime.Remoting;
+using Yu5h1Tools.WPFExtension;
 
 namespace TESV_EspEquipmentGenerator
 {
@@ -23,10 +19,10 @@ namespace TESV_EspEquipmentGenerator
         }
         protected override void OnStartup(StartupEventArgs e)
         {
-            //NifUtil.GetTexturesFromAllShapes(@"G:\Hentai\The Elder Scrolls\TESV\Data\meshes\test\TestF_1.nif").PromptInfo();
+            //string path = @"G:\Hentai\The Elder Scrolls\TESV\Data\meshes\test\TestF_1.nif";
+            //var r = NifUtil.GetShapeTextureInfos(path);
             //Shutdown();
             //return;
-
 
             args = e.Args;
             if (args.Length == 1) {

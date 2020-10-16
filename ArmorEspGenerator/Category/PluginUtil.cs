@@ -19,6 +19,16 @@ namespace TESV_EspEquipmentGenerator
         public static string TrimTexturesPath(string value) => TrimSourceFolderPath(value, GetTexturesPath());
         public static string TrimMeshesPath(string value) => TrimSourceFolderPath(value, GetMeshesPath());
 
+        public void AddTextureSetsByNif(string filename)
+        {
+            var shapesTextures = NifUtil.GetShapesTextureInfos(filename);
+            foreach (var item in shapesTextures)
+            {
+                var textureSet = TextureSets.AddNewItem(item.Key);
+                textureSet.CopyTexturePath(item.Value);
+            }
+        }
+
         public List<TextureSet> AddTextureSetsByDifuseAssets(string[] defaultTexturesPath, params string[] files)
         {
             var results = new List<TextureSet>();
@@ -27,17 +37,17 @@ namespace TESV_EspEquipmentGenerator
                 if (!IsLocateAtGameAssetsFolder(path)) return null;
 
                 var DifusePath = TrimTexturesPath(path);
-                var existsTextureSet = TextureSets.Find(d => d.Difuse.Equals(DifusePath, StringComparison.OrdinalIgnoreCase));
-                if (existsTextureSet == null)
+                var textureSet = TextureSets.Find(d => d.Difuse.Equals(DifusePath, StringComparison.OrdinalIgnoreCase));
+                if (textureSet == null)
                 {
-                    existsTextureSet = TextureSets.AddNewItem(Path.GetFileNameWithoutExtension(path));
-                    existsTextureSet.Difuse = DifusePath;
+                    textureSet = TextureSets.AddNewItem(Path.GetFileNameWithoutExtension(path));
+                    textureSet.Difuse = DifusePath;
                 }
                 if (defaultTexturesPath != null)
                     if (defaultTexturesPath.Length > 7)
-                        existsTextureSet.CopyTexturePath(defaultTexturesPath, 0);
+                        textureSet.CopyTexturePath(defaultTexturesPath, 0);
 
-                if (existsTextureSet) results.Add(existsTextureSet);
+                if (textureSet) results.Add(textureSet);
                 else "Create New TextureSet Failed ! ".PromptWarnning();
             }
             return results;

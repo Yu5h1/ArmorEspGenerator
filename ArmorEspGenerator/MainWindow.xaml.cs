@@ -10,6 +10,7 @@ using XeLib.API;
 using Yu5h1Tools.WPFExtension;
 using Yu5h1Tools.WPFExtension.CustomControls;
 using static InformationViewer;
+using System.Windows.Data;
 
 namespace TESV_EspEquipmentGenerator
 {
@@ -52,6 +53,7 @@ namespace TESV_EspEquipmentGenerator
                 }
             };
             newPlugin_btn.Visibility = Visibility.Hidden;
+            this.FocusControlWhenMouseDown(grid);
         }
         protected override void OnContentRendered(EventArgs e)
         {
@@ -65,6 +67,7 @@ namespace TESV_EspEquipmentGenerator
                 CheckNewPluginIsAllow();
                 LoadPlugin(false);
                 IsSettingLoaded = true;
+                PathSelector.AddInvalidCharactersHandler(Plugin_cb.textBox);
             }
 
         }
@@ -99,8 +102,12 @@ namespace TESV_EspEquipmentGenerator
                         for (int i = 0; i < 8; i++)
                         {
                             //var item = new TreeViewItem().SetField(TextureSet.Names[i], textureSet[i], 75, DataInfos_tree.Width);
-                            var item = new TreeViewItem();
-                            item.HorizontalAlignment = HorizontalAlignment.Stretch;
+                            var item = new TreeViewItem() {
+                                HorizontalContentAlignment = HorizontalAlignment.Stretch,
+                                HorizontalAlignment = HorizontalAlignment.Stretch
+                            };
+                            DataInfos_treeView.Items.Add(item);
+                            //item.HorizontalAlignment = HorizontalAlignment.Stretch;
                             var pathSelector = new PathSelector() {
                                 OnlyAllowValueFromInitialDirectory = true,
                                 InitialDirectory = Plugin.GetTexturesPath(),
@@ -108,10 +115,10 @@ namespace TESV_EspEquipmentGenerator
                                 Text = textureSet[i],
                                 FileFilter = new SelectionDialogFilter("Direct Draw Surface", ".dds").ToString(),
                                 Background = null
-                        };
+                            };
                             item.Height = pathSelector.Height + 1;
-                            pathSelector.labelWidth = 200;
-                            pathSelector.Width = 350;
+                            //pathSelector.labelWidth = 200;
+                            //pathSelector.Width = item.ActualWidth;
                             int permanentIndex = i;
                             pathSelector.GetPathBy += (txt) => txt == "" ? "" : Plugin.GetTexturesPath(txt);
                             pathSelector.SetPathBy += (txt) =>
@@ -121,7 +128,7 @@ namespace TESV_EspEquipmentGenerator
                                 return result;
                             };
                             item.Header = pathSelector;
-                            DataInfos_treeView.Items.Add(item);
+
                         }
                         break;
                 }
@@ -260,10 +267,18 @@ namespace TESV_EspEquipmentGenerator
                         var textureSetsNode = GetRecordContainerTreeNode(plugin.TextureSets);
                         textureSetsNode.ToolTip += "Drop .dds files for add new TextureSets";
                         RecordsTreeView.DeleteIgnoreList.Add(textureSetsNode);
+                        
                         textureSetsNode.HandleDragDrop(files =>
                         {
-                            plugin.AddTextureSetsByDifuseAssets(null, files);
-                        }, ".dds");
+                            foreach (var dropfile in files)
+                            {
+                                if (Path.GetExtension(dropfile) == ".nif")
+                                    plugin.AddTextureSetsByNif(dropfile);
+                                else
+                                    plugin.AddTextureSetsByDifuseAssets(null, dropfile);
+                            }
+                            
+                        }, ".dds","nif");
                         RecordsTreeView.Items.Add(textureSetsNode);
                         save_btn.IsEnabled = true;
                         Plugin_lb.ToolTip = "Dependencies : \n" + plugin.pluginMasters.ToMasterNames().Join("\n   ");
@@ -351,6 +366,10 @@ namespace TESV_EspEquipmentGenerator
         private void NewPlugin_btn_Click(object sender, RoutedEventArgs e)
         {
             Plugin.CreateNewPlugin(Plugin_cb.Text);
+        }
+        private void Grid_MouseUp(object sender, MouseButtonEventArgs e)
+        {
+            grid.Focus();
         }
     }
 }

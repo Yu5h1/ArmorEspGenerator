@@ -18,30 +18,38 @@ namespace TESV_EspEquipmentGenerator
     {
         public static TreeViewItem AddWorldModelTreeNode(this MultiSelectTreeView treeview, WorldModel worldModel)
         {
-            var result = new TreeViewItem() { HorizontalAlignment = HorizontalAlignment.Stretch }.SetTextBlockHeader(worldModel.signature);
+            var result = new TreeViewItem() {
+                ItemContainerStyle = (Style)MainWindow.current.FindResource("StretchTreeViewItemStyle"),
+                HorizontalContentAlignment = HorizontalAlignment.Stretch,
+                HorizontalAlignment = HorizontalAlignment.Stretch
+            }.SetTextBlockHeader(worldModel.signature);
             treeview.Items.Add(result);
+            var modelTreeitem = new TreeViewItem()
+            {
+                ItemContainerStyle = (Style)MainWindow.current.FindResource("StretchTreeViewItemStyle"),
+                HorizontalContentAlignment = HorizontalAlignment.Stretch,
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+            };
+            result.Items.Add(modelTreeitem);
             var pathSelector = new PathSelector()
             {
                 InitialDirectory = Plugin.GetMeshesPath(),
                 label = "Model",
                 Text = worldModel.Model,
                 FileFilter = new SelectionDialogFilter("Nif File", ".nif").ToString(),
-                OnlyAllowValueFromInitialDirectory = true
+                OnlyAllowValueFromInitialDirectory = true,
+                Background = null
             };
-            pathSelector.Width = 350;
-            pathSelector.Background = null;
+            pathSelector.MinWidth = 10;
+            pathSelector.labelWidth = 100;
             pathSelector.GetPathBy += (txt) => txt == "" ? "" : Plugin.GetMeshesPath(txt);
             pathSelector.SetPathBy += (txt) => Plugin.TrimMeshesPath(txt);
             pathSelector.TextChanged += (s, e) => {
                 worldModel.Model = pathSelector.Text;
                 MainWindow.current.ShowSelectedRecord();
             };
-            var modelTreeitem = new TreeViewItem()
-            {
-                //HorizontalAlignment = HorizontalAlignment.Stretch,
-                Header = pathSelector,
-            };
-            result.Items.Add(modelTreeitem);
+            modelTreeitem.Header = pathSelector;
+
             var menuitem = pathSelector.labelControl.AddMenuItem("BodyParts to Partitions");
             result.IsExpanded = true;
             menuitem.Click += (s, e) => {
