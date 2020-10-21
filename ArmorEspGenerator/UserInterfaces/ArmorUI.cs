@@ -40,7 +40,8 @@ namespace TESV_EspEquipmentGenerator
                 OnlyAllowValueFromInitialDirectory = true,
                 Background = null,
                 MinWidth = 10,
-                labelWidth = 100
+                labelWidth = 100,
+                ShowInitialDirectoryIfEmpty = true
             };
             pathSelector.GetPathBy += (txt) => txt == "" ? "" : Plugin.GetMeshesPath(txt);
             pathSelector.SetPathBy += (txt) => Plugin.TrimMeshesPath(txt);

@@ -14,10 +14,24 @@ namespace TESV_EspEquipmentGenerator
 {
     public static class RecordsUI
     {
+        public static TreeViewItem GetTreeNode(this Handle handle,string elementName) {
+            var elementHandle = handle.GetElement(elementName);
+            if (elementHandle == null)
+            {
+                return new TreeViewItem()
+                {
+                    Header = new TextBlock {
+                        Foreground = Brushes.DarkGray,
+                        Text = elementName,
+                        IsEnabled = false
+                    }
+                };
+            }
+            return elementHandle.GetTreeNode();
+        }
         public static TreeViewItem GetTreeNode(this Handle handle)
         {
             var result = new TreeViewItem();
-
             if (handle.GetValue() != null)
             {
                 result.SetControlLabel(handle.GetDisplayName(), new TextBox() {

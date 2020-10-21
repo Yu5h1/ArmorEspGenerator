@@ -105,7 +105,7 @@ namespace TESV_EspEquipmentGenerator
                 switch (curSelectedItem.Tag)
                 {
                     case Armor armor:
-                        DataInfos_treeView.Items.Add(armor.armatures.handle.GetTreeNode());
+                        DataInfos_treeView.Items.Add(armor.handle.GetTreeNode(Armatures.Signature));
                         DataInfos_treeView.Items.Add(ArmorUI.BipedBodyTemplateField(armor.bipedBodyTemplate));
                         DataInfos_treeView.AddWorldModelTreeNode(armor.MaleWorldModel);
                         DataInfos_treeView.AddWorldModelTreeNode(armor.FemaleWorldModel);
