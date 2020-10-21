@@ -24,9 +24,11 @@ namespace TESV_EspEquipmentGenerator
         public Plugin plugin;
         public bool IsSettingLoaded = false;
         public Setup.GameMode SelectedGameMode => (Setup.GameMode)GameMode_cb.SelectedItem;
-
+        
         public MainWindow()
         {
+            //settings.Reset();
+            //settings.Save();
             try
             {
                 InitializeComponent();

@@ -17,8 +17,17 @@ namespace TESV_EspEquipmentGenerator
         { try { return Meta.GetGlobal("AppName"); } catch (Exception) { return ""; } }
         public static bool IsLoaded => GetLoadedGameName() != string.Empty;
 
-        public static Setup.GameMode ParseGameMode(string modeName) =>
-                            (Setup.GameMode)Enum.Parse(typeof(Setup.GameMode), modeName);
+        public static Setup.GameMode ParseGameMode(string modeName) {
+            try
+            {
+                 return (Setup.GameMode)Enum.Parse(typeof(Setup.GameMode), modeName);
+            }
+            catch (Exception)
+            {
+                return Setup.GameMode.SSE;
+            }
+        }
+                            
         public static Setup.GameMode ActiveGameMode => ParseGameMode(GetLoadedGameName());
 
         public override string signature => "TES4";
