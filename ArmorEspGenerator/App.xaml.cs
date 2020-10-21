@@ -20,7 +20,7 @@ namespace TESV_EspEquipmentGenerator
         protected override void OnStartup(StartupEventArgs e)
         {
             //string path = @"G:\Hentai\The Elder Scrolls\TESV\Data\meshes\test\TestF_1.nif";
-            //var r = NifUtil.GetShapeTextureInfos(path);
+            //var r = NifUtil.GetShapesTextureInfos(path);
             //Shutdown();
             //return;
 

@@ -11,7 +11,7 @@ namespace TESV_EspEquipmentGenerator
     public partial class Plugin
     {
         static string TrimSourceFolderPath(string value, string folder) {
-            if (value.Equals(string.Empty)) return value;
+            if (string.IsNullOrEmpty(value)) return value;
             int index = value.ToLower().IndexOf(folder.ToLower());
             if (index >= 0) value = value.Substring(index + folder.Length).RemovePrefixUtilEmpty(@"\");
             return value;
@@ -90,7 +90,6 @@ namespace TESV_EspEquipmentGenerator
                         }
                     }
                 }
-
                 var editorID = nifPathInfo.Name.RemoveSuffixFrom("_1");
                 bool maleOrfemale = true;
                 if (nifPathInfo.directoryName.MatchAny("f", "female"))
@@ -103,27 +102,29 @@ namespace TESV_EspEquipmentGenerator
                 else if (editorID.EndsWith("F"))
                 {
                     editorID = editorID.Remove(editorID.Length - 1);
-
                     maleOrfemale = false;
                 }
                 else
                 {
                     if (editorID.EndsWith("M")) editorID = editorID.Remove(editorID.Length - 1);
-
-
                 }
-
                 string ArmorAddonName = ArmorAddon.MakeArmorAddonName(editorID);
                 ArmorAddon armorAddon = null;
-                foreach (var item in ArmorAddons)
+                try
                 {
-                    if (item.EditorID == ArmorAddonName)
-                    {
-                        armorAddon = item;
-                        break;
-                    }
+                     armorAddon = ArmorAddons.Find(d => d.EditorID == ArmorAddonName);
+
+                    
                 }
+                catch (Exception error)
+                {
+                    error.Message.PromptWarnning();
+                    throw;
+                }
+
                 if (armorAddon == null) armorAddon = ArmorAddons.AddNewItem(ArmorAddonName);
+
+                armorAddon.PromptInfo();
 
                 if (maleOrfemale)
                 {

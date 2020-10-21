@@ -23,8 +23,8 @@ namespace TESV_EspEquipmentGenerator
 
         public void Set(string shapeName, Handle textureSet)
         {
+            
             if (handle == null) parent.AddElement(signature);
-
             var element = Find(a => a.ShapeName == shapeName);
             if (element == null)
             {
@@ -147,7 +147,7 @@ namespace TESV_EspEquipmentGenerator
         public static void SetNewTexture(Handle handle, string value) => handle.SetValue("New Texture", value);
 
 
-        public void Delete() => container.Remove(this);
+        public override void Delete() => container.Remove(this);
         public override string ToString() => ShapeIndex.ToString() + " . " + ShapeName + " : " + NewTexture;
     }
 }

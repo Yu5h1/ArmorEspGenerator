@@ -35,7 +35,7 @@ namespace TESV_EspEquipmentGenerator
         public static PartitionFlag[] GetPartitionFlags(string FlagsValue = "")
         {
             var partitions = (Partitions[])Enum.GetValues(typeof(Partitions));
-            var results = new PartitionFlag[partitions.Length];
+            var results = new PartitionFlag[partitions.Length];            
             for (int i = 0; i < partitions.Length; i++) {
                 bool flag = i < FlagsValue.Length ? FlagsValue[i] == '1' : false;
                 results[i] = new PartitionFlag(partitions[i], flag);

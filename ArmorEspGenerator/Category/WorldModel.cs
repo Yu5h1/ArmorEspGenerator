@@ -1,20 +1,24 @@
 ﻿using System.IO;
 using System.Collections.Generic;
 using Yu5h1Tools.WPFExtension;
+using XeLib;
 
 namespace TESV_EspEquipmentGenerator
 {
     public class WorldModel : RecordObject
     {
-        public bool MaleOrFemale;
-        public static string Signature(bool maleOrfemale)
-                             => (maleOrfemale ? "Male" : "Female") + " world model";
+        public bool? MaleOrFemale = null;
+        public static string Signature(bool? maleOrfemale)
+        {
+            if (maleOrfemale == null) return "";
+            return (((bool)maleOrfemale) ? "Male" : "Female") + " world model";
+        }
         public override string signature => Signature(MaleOrFemale);
 
         public string modelKey => handle.GetSignatureByDisplayName("Model");
         public string alternateTexturesKey => handle.GetSignatureByDisplayName("Alternate Textures");
 
-        public List<string> ShapesNames { get; private set; }
+        public List<string> ShapesNames { get; private set; } = new List<string>();
         public string Model
         {
             get => handle.GetValue(modelKey);
@@ -22,13 +26,8 @@ namespace TESV_EspEquipmentGenerator
             {
                 if (value != Model)
                 {
-                    if (Plugin.IsLocateAtGameAssetsFolder(value))
-                    {
-                        if (Plugin.ContainMeshesFolderInPath(value))
-                            value = Plugin.TrimMeshesPath(value);
-                    }
                     PrepareHandle();
-                    handle.SetValue(modelKey, value);
+                    handle.SetValue(modelKey, Plugin.TrimMeshesPath(value));
                     UpdateShapesNames();
                 }
             }
@@ -46,6 +45,8 @@ namespace TESV_EspEquipmentGenerator
         }
         void UpdateShapesNames()
         {
+            ShapesNames.Clear();
+            if (string.IsNullOrEmpty(Model)) return;
             string[] shapesPathes = new string[0];
             var fullMeshPath = Plugin.GetMeshesPath(Model);
             if (File.Exists(fullMeshPath)) shapesPathes = NifUtil.GetShapeNames(fullMeshPath);
@@ -53,8 +54,8 @@ namespace TESV_EspEquipmentGenerator
         }
 
 
-        public WorldModel(RecordObject parentObj, bool maleOrfemale) :
-                     base(parentObj.handle, parentObj.handle.GetElement(Signature(maleOrfemale)))
+        public WorldModel(Handle parent, bool maleOrfemale) : 
+                     base(parent, parent.GetElement(Signature(maleOrfemale)))
         {
             MaleOrFemale = maleOrfemale;
             UpdateShapesNames();

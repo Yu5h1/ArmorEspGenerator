@@ -22,7 +22,7 @@ namespace TESV_EspEquipmentGenerator
         }
         public static string GetLabel(this Handle handle) => handle.GetEditorID() + " [" + handle.GetSignature() + ":" + handle.GetFormID() + "]";
         public static bool HasElement(this Handle handle, string path) => handle != null ? Elements.HasElement(handle, path) : false;
-        public static Handle GetElement(this Handle handle, string path) => handle.HasElement(path) ? Elements.GetElement(handle, path) : null;
+        public static Handle GetElement(this Handle handle, string path) => path == "" || !handle.HasElement(path) ? null : Elements.GetElement(handle, path);
         public static Handle[] GetElements(this Handle handle,string path = "",bool sort = false, bool filter = false) => Elements.GetElements(handle.Value, path, sort,filter);
         public static Handle[] GetElementsByGetSignature(this Handle handle, string Signature = "") => Elements.GetElements(handle).Where(d=>d.GetSignature() == Signature).ToArray();
         public static Handle[] GetArrayItems(this Handle handle, string itemName) 
@@ -30,7 +30,7 @@ namespace TESV_EspEquipmentGenerator
         public static Handle AddArrayItem(this Handle handle, string path = "", string subpath = "", string value = "") 
                                                     => Elements.AddArrayItem(handle, path, subpath, value);
         public static string GetValue(this Handle handle,string path = "") => handle == null ? "" : ElementValues.GetValue(handle, path);
-        public static Elements.ValueTypes GetValueType(this Handle handle, string path = "") => handle != null ? Elements.ValueType(handle) : Elements.ValueTypes.VtUnknown;
+        public static Elements.ValueTypes GetValueType(this Handle handle, string path = "") => Elements.ValueType(handle);
         public static int GetInteger(this Handle handle, string path = "") => ElementValues.GetIntValue(handle, path);
         public static void SetInteger(this Handle handle, string path = "",int value = 0) => ElementValues.SetIntValue(handle, path,value);
         public static void SetValue(this Handle handle,string value) => ElementValues.SetValue(handle, "", value);
@@ -76,7 +76,7 @@ namespace TESV_EspEquipmentGenerator
         public static void Delete(this Handle handle, string path = "") => Elements.RemoveElement(handle, path);
         public static bool CompareSignature<T>(this Handle handle) => handle.GetSignature() == SignatureUtil.GetSignature<T>();
         public static int Count(this Handle handle) => Elements.ElementCount(handle);
-        public static string GetDisplayName(this Handle handle) => ElementValues.DisplayName(handle);
+        public static string GetDisplayName(this Handle handle) => handle == null ? "Null" : ElementValues.DisplayName(handle);
         public static string[] GetDefineNames(this Handle handle) => handle == null ? null : Elements.GetDefNames(handle);
         public static Elements.ElementTypes GetElementType(this Handle handle) => Elements.ElementType(handle);
 

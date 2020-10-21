@@ -27,47 +27,64 @@ namespace TESV_EspEquipmentGenerator
 
         public MainWindow()
         {
-            InitializeComponent();
-            current = this;
-            if (settings.WindowWidth > 300) Width = settings.WindowWidth;
-            if (settings.WindowHeight > 100) Height = settings.WindowHeight;
+            try
+            {
+                InitializeComponent();
+                current = this;
+                if (settings.WindowWidth > 300) Width = settings.WindowWidth;
+                if (settings.WindowHeight > 100) Height = settings.WindowHeight;
 
-            WindowStartupLocation = WindowStartupLocation.CenterScreen;
-            RecordsTreeView.SelectedItemChanged += RecordsTreeView_SelectedItemChanged;
-            Plugin_lb.MouseDown += (s, e) => {
-                if (e.ClickCount == 2 && e.ChangedButton == MouseButton.Left) {
-                    string pluginPath = Plugin.GetPluginFullPath(Plugin_cb.Text);
-                    if (File.Exists(pluginPath))
-                        ProcessUtil.ShowInExplorer(pluginPath);
-                    else if (Directory.Exists(Plugin.GetGameDataPath()))
-                        ProcessUtil.ShowInExplorer(Plugin.GetGameDataPath());
+                WindowStartupLocation = WindowStartupLocation.CenterScreen;
+                RecordsTreeView.SelectedItemChanged += RecordsTreeView_SelectedItemChanged;
+                Plugin_lb.MouseDown += (s, e) => {
+                    if (e.ClickCount == 2 && e.ChangedButton == MouseButton.Left) {
+                        string pluginPath = Plugin.GetPluginFullPath(Plugin_cb.Text);
+                        if (File.Exists(pluginPath))
+                            ProcessUtil.ShowInExplorer(pluginPath);
+                        else if (Directory.Exists(Plugin.GetGameDataPath()))
+                            ProcessUtil.ShowInExplorer(Plugin.GetGameDataPath());
 
-                }
-            };
-            Plugin_cb.DropDownClosed += (s, e) => {
-                if (Plugin_cb.SelectedItem != null) {
-                    if (File.Exists(Plugin.GetPluginFullPath(Plugin_cb.Text)))
-                    {
-                        LoadPlugin();
                     }
-                }
-            };
-            newPlugin_btn.Visibility = Visibility.Hidden;
-            this.FocusControlWhenMouseDown(grid);
+                };
+                Plugin_cb.DropDownClosed += (s, e) => {
+                    if (Plugin_cb.SelectedItem != null) {
+                        if (File.Exists(Plugin.GetPluginFullPath(Plugin_cb.Text)))
+                        {
+                            LoadPlugin();
+                        }
+                    }
+                };
+                newPlugin_btn.Visibility = Visibility.Hidden;
+                this.FocusControlWhenMouseDown(grid);
+            }
+            catch (Exception error)
+            {
+                error.Message.PromptError();
+                Close();
+            }
         }
         protected override void OnContentRendered(EventArgs e)
         {
             base.OnContentRendered(e);
 
             if (!IsSettingLoaded) {
-                Plugin_cb.Text = settings.LastPlugin;
-                GameMode_cb.Items.Add((Setup.GameMode)3);
-                GameMode_cb.Items.Add((Setup.GameMode)4);
-                GameMode_cb.SelectedItem = Plugin.ParseGameMode(settings.GameMode);
-                CheckNewPluginIsAllow();
-                LoadPlugin(false);
-                IsSettingLoaded = true;
-                PathSelector.AddInvalidCharactersHandler(Plugin_cb.textBox);
+                try
+                {
+                    Plugin_cb.Text = settings.LastPlugin;
+                    GameMode_cb.Items.Add((Setup.GameMode)3);
+                    GameMode_cb.Items.Add((Setup.GameMode)4);
+                    GameMode_cb.SelectedItem = Plugin.ParseGameMode(settings.GameMode);
+                    CheckNewPluginIsAllow();
+                    LoadPlugin(false);
+                    IsSettingLoaded = true;
+                    PathSelector.AddInvalidCharactersHandler(Plugin_cb.textBox);
+                }
+                catch (Exception error)
+                {
+                    error.PromptError();
+                    Close();
+                }
+
             }
 
         }
@@ -88,7 +105,7 @@ namespace TESV_EspEquipmentGenerator
                 switch (curSelectedItem.Tag)
                 {
                     case Armor armor:
-                        //DataInfos_treeView.Items.Add(armor.handle.GetTreeNode());
+                        DataInfos_treeView.Items.Add(armor.armatures.handle.GetTreeNode());
                         DataInfos_treeView.Items.Add(ArmorUI.BipedBodyTemplateField(armor.bipedBodyTemplate));
                         DataInfos_treeView.AddWorldModelTreeNode(armor.MaleWorldModel);
                         DataInfos_treeView.AddWorldModelTreeNode(armor.FemaleWorldModel);
@@ -113,22 +130,22 @@ namespace TESV_EspEquipmentGenerator
                                 InitialDirectory = Plugin.GetTexturesPath(),
                                 label = TextureSet.DisplayNames[i],
                                 Text = textureSet[i],
-                                FileFilter = new SelectionDialogFilter("Direct Draw Surface", ".dds").ToString(),
-                                Background = null
+                                FileFilter = new FileTypeFilter("Direct Draw Surface", ".dds").ToString(),
+                                Background = null,
+                                ShowInitialDirectoryIfEmpty = true
                             };
                             item.Height = pathSelector.Height + 1;
-                            //pathSelector.labelWidth = 200;
-                            //pathSelector.Width = item.ActualWidth;
                             int permanentIndex = i;
                             pathSelector.GetPathBy += (txt) => txt == "" ? "" : Plugin.GetTexturesPath(txt);
                             pathSelector.SetPathBy += (txt) =>
                             {
                                 var result = Plugin.TrimTexturesPath(txt);
-                                textureSet[permanentIndex] = result;
                                 return result;
                             };
+                            pathSelector.TextChanged += (s, e) => {
+                                textureSet[permanentIndex] = pathSelector.Text;
+                            };
                             item.Header = pathSelector;
-
                         }
                         break;
                 }
@@ -289,7 +306,7 @@ namespace TESV_EspEquipmentGenerator
         private void Save_btn_Click(object sender, RoutedEventArgs e)
         {
             using (var p = new WaitCursorProcess()) {
-                if (plugin.Save()) p.PlayCompletedSound = true;
+                p.succeed = plugin.Save();
             }
         }
 
@@ -300,22 +317,30 @@ namespace TESV_EspEquipmentGenerator
         }
         protected override void OnClosing(CancelEventArgs e)
         {
-            if (App.LaunchWithoutWindow == false) {
-                try
+            try
+            {
+                if (App.LaunchWithoutWindow == false)
                 {
-                    plugin?.UnLoad();
+                    try
+                    {
+                        plugin?.UnLoad();
+                    }
+                    catch (Exception error)
+                    {
+                        error.Message.PromptWarnning();
+                        throw;
+                    }
+                    settings.WindowWidth = Width;
+                    settings.WindowHeight = Height;
+                    settings.LastPlugin = Plugin_cb.Text;
+                    if (GameMode_cb.SelectedItem != null)
+                        settings.GameMode = GameMode_cb.SelectedItem.ToString();
+                    settings.Save();
                 }
-                catch (Exception error)
-                {
-                    error.Message.PromptWarnning();
-                    throw;
-                }
-                settings.WindowWidth = Width;
-                settings.WindowHeight = Height;
-                settings.LastPlugin = Plugin_cb.Text;
-                if (GameMode_cb.SelectedItem != null)
-                    settings.GameMode = GameMode_cb.SelectedItem.ToString();
-                settings.Save();
+            }
+            catch (Exception error)
+            {
+                error.Message.PromptError();                
             }
             base.OnClosing(e);
         }

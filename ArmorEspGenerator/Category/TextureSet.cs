@@ -88,6 +88,7 @@ namespace TESV_EspEquipmentGenerator
             var key = GetTextureKey(index);
             if (index < 0 || index > 7) throw new OutOfMemoryException();
             if (value == string.Empty) handle.Delete(key);
+            else value = Plugin.TrimTexturesPath(value);
             PrepareHandle();
             SetValue(key, value);
         }

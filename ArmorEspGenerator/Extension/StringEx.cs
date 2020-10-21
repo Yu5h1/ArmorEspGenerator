@@ -42,6 +42,7 @@ namespace TESV_EspEquipmentGenerator
         public static string FirstCharToUpper(this string txt)
           =>  txt == string.Empty || txt == null ? "" : txt[0].ToString().ToUpper() + txt.Substring(1);
 
-        public static string NameWithOutExtension(this string txt) => Path.GetFileNameWithoutExtension(txt);        
+        public static string NameWithOutExtension(this string txt) => Path.GetFileNameWithoutExtension(txt);
+        public static bool IsNullOrEmpty(this string txt) => string.IsNullOrEmpty(txt);
     }
 }

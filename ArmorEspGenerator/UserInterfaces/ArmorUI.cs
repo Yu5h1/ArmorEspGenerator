@@ -36,12 +36,12 @@ namespace TESV_EspEquipmentGenerator
                 InitialDirectory = Plugin.GetMeshesPath(),
                 label = "Model",
                 Text = worldModel.Model,
-                FileFilter = new SelectionDialogFilter("Nif File", ".nif").ToString(),
+                FileFilter = new FileTypeFilter("Nif File", ".nif").ToString(),
                 OnlyAllowValueFromInitialDirectory = true,
-                Background = null
+                Background = null,
+                MinWidth = 10,
+                labelWidth = 100
             };
-            pathSelector.MinWidth = 10;
-            pathSelector.labelWidth = 100;
             pathSelector.GetPathBy += (txt) => txt == "" ? "" : Plugin.GetMeshesPath(txt);
             pathSelector.SetPathBy += (txt) => Plugin.TrimMeshesPath(txt);
             pathSelector.TextChanged += (s, e) => {

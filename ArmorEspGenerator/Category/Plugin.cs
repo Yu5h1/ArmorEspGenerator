@@ -84,7 +84,6 @@ namespace TESV_EspEquipmentGenerator
                 using (var p = new WaitCursorProcess())
                 {
                     Files.SaveFile(handle, FullPath);
-                    p.PlayCompletedSound = true;
                 }
                 return true;
             }

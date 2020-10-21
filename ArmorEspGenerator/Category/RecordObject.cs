@@ -13,6 +13,7 @@ namespace TESV_EspEquipmentGenerator
         Handle parent { get; }
         Handle handle { get; }
         string DisplayName { get; }
+        void Delete();
     }
     public abstract class RecordObject : IRecordObject
     {        
@@ -32,6 +33,7 @@ namespace TESV_EspEquipmentGenerator
         {
             if (handle == null) handle = parent.AddElement(signature);
         }
+        public virtual void Delete() => handle.Delete();
     }
     public abstract class RecordArrayObject<T> : List<T>,IRecordObject
     {
@@ -48,6 +50,7 @@ namespace TESV_EspEquipmentGenerator
             if (handle == null) parent.AddElement(signature);
             base.Add(item);
         }
+        public virtual void Delete() => handle.Delete();
     }
     public abstract class RecordElement : RecordObject
     {        
@@ -57,8 +60,6 @@ namespace TESV_EspEquipmentGenerator
         public string EditorID { get => handle.GetEditorID(); set => handle.SetEditorID(value); }
 
         public RecordElement(Handle Parent,Handle target) : base(Parent, target) { }
-        public virtual void Delete() => handle.Delete();
-
         public override string ToString() => handle.GetLabel();
         public virtual string GetDataInfo() => "";
     }

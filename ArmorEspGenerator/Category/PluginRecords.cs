@@ -48,7 +48,7 @@ namespace TESV_EspEquipmentGenerator
             editorID = editorID.MakeValidEditorID().GetUniqueStringWithSuffixNumber(this, d => d.EditorID);
             T result = Constructor(this, handle.AddElement(SignatureUtil.GetSignature<T>()));
             result.EditorID = editorID;
-            Add(result);            
+            Add(result);
             return result;
         }
         public T Duplicate(T source, string newEditorID = "")

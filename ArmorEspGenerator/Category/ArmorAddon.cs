@@ -19,9 +19,9 @@ namespace TESV_EspEquipmentGenerator
         public WorldModel FemaleWorldModel;
 
         ArmorAddon(PluginRecords<ArmorAddon> container, Handle target) : base(container, target) {
-            bipedBodyTemplate = new BipedBodyTemplate(handle,handle.GetElement(BipedBodyTemplate.Signature));
-            MaleWorldModel = new WorldModel(this, true);
-            FemaleWorldModel = new WorldModel(this, false);
+            bipedBodyTemplate = new BipedBodyTemplate(target, target.GetElement(BipedBodyTemplate.Signature));
+            MaleWorldModel = new WorldModel(target, true);
+            FemaleWorldModel = new WorldModel(target, false);
         }
         public static ArmorAddon Create(PluginRecords<ArmorAddon> container, Handle handle)
         {
