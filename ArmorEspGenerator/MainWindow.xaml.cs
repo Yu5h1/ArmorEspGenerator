@@ -27,8 +27,6 @@ namespace TESV_EspEquipmentGenerator
         
         public MainWindow()
         {
-            //settings.Reset();
-            //settings.Save();
             try
             {
                 InitializeComponent();
@@ -76,10 +74,13 @@ namespace TESV_EspEquipmentGenerator
                     GameMode_cb.Items.Add((Setup.GameMode)3);
                     GameMode_cb.Items.Add((Setup.GameMode)4);
                     GameMode_cb.SelectedItem = Plugin.ParseGameMode(settings.GameMode);
-                    CheckNewPluginIsAllow();
+                    CheckAddNewPluginIsAllow();
                     LoadPlugin(false);
                     IsSettingLoaded = true;
                     PathSelector.AddInvalidCharactersHandler(Plugin_cb.textBox);
+                    Plugin_cb.TextChanged += (s, ee) => {
+                        settings.LastPlugin = Plugin_cb.Text;
+                    };
                 }
                 catch (Exception error)
                 {
@@ -92,8 +93,16 @@ namespace TESV_EspEquipmentGenerator
         }
         private void GameMode_cb_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            Plugin.SetGameMode(SelectedGameMode);
-            Plugin_cb.sourceItems = Directory.GetFiles(Plugin.GetGameDataPath(), "*.esp").Select(d => Path.GetFileName(d)).ToArray();
+            settings.GameMode = GameMode_cb.SelectedItem.ToString();
+            var selectedGamePath = Setup.GetGamePath((Setup.GameMode)GameMode_cb.SelectedItem);
+            if (Directory.Exists(selectedGamePath))
+            {
+                Plugin.SetGameMode(SelectedGameMode);
+                Plugin_cb.sourceItems = Directory.GetFiles(Plugin.GetGameDataPath(), "*.esp").Select(d => Path.GetFileName(d)).ToArray();
+            }
+            else {
+                ( GameMode_cb.SelectedItem.ToString()+"'s Game Folder does not exists ! " ).PromptWarnning();
+            }
         }
 
         public void ShowSelectedRecord()
@@ -159,12 +168,11 @@ namespace TESV_EspEquipmentGenerator
         }
         public void CreateRecordTreeItem<T>(TreeViewItem root,T item) where T : RecordElement<T>
         {
-            var treeItem = root.AddNameField(   item.EditorID,false,
+            var treeItem = root.AddNameField(   item.EditorID,true,
                                                 (tb)=> {
                                                     if (item.EditorID != tb.Text) item.EditorID = tb.Text;
                                                 },
                                                 RecordsTreeView.Width-6);
-
             treeItem.Tag = item;
             treeItem.ToolTip = item.FormID;
             treeItem.Unloaded += (s, e) =>
@@ -176,22 +184,18 @@ namespace TESV_EspEquipmentGenerator
                     curData.Delete();
                 }
             };
-            MenuItem menuitem = treeItem.AddMenuItem("Duplicate","Ctrl + D");
-            
-            menuitem.Click += (s, e) => DuplicateSelected();
-
+            treeItem.AddMenuItem("Duplicate","Ctrl + D").Click += (s, e) => DuplicateSelected();
+            treeItem.AddMenuItem("Delete").Click += (s, e) => RecordsTreeView.DeleteSelectedNodes();
             switch (item)
             {
                 case Armor armor:
                     
-                    menuitem = treeItem.AddMenuItem("Generate Armors By Similar Diffuses");
-                    menuitem.Click += (s, e) =>
+                    treeItem.AddMenuItem("Generate Armors By Similar Diffuses").Click += (s, e) =>
                     {
                     };
                     break;
                 case ArmorAddon armorAddon:
-                    menuitem = treeItem.AddMenuItem("Generate Armor(s) By Selected ArmorAddons");
-                    menuitem.Click += (s, e) => {
+                    treeItem.AddMenuItem("Generate Armor(s) By Selected ArmorAddons").Click += (s, e) => {
                         var selectedArmorAddons = RecordsTreeView.selectedNodes.Where(d => d.Tag.GetType() == typeof(ArmorAddon)).Select(d => (ArmorAddon)d.Tag).ToArray();
 
                         plugin.AddArmorByArmaturesFromArmorAddon(selectedArmorAddons.Count() > 1 ? "" :
@@ -199,7 +203,7 @@ namespace TESV_EspEquipmentGenerator
                     };
                     break;
                 case TextureSet textureSet:
-                    treeItem.HandleDragDrop(files =>
+                    treeItem.HandleDragDrop(false, files =>
                     {
                         plugin.AddTextureSetsByDifuseAssets(textureSet.ToArray(), files);
                     }, ".dds");
@@ -208,7 +212,10 @@ namespace TESV_EspEquipmentGenerator
         }
         public TreeViewItem GetRecordContainerTreeNode<T>(PluginRecords<T> records) where T : RecordElement<T>
         {
-            var root = new TreeViewItem().SetTextBlockHeader(typeof(T).Name + "s");
+            var root = new TreeViewItem() {
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                ItemContainerStyle = (Style)MainWindow.current.FindResource("StretchTreeViewItemStyle")
+            }.SetTextBlockHeader(typeof(T).Name + "s");
             records.Added += item => CreateRecordTreeItem(root, item);
             var menuItem = root.AddMenuItem("New");
             menuItem.Click += (s, e) => records.AddNewItem();               
@@ -220,10 +227,17 @@ namespace TESV_EspEquipmentGenerator
             Closed += (s, e) => {
                 ProcessUtil.Launch(System.Reflection.Assembly.GetExecutingAssembly().Location);
             };
-            Close();
+            try
+            {
+                Close();
+            }
+            catch (Exception error)
+            {
+                error.Message.PromptError();
+            }
         }
         void LoadPlugin(bool Prompt = true)
-        {
+        {            
             if (Plugin_cb.Text == "" ) return;
             string fullPluginPath = Plugin.GetPluginFullPath(Plugin_cb.Text);
             if (!File.Exists(fullPluginPath)) {
@@ -248,7 +262,7 @@ namespace TESV_EspEquipmentGenerator
                         var armorsNode = GetRecordContainerTreeNode(plugin.Armors);
                         RecordsTreeView.DeleteIgnoreList.Add(armorsNode);
                         RecordsTreeView.Items.Add(armorsNode);
-                        armorsNode.HandleDragDrop(files =>
+                        armorsNode.HandleDragDrop(true, files =>
                         {
                             foreach (var path in files)
                             {
@@ -266,7 +280,7 @@ namespace TESV_EspEquipmentGenerator
                         var ArmorAddonsNode = GetRecordContainerTreeNode(plugin.ArmorAddons);
                         RecordsTreeView.DeleteIgnoreList.Add(ArmorAddonsNode);
                         RecordsTreeView.Items.Add(ArmorAddonsNode);
-                        ArmorAddonsNode.HandleDragDrop(files =>
+                        ArmorAddonsNode.HandleDragDrop(true, files =>
                         {
                             foreach (var path in files)
                             {
@@ -287,7 +301,7 @@ namespace TESV_EspEquipmentGenerator
                         textureSetsNode.ToolTip += "Drop .dds files for add new TextureSets";
                         RecordsTreeView.DeleteIgnoreList.Add(textureSetsNode);
                         
-                        textureSetsNode.HandleDragDrop(files =>
+                        textureSetsNode.HandleDragDrop(true,files =>
                         {
                             foreach (var dropfile in files)
                             {
@@ -314,8 +328,27 @@ namespace TESV_EspEquipmentGenerator
 
         private void GameMod_lb_MouseDown(object sender, MouseButtonEventArgs e)
         {
-            if (e.ChangedButton == MouseButton.Left && e.ClickCount == 2)
-                Setup.GetGamePath(SelectedGameMode).ShowInExplorer();
+            if (e.ClickCount == 2) {
+                switch (e.ChangedButton)
+                {
+                    case MouseButton.Left:
+                        Plugin.GetMeshesPath().ShowInExplorer();
+                        break;
+                    case MouseButton.Middle:
+                        Plugin.GetGamePath().ShowInExplorer();
+                        break;
+                    case MouseButton.Right:
+                        Plugin.GetTexturesPath().ShowInExplorer();
+                        break;
+                }
+            }
+
+        }
+        protected override void OnRenderSizeChanged(SizeChangedInfo sizeInfo)
+        {
+            settings.WindowWidth = Width;
+            settings.WindowHeight = Height;
+            base.OnRenderSizeChanged(sizeInfo);
         }
         protected override void OnClosing(CancelEventArgs e)
         {
@@ -331,12 +364,7 @@ namespace TESV_EspEquipmentGenerator
                     {
                         error.Message.PromptWarnning();
                         throw;
-                    }
-                    settings.WindowWidth = Width;
-                    settings.WindowHeight = Height;
-                    settings.LastPlugin = Plugin_cb.Text;
-                    if (GameMode_cb.SelectedItem != null)
-                        settings.GameMode = GameMode_cb.SelectedItem.ToString();
+                    }       
                     settings.Save();
                 }
             }
@@ -377,7 +405,7 @@ namespace TESV_EspEquipmentGenerator
                 Plugin_cb.Text = "";
             }
         }
-        void CheckNewPluginIsAllow() {
+        void CheckAddNewPluginIsAllow() {
             if (!File.Exists(Plugin.GetPluginFullPath(Plugin_cb.Text)) &&
                             (Plugin_cb.Text.EndsWith(".esp") || Plugin_cb.Text.EndsWith(".esm")))
             {
@@ -387,7 +415,7 @@ namespace TESV_EspEquipmentGenerator
         }
         private void Plugin_cb_TextChanged(object sender, TextChangedEventArgs e)
         {
-            CheckNewPluginIsAllow();
+            CheckAddNewPluginIsAllow();
         }
 
         private void NewPlugin_btn_Click(object sender, RoutedEventArgs e)
@@ -397,6 +425,16 @@ namespace TESV_EspEquipmentGenerator
         private void Grid_MouseUp(object sender, MouseButtonEventArgs e)
         {
             grid.Focus();
+        }
+
+        private void Window_KeyDown(object sender, KeyEventArgs e)
+        {
+            //clear settings
+            if (Keyboard.IsKeyDown(Key.LeftCtrl) && e.Key == Key.N)
+            {
+                settings.Reset();
+                ReStartApplication();
+            }
         }
     }
 }

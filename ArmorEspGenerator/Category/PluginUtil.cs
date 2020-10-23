@@ -16,16 +16,29 @@ namespace TESV_EspEquipmentGenerator
             if (index >= 0) value = value.Substring(index + folder.Length).RemovePrefixUtilEmpty(@"\");
             return value;
         }
-        public static string TrimTexturesPath(string value) => TrimSourceFolderPath(value, GetTexturesPath());
-        public static string TrimMeshesPath(string value) => TrimSourceFolderPath(value, GetMeshesPath());
+        public static string TrimTexturesPath(string value) => value.TrimPrefix("textures",1);
+        public static string TrimMeshesPath(string value) => value.TrimPrefix("meshes", 1);
 
         public void AddTextureSetsByNif(string filename)
         {
-            var shapesTextures = NifUtil.GetShapesTextureInfos(filename);
-            foreach (var item in shapesTextures)
+            try
             {
-                var textureSet = TextureSets.AddNewItem(item.Key);
-                textureSet.CopyTexturePath(item.Value);
+                var shapesTextures = NifUtil.GetShapesTextureInfos(filename);
+                foreach (var item in shapesTextures)
+                {
+                    item.Value.Switch(2,5);
+                    item.Value.Switch(4,5);
+                    item.Value.Switch(3,4);
+                }
+                foreach (var item in shapesTextures)
+                {
+                    var textureSet = TextureSets.AddNewItem(item.Key);
+                    textureSet.CopyTexturePath(item.Value);
+                }
+            }
+            catch (Exception error)
+            {
+                error.Message.PromptError();
             }
         }
 

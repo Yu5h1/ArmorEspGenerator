@@ -83,7 +83,7 @@ namespace TESV_EspEquipmentGenerator
         public string Author { get => GetValue(@"File Header\CNAM"); set => SetValue(@"File Header\CNAM", value); }
         public string Description { get => GetValue(@"File Header\SNAM"); set => SetValue(@"File Header\SNAM", value); }
 
-        public Handle[] GetRecords(bool includeOverrides = false) => Records.GetRecords(handle, "", includeOverrides);
+        public Handle[] GetRecords(string recordSignature = "", bool includeOverrides = false) => Records.GetRecords(handle, recordSignature, includeOverrides);
         public PluginRecords<TextureSet> TextureSets;
         public PluginRecords<Armor> Armors;
         public PluginRecords<ArmorAddon> ArmorAddons;
@@ -111,10 +111,17 @@ namespace TESV_EspEquipmentGenerator
                 File.Delete(GetTempFullPath());
             }
         }
-
-        public static string GetGamePath() {
-            if (IsLoaded) return Setup.GetGamePath(ActiveGameMode);
-            return "";
+        static string SpecialGamePathCache = "";
+        public static string SpecialGamePath {
+            get { return SpecialGamePathCache; }
+            set {
+                Setup.SetGamePath(value);
+                SpecialGamePathCache = value;
+            }
+        }
+        public static string GetGamePath() {    
+            if (IsLoaded) return Setup.GetGamePath(ActiveGameMode);            
+            return SpecialGamePath;
         } 
         public static String GetGameDataPath(Setup.GameMode gameMode) => Path.Combine(Setup.GetGamePath(gameMode), "Data");
         public static String GetGameDataPath() => Path.Combine(GetGamePath(), "Data");
@@ -143,12 +150,19 @@ namespace TESV_EspEquipmentGenerator
         public static  string[] GetMasterNames(string PluginName) {
             var results = new string[0];
             if (File.Exists(GetPluginFullPath(PluginName))) {
-                var header = Setup.LoadPluginHeader(PluginName);
-                var masters = header.GetElements()[0].GetElement("Master Files").GetElements();
-                results = new string[masters.Length];
-                for (int i = 0; i < results.Length; i++)
-                    results[i] = masters[i].GetValue("MAST");
-                Setup.UnloadPlugin(header);
+                try
+                {
+                    var header = Setup.LoadPluginHeader(PluginName);
+                    var masters = header.GetElements()[0].GetElement("Master Files").GetElements();
+                    results = new string[masters.Length];
+                    for (int i = 0; i < results.Length; i++)
+                        results[i] = masters[i].GetValue("MAST");
+                    Setup.UnloadPlugin(header);
+                }
+                catch (Exception error)
+                {
+                    error.Message.PromptError();
+                }
             }
             return results;
         }
@@ -198,7 +212,8 @@ namespace TESV_EspEquipmentGenerator
         public static bool LoadPlugins(Setup.GameMode gameMode, params string[] PluginsList)
         {
             var missingMasters = GetMissingMastersInfo(PluginsList);
-            if (missingMasters.Length > 0) {
+            if (missingMasters.Length > 0)
+            {
                 ("The dependent modules are missing : \n" + missingMasters.Join("\n")).PromptWarnning();
                 return false;
             }
@@ -208,7 +223,6 @@ namespace TESV_EspEquipmentGenerator
             }
             catch (Exception error)
             {
-                
                 error.Message.PromptWarnning();
                 return false;
             }

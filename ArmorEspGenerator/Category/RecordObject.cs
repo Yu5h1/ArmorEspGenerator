@@ -51,6 +51,10 @@ namespace TESV_EspEquipmentGenerator
             base.Add(item);
         }
         public virtual void Delete() => handle.Delete();
+        public void PrepareHandle()
+        {
+            if (handle == null) parent.AddElement(signature);
+        }
     }
     public abstract class RecordElement : RecordObject
     {        

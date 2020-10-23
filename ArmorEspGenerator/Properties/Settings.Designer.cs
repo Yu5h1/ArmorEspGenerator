@@ -70,5 +70,17 @@ namespace TESV_EspEquipmentGenerator.Properties {
                 this["WindowHeight"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string GamePath {
+            get {
+                return ((string)(this["GamePath"]));
+            }
+            set {
+                this["GamePath"] = value;
+            }
+        }
     }
 }

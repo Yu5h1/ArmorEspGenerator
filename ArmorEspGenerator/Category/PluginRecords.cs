@@ -6,28 +6,25 @@ using Yu5h1Tools.WPFExtension;
 
 namespace TESV_EspEquipmentGenerator
 {
-    public class PluginRecords<T> : List<T> where T : RecordElement<T>
+    public class PluginRecords<T> : RecordArrayObject<T> where T : RecordElement<T>
     {
+        public override string signature => SignatureUtil.GetSignature<T>();
         public Plugin plugin;
-        public Handle handle;
+
+        
         public Action<T> Added;
         Func<PluginRecords<T>, Handle, T> Constructor;
 
-        public PluginRecords(Plugin plugin, Func<PluginRecords<T>, Handle, T> constructor)
+        public PluginRecords(Plugin plugin, Func<PluginRecords<T>, Handle, T> constructor):
+                            base(plugin.handle)
         {
             this.plugin = plugin;
             Constructor = constructor;
-            foreach (var item in plugin.handle.GetElements())
-            {
-                if (item.GetSignature() == SignatureUtil.GetSignature<T>()) {
-                    handle = item;
-                    break;
-                }
-            }
-            foreach (var item in plugin.GetRecords()) Add(item);
+            foreach (var item in plugin.GetRecords(signature)) Add(item);
         }
         public new void Add(T item)
         {
+            PrepareHandle();
             base.Add(item);
             Added?.Invoke(item);
         }
@@ -44,8 +41,9 @@ namespace TESV_EspEquipmentGenerator
 
         public T AddNewItem(string editorID = "")
         {
+            PrepareHandle();
             if (editorID.Equals(string.Empty)) editorID = ("New" + typeof(T).Name);
-            editorID = editorID.MakeValidEditorID().GetUniqueStringWithSuffixNumber(this, d => d.EditorID);
+            editorID = editorID.MakeValidEditorID().MakeUniqueByNumber(this, d => d.EditorID);
             T result = Constructor(this, handle.AddElement(SignatureUtil.GetSignature<T>()));
             result.EditorID = editorID;
             Add(result);
@@ -54,7 +52,7 @@ namespace TESV_EspEquipmentGenerator
         public T Duplicate(T source, string newEditorID = "")
         {
             if (newEditorID == "") newEditorID = source.EditorID;
-            newEditorID = newEditorID.GetUniqueStringWithSuffixNumber(this, d => d.EditorID);
+            newEditorID = newEditorID.MakeUniqueByNumber(this, d => d.EditorID);
             return Add(source.handle.CopyAsNew(newEditorID, plugin.handle));
         }
 
