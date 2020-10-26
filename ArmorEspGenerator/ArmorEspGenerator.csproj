@@ -53,9 +53,9 @@
       <RequiredTargetFramework>4.0</RequiredTargetFramework>
     </Reference>
     <Reference Include="UIAutomationProvider" />
-    <Reference Include="WindowsBase" />
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
+    <Reference Include="WindowsBase" />
     <Reference Include="WindowsFormsIntegration" />
     <Reference Include="XeLibSharp, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -75,13 +75,14 @@
     <Compile Include="Category\Armor.cs" />
     <Compile Include="Category\ArmorAddon.cs" />
     <Compile Include="Category\BipedBodyTemplate.cs" />
+    <Compile Include="Category\EquipmentAsset.cs" />
     <Compile Include="Category\Partitions.cs" />
     <Compile Include="Category\Plugin.cs" />
     <Compile Include="Category\PluginRecords.cs" />
     <Compile Include="Category\PluginUtil.cs" />
     <Compile Include="Category\RecordHandle.cs" />
     <Compile Include="Category\TextureSet.cs" />
-    <Compile Include="Category\WorldModel.cs" />
+    <Compile Include="Category\ModelAlternateTextures.cs" />
     <Compile Include="Extension\HandleEx.cs" />
     <Compile Include="UserInterfaces\ArmorUI.cs" />
     <Compile Include="UserInterfaces\RecordsUI.cs" />

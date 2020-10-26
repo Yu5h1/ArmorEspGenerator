@@ -14,21 +14,22 @@ namespace TESV_EspEquipmentGenerator
         public static Plugin current;
 
         public static string GetLoadedGameName()
-        { try { return Meta.GetGlobal("AppName"); } catch (Exception) { return ""; } }
-        public static bool IsLoaded => GetLoadedGameName() != string.Empty;
+        {
+            try { return Meta.GetGlobal("AppName"); } catch (Exception) { return ""; }
+        }
+        public static bool IsLoaded => Setup.GetLoadedFileNames().Length > 0;
 
         public static Setup.GameMode ParseGameMode(string modeName) {
             try
             {
                  return (Setup.GameMode)Enum.Parse(typeof(Setup.GameMode), modeName);
             }
-            catch (Exception)
+            catch (Exception e)
             {
+                e.Message.print();
                 return Setup.GameMode.SSE;
             }
         }
-                            
-        public static Setup.GameMode ActiveGameMode => ParseGameMode(GetLoadedGameName());
 
         public override string signature => "TES4";
 
@@ -119,10 +120,8 @@ namespace TESV_EspEquipmentGenerator
                 SpecialGamePathCache = value;
             }
         }
-        public static string GetGamePath() {    
-            if (IsLoaded) return Setup.GetGamePath(ActiveGameMode);            
-            return SpecialGamePath;
-        } 
+        public static Setup.GameMode currentGameMode = Setup.GameMode.SSE;
+        public static string GetGamePath() => Setup.GetGamePath(currentGameMode);
         public static String GetGameDataPath(Setup.GameMode gameMode) => Path.Combine(Setup.GetGamePath(gameMode), "Data");
         public static String GetGameDataPath() => Path.Combine(GetGamePath(), "Data");
         public static String GetGameDataPath(string suffix) => GetGameDataPath().CombineNoleadSlash(suffix).ReplaceRepeatFolderUtilEmpty("Data");
@@ -192,20 +191,18 @@ namespace TESV_EspEquipmentGenerator
                                                     => Handle.BaseHandle.GetElement(pluginName);
         public static Handle[] GetActivePluginRecords(string pluginName,string search = "",bool includeOverrides = false)
                                             => GetActivePlugin(pluginName).GetRecords(search,includeOverrides);
-        public static void Reset() {
-            //Meta.ResetStore();
-            Meta.Initialize();
-        }
         public static bool SetGameMode(Setup.GameMode gameMode) {
-            if (IsLoaded) MainWindow.current.ReStartApplication();
-            Reset();
+            
             try
             {
+                currentGameMode = gameMode;
+                Meta.Initialize();
                 Setup.SetGameMode(gameMode);
             }
-            catch (Exception)
+            catch (Exception error)
             {
-                return false;
+                (error.Message+"\nRestart program.").print();
+                MainWindow.current.ReStartApplication();
             }
             return true;
         }

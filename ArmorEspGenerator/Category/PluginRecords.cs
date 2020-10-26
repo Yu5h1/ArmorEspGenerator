@@ -74,7 +74,8 @@ namespace TESV_EspEquipmentGenerator
         }
         public new void Clear()
         {
-            foreach (var item in this) item.Delete();
+            for (int i = Count-1; i >= 0 ; i--)
+                this[i].Delete();
             base.Clear();
         }
     }

@@ -5,15 +5,16 @@ using XeLib;
 
 namespace TESV_EspEquipmentGenerator
 {
-    public class WorldModel : RecordObject
+    public class ModelAlternateTextures : RecordObject
     {
+        public bool? IsFirstPerson = null;
         public bool? MaleOrFemale = null;
-        public static string Signature(bool? maleOrfemale)
+        public static string Signature(bool? maleOrfemale,bool? isFirstPerson)
         {
-            if (maleOrfemale == null) return "";
-            return (((bool)maleOrfemale) ? "Male" : "Female") + " world model";
+            if (isFirstPerson == null || maleOrfemale == null) return "";
+            return (((bool)maleOrfemale) ? "Male" : "Female") + (((bool)isFirstPerson) ? " 1st Person" : " world model");
         }
-        public override string signature => Signature(MaleOrFemale);
+        public override string signature => Signature(MaleOrFemale, IsFirstPerson);
 
         public string modelKey => handle.GetSignatureByDisplayName("Model");
         public string alternateTexturesKey => handle.GetSignatureByDisplayName("Alternate Textures");
@@ -54,10 +55,11 @@ namespace TESV_EspEquipmentGenerator
         }
 
 
-        public WorldModel(Handle parent, bool maleOrfemale) : 
-                     base(parent, parent.GetElement(Signature(maleOrfemale)))
+        public ModelAlternateTextures(Handle parent, bool maleOrfemale,bool isFirstPerson = false) : 
+                     base(parent, parent.GetElement(Signature(maleOrfemale, isFirstPerson)))
         {
             MaleOrFemale = maleOrfemale;
+            IsFirstPerson = isFirstPerson;
             UpdateShapesNames();
             alternateTextures = new AlternateTextures(this);
         }

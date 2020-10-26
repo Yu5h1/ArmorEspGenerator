@@ -16,11 +16,12 @@ namespace TESV_EspEquipmentGenerator
         void Delete();
     }
     public abstract class RecordObject : IRecordObject
-    {        
+    {
+        public const string FullNameKEY = "FULL - Name";
         public abstract string signature { get; }
         public Handle parent { get; protected set; }
         public virtual Handle handle { get; protected set; }
-        public string DisplayName => handle.GetDisplayName();
+        public virtual string DisplayName => handle.GetDisplayName();
         public static implicit operator bool(RecordObject obj) => obj != null;
         public string GetValue(string path) => handle.GetValue(path);
         public void SetValue(string path, string value) => handle.SetValue(path, value);
@@ -59,12 +60,11 @@ namespace TESV_EspEquipmentGenerator
     public abstract class RecordElement : RecordObject
     {        
         public static Handle SkyrimESM => Handle.BaseHandle.GetElement("Skyrim.esm");
-
         public string FormID => handle.GetFormID();
         public string EditorID { get => handle.GetEditorID(); set => handle.SetEditorID(value); }
-
+        public string RecordHeaderFormID => handle.GetRecordHeaderFormID();
         public RecordElement(Handle Parent,Handle target) : base(Parent, target) { }
-        public override string ToString() => handle.GetLabel();
+        public override string ToString() => handle.GetRecordHeaderFormID();
         public virtual string GetDataInfo() => "";
     }
     public interface IRecordElement

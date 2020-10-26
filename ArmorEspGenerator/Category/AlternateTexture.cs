@@ -10,10 +10,10 @@ namespace TESV_EspEquipmentGenerator
     {
         public override string signature => worldModel.alternateTexturesKey;
 
-        public WorldModel worldModel { get; private set; }
+        public ModelAlternateTextures worldModel { get; private set; }
         public List<string> ShapesNames => worldModel.ShapesNames;
         public List<Handle> AlternateTexturesHandles => handle.GetArrayItems("Alternate Texture").ToList();
-        public AlternateTextures(WorldModel worldModel) : base(worldModel.handle)
+        public AlternateTextures(ModelAlternateTextures worldModel) : base(worldModel.handle)
         {
             this.worldModel = worldModel;
             foreach (var item in AlternateTexturesHandles) Add(new AlternateTexture(this, item));
@@ -30,7 +30,7 @@ namespace TESV_EspEquipmentGenerator
             {
                 Add(new AlternateTexture(this, handle.AddArrayItem(), shapeName, textureSet));
             }
-            else element.NewTexture = textureSet.GetLabel();
+            else element.NewTexture = textureSet.GetFormID();
             //Sort();
         }
         //public new void Sort()
@@ -103,7 +103,7 @@ namespace TESV_EspEquipmentGenerator
         {
             container = alternateTextures;
             if (shapeName != "") ShapeName = shapeName;
-            if (textureSet != null) NewTexture = textureSet.GetLabel();
+            if (textureSet != null) NewTexture = textureSet.GetRecordHeaderFormID();
         }
         public string ShapeName
         {

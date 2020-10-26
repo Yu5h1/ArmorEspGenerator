@@ -12,30 +12,28 @@ namespace TESV_EspEquipmentGenerator
     {
         public const string Signature = "ARMO";
         public override string signature => Signature;
-        #region recordsPath
-        const string MWMm2 = @"Male world Model\MOD2";
-        const string FWMm4 = @"Female world Model\MOD4";
-        #endregion
-        public string FULLName { get => GetValue("FULL"); set => SetValue("FULL", value); }
-        //public string MaleModel { get => GetValue(MWMm2); set => SetValue(MWMm2, value); }
-        //public string FemaleModel { get => GetValue(FWMm4); set => SetValue(FWMm4, value); }
+        public string FULLName { get => GetValue(FullNameKEY); set => SetValue(FullNameKEY, value); }
         public BipedBodyTemplate bipedBodyTemplate;
-        public WorldModel MaleWorldModel;
-        public WorldModel FemaleWorldModel;
+        public ModelAlternateTextures MaleWorldModel;
+        public ModelAlternateTextures FemaleWorldModel;
         public Armatures armatures;
-
 
         Armor(PluginRecords<Armor> container, Handle target) : base(container, target) {
             armatures = new Armatures(this);
-            bipedBodyTemplate = new BipedBodyTemplate(target, target.GetElement(BipedBodyTemplate.Signature));
-            MaleWorldModel = new WorldModel(target, true);
-            FemaleWorldModel = new WorldModel(target, false);
+            bipedBodyTemplate = new BipedBodyTemplate(target);
+            MaleWorldModel = new ModelAlternateTextures(target, true);
+            FemaleWorldModel = new ModelAlternateTextures(target, false);
         }
         public static Armor Create(PluginRecords<Armor> container, Handle handle) {
             if (handle.CompareSignature<Armor>()) return new Armor(container, handle);
             else return null;
         }
-
+        public void SetModelAssets(bool maleOrfemale,EquipmentAsset asset) {
+            if (asset == null) return;
+            if (asset.ItemModel == "") return;
+            if (maleOrfemale) MaleWorldModel.Model = asset.ItemModel;
+            else FemaleWorldModel.Model = asset.ItemModel;
+        }
     }
     public class Armatures : RecordArrayObject<Handle>
     {
@@ -55,17 +53,16 @@ namespace TESV_EspEquipmentGenerator
             for (int i = 0; i < items.Length; i++)
             {
                 var item = items[i];
-                var label = item.ToString();
                 if (Count == 0)
                 {
-                    armor.handle.SetValue(@"Armature\MODL", label);
+                    armor.handle.SetValue(@"Armature\MODL", item.handle.GetFormID() );
                     Add(handle.GetElement("MODL"));
                 }
                 else
                 {
                     if (!Exists(item))
                     {
-                        Add(Elements.AddArrayItem(handle, "", "", label));
+                        Add(Elements.AddArrayItem(handle, "", "", item.handle.GetFormID()));
                         results[i] = true;
                     }
                 }

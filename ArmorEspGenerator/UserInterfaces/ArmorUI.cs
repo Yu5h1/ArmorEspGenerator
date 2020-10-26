@@ -16,13 +16,13 @@ namespace TESV_EspEquipmentGenerator
 {
     public static class ArmorUI
     {
-        public static TreeViewItem AddWorldModelTreeNode(this MultiSelectTreeView treeview, WorldModel worldModel)
+        public static TreeViewItem AddWorldModelTreeNode(this MultiSelectTreeView treeview, ModelAlternateTextures modelAlternateTextures)
         {
             var result = new TreeViewItem() {
                 ItemContainerStyle = (Style)MainWindow.current.FindResource("StretchTreeViewItemStyle"),
                 HorizontalContentAlignment = HorizontalAlignment.Stretch,
                 HorizontalAlignment = HorizontalAlignment.Stretch
-            }.SetTextBlockHeader(worldModel.signature);
+            }.SetTextBlockHeader(modelAlternateTextures.signature);
             treeview.Items.Add(result);
             var modelTreeitem = new TreeViewItem()
             {
@@ -35,7 +35,7 @@ namespace TESV_EspEquipmentGenerator
             {
                 InitialDirectory = Plugin.GetMeshesPath(),
                 label = "Model",
-                Text = worldModel.Model,
+                Text = modelAlternateTextures.Model,
                 FileFilter = new FileTypeFilter("Nif File", ".nif").ToString(),
                 OnlyAllowValueFromInitialDirectory = true,
                 Background = null,
@@ -46,24 +46,24 @@ namespace TESV_EspEquipmentGenerator
             pathSelector.GetPathBy += (txt) => txt == "" ? "" : Plugin.GetMeshesPath(txt);
             pathSelector.SetPathBy += (txt) => Plugin.TrimMeshesPath(txt);
             pathSelector.TextChanged += (s, e) => {
-                worldModel.Model = pathSelector.Text;
+                modelAlternateTextures.Model = pathSelector.Text;
                 MainWindow.current.ShowSelectedRecord();
             };
             modelTreeitem.Header = pathSelector;
 
-            var menuitem = pathSelector.labelControl.AddMenuItem("BodyParts to Partitions");
-            result.IsExpanded = true;
-            menuitem.Click += (s, e) => {
+            pathSelector.labelControl.AddMenuItem("BodyParts to Partitions").Click += (s, e) => {
                 //worldModel.BodyPartsToPartitions();
                 MainWindow.current.ShowSelectedRecord();
             };
+            result.IsExpanded = true;
+
 
             var AlternateTexturesRoot = result.AddTreeNode<TextBlock>("AlternateTextures");
             AlternateTexturesRoot.IsExpanded = true;
-            for (int i = 0; i < worldModel.ShapesNames.Count; i++)
+            for (int i = 0; i < modelAlternateTextures.ShapesNames.Count; i++)
             {
-                var shapeName = worldModel.ShapesNames[i];
-                var data = worldModel.alternateTextures.Find(d => d.ShapeName == shapeName);
+                var shapeName = modelAlternateTextures.ShapesNames[i];
+                var data = modelAlternateTextures.alternateTextures.Find(d => d.ShapeName == shapeName);
 
                 Button btn = new Button()
                 {
@@ -80,24 +80,32 @@ namespace TESV_EspEquipmentGenerator
                             menuItemName = Plugin.current.PluginName;
                         var curPluginMenuItem = contextMenu.AddMenuItem(menuItemName);
                         var textureSets = Plugin.GetActivePluginRecords(pluginName, TextureSet.Signature);
-                        foreach (var txts in textureSets)
+                        foreach (var textureSet in textureSets)
                         {
-                            var curTxtsitem = curPluginMenuItem.AddMenuItem(txts.GetEditorID());
+                            var curTxtsitem = curPluginMenuItem.AddMenuItem(textureSet.GetEditorID());
                             curTxtsitem.Click += (ss, ee) =>
                             {
-                                worldModel.alternateTextures.Set(shapeName, txts);
-                                MainWindow.current.ShowSelectedRecord();
+                                try
+                                {
+                                    modelAlternateTextures.alternateTextures.Set(shapeName, textureSet);
+                                    MainWindow.current.ShowSelectedRecord();
+                                }
+                                catch (Exception error)
+                                {
+                                    error.Message.PromptError();
+                                }
+                        
                             };
                         }
 
                     }
-                    var curData = worldModel.alternateTextures.Find(d => d.ShapeName == shapeName);
+                    var curData = modelAlternateTextures.alternateTextures.Find(d => d.ShapeName == shapeName);
                     if (curData != null)
                     {
                         var deleteMenuitem = contextMenu.AddMenuItem("Delete", "Del");
                         deleteMenuitem.Click += (ds, de) =>
                         {
-                            worldModel.alternateTextures.Remove(shapeName);
+                            modelAlternateTextures.alternateTextures.Remove(shapeName);
                             btn.Content = "    null    ";
                         };
                     }
@@ -108,7 +116,7 @@ namespace TESV_EspEquipmentGenerator
                 shapeFieldTreeItem.KeyDown += (s, e) => {
                     if (e.Key == Key.Delete)
                     {
-                        worldModel.alternateTextures.Remove(shapeName);
+                        modelAlternateTextures.alternateTextures.Remove(shapeName);
                         btn.Content = "    null    ";
                     }
                 };
@@ -126,7 +134,7 @@ namespace TESV_EspEquipmentGenerator
             var result = new TreeViewItem()
             {
                 IsExpanded = true
-            }.SetTextBlockHeader("Biped Body Template");
+            }.SetTextBlockHeader(bipedBodyTemplate.DisplayName);
 
             var partitionsComboBox = new ComboBox();
             var LabelItem = new ComboBoxItem()
@@ -165,13 +173,21 @@ namespace TESV_EspEquipmentGenerator
 
    
 
-            result.Items.Add(new TreeViewItem().SetControlLabel(bipedBodyTemplate.FirstPersonFlagsKey + " ", partitionsComboBox));
+            result.Items.Add(new TreeViewItem().SetControlLabel(BipedBodyTemplate.FirstPersonFlagsKey + " ", partitionsComboBox));
 
-            //var ArmorTypeComboBox = new ComboBox();
-            //ArmorTypeComboBox.Items.Add("Cloth");
-            //ArmorTypeComboBox.Items.Add("Heavy");
-            //ArmorTypeComboBox.Items.Add("Light");
-            //result.AddTreeNode("Armor Type", ArmorTypeComboBox);
+            var ArmorTypeComboBox = new ComboBox();
+            ArmorTypeComboBox.Items.Add("Clothing");
+            ArmorTypeComboBox.Items.Add("Heavy Armor");
+            ArmorTypeComboBox.Items.Add("Light Armor");
+            for (int i = 0; i < ArmorTypeComboBox.Items.Count; i++)
+            {
+                if (ArmorTypeComboBox.Items[i].ToString() == bipedBodyTemplate.ArmorType) {
+                    ArmorTypeComboBox.SelectedIndex = i;
+                }
+            }
+            
+            ArmorTypeComboBox.DropDownClosed += (s, e) => bipedBodyTemplate.ArmorType = ArmorTypeComboBox.SelectedItem.ToString();
+            result.AddTreeNode("Armor Type", ArmorTypeComboBox);
             return result;
         }
     }

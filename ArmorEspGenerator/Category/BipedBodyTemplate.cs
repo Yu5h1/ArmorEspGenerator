@@ -1,5 +1,6 @@
 ﻿using System;
 using XeLib;
+//using Yu5h1Tools.WPFExtension;
 
 namespace TESV_EspEquipmentGenerator
 {
@@ -17,13 +18,23 @@ namespace TESV_EspEquipmentGenerator
     }
     public class BipedBodyTemplate : RecordObject
     {
-        public static string Signature => @"BOD2";
+        public static string Signature => "Biped Body Template";
         public override string signature => Signature;
+        public override Handle handle {
+            get {
+                return parent.HasElement("BODT") ? parent.GetElement("BODT") : base.handle;
+            }
+            protected set => base.handle = value;
+        }
+        public override string DisplayName {
+            get {
+                if (handle == null) return signature;
+                return base.DisplayName;
+            }
+        }
+        public BipedBodyTemplate(Handle Parent) : base(Parent){}
 
-        public string FirstPersonFlagsKey => @"First Person Flags";
-
-        public BipedBodyTemplate(Handle Parent,Handle target) : base(Parent,target){}
-
+        public static string FirstPersonFlagsKey => @"First Person Flags";
         public PartitionFlag[] FirstPersonFlags
         {
             get => GetPartitionFlags(handle.GetValue(FirstPersonFlagsKey));
@@ -32,6 +43,15 @@ namespace TESV_EspEquipmentGenerator
                 handle.SetValue(FirstPersonFlagsKey, value.ToValue());
             }
         }
+        public static string ArmorTypeKey => @"Armor Type";
+        public string ArmorType {
+            get => handle.GetElement(ArmorTypeKey).GetValue();
+            set {
+                PrepareHandle();
+                handle.SetValue(ArmorTypeKey, value);
+            } 
+        }
+
         public static PartitionFlag[] GetPartitionFlags(string FlagsValue = "")
         {
             var partitions = (Partitions[])Enum.GetValues(typeof(Partitions));
@@ -47,12 +67,11 @@ namespace TESV_EspEquipmentGenerator
             FirstPersonFlags = partitions.ToPartitionFlags();
         }
 
-        public void BodyPartsToPartitions(string nifFile)
+        public void SetPartitionsFromNif(string nifFile)
         {
-            SetPartitionFlags(
-                PartitionsUtil.ConvertIndicesToBodyParts(
-                    Plugin.GetBodyPartsIndicesFromNif(nifFile)).
-                    BSDismemberBodyPartsToPartitions());
+            SetPartitionFlags(PartitionsUtil.ConvertIndicesToBodyParts(Plugin.
+                                GetBodyPartsIndicesFromNif(nifFile)).
+                                BSDismemberBodyPartsToPartitions());
         }
     }
 }

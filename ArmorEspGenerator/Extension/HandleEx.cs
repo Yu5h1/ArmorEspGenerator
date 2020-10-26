@@ -20,7 +20,7 @@ namespace TESV_EspEquipmentGenerator
             }
             return false;
         }
-        public static string GetLabel(this Handle handle) => handle.GetEditorID() + " [" + handle.GetSignature() + ":" + handle.GetFormID() + "]";
+        public static bool HasValue(this Handle handle) => handle != null && handle.HasElement(handle.GetDisplayName());
         public static bool HasElement(this Handle handle, string path) => handle != null ? Elements.HasElement(handle, path) : false;
         public static Handle GetElement(this Handle handle, string path) => path == "" || !handle.HasElement(path) ? null : Elements.GetElement(handle, path);
         public static Handle[] GetElements(this Handle handle,string path = "",bool sort = false, bool filter = false) => Elements.GetElements(handle.Value, path, sort,filter);
@@ -82,9 +82,16 @@ namespace TESV_EspEquipmentGenerator
 
         public static Handle[] GetRecords(this Handle handle,string search = "",bool includeOverrides = false) => Records.GetRecords(handle, search, includeOverrides);
 
-
+        public static string GetRecordHeaderFormID(this Handle handle) {
+            var RecordHeader = handle.GetElement("Record Header");
+            if (RecordHeader != null) {
+                return RecordHeader.GetValue("FormID");
+            }
+            return "";
+        }
         public static string MakeValidEditorID(this string txt)
         {
+            if (txt.IsNullOrEmpty()) return "";
             txt = txt.Split('_').Select(d => d.FirstCharToUpper()).Join();
             txt = txt.Split(' ').Select(d => d.FirstCharToUpper()).Join();
             return new Regex("[^a-zA-Z0-9]").Replace(txt, "");

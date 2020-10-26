@@ -14,7 +14,7 @@ namespace TESV_EspEquipmentGenerator
 {
     public static class RecordsUI
     {
-        public static TreeViewItem GetTreeNode(this Handle handle,string elementName) {
+        public static TreeViewItem GetTreeNode(this Handle handle,string elementName, bool EnabledEdit = false) {
             var elementHandle = handle.GetElement(elementName);
             if (elementHandle == null)
             {
@@ -27,94 +27,79 @@ namespace TESV_EspEquipmentGenerator
                     }
                 };
             }
-            return elementHandle.GetTreeNode();
+            return elementHandle.GetTreeNode(EnabledEdit);
         }
-        public static TreeViewItem GetTreeNode(this Handle handle)
+        public static TreeViewItem GetTreeNode(this Handle handle,bool EnabledEdit = false)
         {
-            var result = new TreeViewItem();
-            if (handle.GetValue() != null)
-            {
-                result.SetControlLabel(handle.GetDisplayName(), new TextBox() {
-                    Text = handle.GetValue(),
-                    IsEnabled = false
-                });
-            }else {
-                result.SetTextBlockHeader(handle.GetDisplayName());
-            }
+            if (handle == null) return null;
 
+            var result = new TreeViewItem() {
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                ItemContainerStyle = (Style)MainWindow.current.FindResource("StretchTreeViewItemStyle")
+            }.SetTextBlockHeader(handle.GetDisplayName());
             result.Tag = handle;
-            result.ToolTip = handle.GetElementType().ToString();
             result.IsExpanded = true;
-
-            var definitions = handle.GetDefineNames();
-            foreach (var define in definitions)
+            var DefineNames = handle.GetDefineNames();
+            result.ToolTip = handle.GetElementType().ToString();
+            switch (handle.GetElementType())
             {
-                var subhandle = handle.GetElement(define);
-                TreeViewItem subTreeItem = null;
-                if (subhandle == null) {
-                    subTreeItem = new TreeViewItem().SetHeader(new TextBlock() {
-                        Text = define,
-                        Foreground = Brushes.DarkGray
+                case Elements.ElementTypes.EtFile:
+                    break;
+                case Elements.ElementTypes.EtMainRecord:
+                    result.GetHeader<TextBlock>().Text = handle.GetRecordHeaderFormID();
+                    foreach (var define in DefineNames)
+                    {
+                        result.Items.Add(handle.GetTreeNode(define));
+                    }
+                    break;
+                case Elements.ElementTypes.EtGroupRecord:
+                    break;
+                case Elements.ElementTypes.EtSubRecord:
+                    if (DefineNames.Length == 0)
+                    {
+                        var textbox = new TextBox()
+                        {
+                            Text = handle.GetValue(),
+                            IsEnabled = EnabledEdit
+                        };
+                        if (EnabledEdit) textbox.TextChanged += (s, e) => handle.SetValue(textbox.Text);
+                        result.SetControlLabel(handle.GetDisplayName(), textbox);
+                    }
+                    else {
+                        foreach (var define in DefineNames)
+                            result.Items.Add(handle.GetTreeNode(define));
+                    }
+                    break;
+                case Elements.ElementTypes.EtSubRecordStruct:
+                    break;
+                case Elements.ElementTypes.EtSubRecordArray:
+                    foreach (var item in handle.GetElements())
+                    {
+                        result.Items.Add(item.GetTreeNode());
+                    }
+                    break;
+                case Elements.ElementTypes.EtSubRecordUnion:
+                    break;
+                case Elements.ElementTypes.EtArray:
+                    break;
+                case Elements.ElementTypes.EtStruct:
+                    break;
+                case Elements.ElementTypes.EtValue:
+                    result.SetControlLabel(handle.GetDisplayName(), new TextBox()
+                    {
+                        Text = handle.GetValue(),
+                        IsEnabled = EnabledEdit
                     });
-                }else subTreeItem = subhandle.GetTreeNode();
-
-                result.Items.Add(subTreeItem);
+                    break;
+                case Elements.ElementTypes.EtFlag:
+                    break;
+                case Elements.ElementTypes.EtStringListTerminator:
+                    break;
+                case Elements.ElementTypes.EtUnion:
+                    break;
+                case Elements.ElementTypes.EtStructChapter:
+                    break;
             }
-            //var value = handle.GetValue();
-            //string valueLabel = value == "" ? "" : " : [" + value + "]";
-            
-            
-    
-            //var elements = handle.GetElements();            
-            //if (elements.Length > 0)
-            //foreach (var element in elements)
-            //{
-            //    var DisplayName = element.GetDisplayName();
-            //    switch (element.GetElementType())
-            //    {
-            //            //case Elements.ElementTypes.EtFile:
-            //            //    break;
-            //            case Elements.ElementTypes.EtMainRecord:
-            //                //result.Items.Add(GetTreeNode(item));
-            //                break;
-            //            //case Elements.ElementTypes.EtGroupRecord:
-            //            //    break;
-            //            case Elements.ElementTypes.EtSubRecord:
-            //                result.Items.Add(GetTreeNode(element));
-            //                break;
-            //            case Elements.ElementTypes.EtSubRecordStruct:
-            //                result.Items.Add(GetTreeNode(element));
-            //                break;
-            //            case Elements.ElementTypes.EtSubRecordArray:
-            //                result.Items.Add(GetTreeNode(element));
-            //                break;
-            //            //case Elements.ElementTypes.EtSubRecordUnion:
-            //            //    break;
-            //            //case Elements.ElementTypes.EtArray:
-            //            //    break;
-            //            case Elements.ElementTypes.EtStruct:
-            //                result.Items.Add(GetTreeNode(element));
-            //                break;
-            //            case Elements.ElementTypes.EtValue:
-            //                result.Items.Add(new TreeViewItem() { ToolTip = element.GetValueType().ToString() }.SetField(element.GetDisplayName(), element.GetValue(), 100));
-            //                break;
-            //            //case Elements.ElementTypes.EtFlag:
-            //            //    break;
-            //            //case Elements.ElementTypes.EtFlag:
-            //            //    break;
-            //            //case Elements.ElementTypes.EtStringListTerminator:
-            //            //    break;
-            //            //case Elements.ElementTypes.EtUnion:
-            //            //    break;
-            //            //case Elements.ElementTypes.EtStructChapter:
-            //            //    break;
-            //            default:
-            //            result.Items.Add(   new TreeViewItem() { ToolTip = handle.GetElementType().ToString() }.
-            //                                SetTextBlockHeader(element.GetDisplayName() + " " + element.GetElementType().ToString()));
-            //            break;
-            //    }
-                    
-            //}
             return result;
         }
         public static ComboBox GetComboBox(this PluginRecords<TextureSet> textureSets,string value = "") {
