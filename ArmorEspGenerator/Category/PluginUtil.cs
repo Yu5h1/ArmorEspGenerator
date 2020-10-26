@@ -144,21 +144,31 @@ namespace TESV_EspEquipmentGenerator
             Dictionary<string, Armor> newArmors = new Dictionary<string, Armor>();
             foreach (var item in datas)
             {
-                var keys = item.Key.Split('_');
+                var keys = item.Key.Split('_').ToList();
                 string key = keys[0];
                 //(item.Key + "::" +key + "\n" + item.Value.male.ToString() + "\n" + item.Value.female.ToString()).PromptInfo();
                 var editorID = folderPathInfo.Name.Capitalize() + item.Key.Capitalize();
                 ArmorAddon newArmorAddon = ArmorAddons.AddNewItem(editorID + "AA");
                 newArmorAddon.SetModelAssets(true, item.Value.male);
                 newArmorAddon.SetModelAssets(false, item.Value.female);
-                newArmorAddon.Race = "DefaultRace \"Default Race\" [RACE:00000019]";
-                
+                newArmorAddon.data.malePriority = 5;
+                newArmorAddon.data.femalePriority = 5;
+                newArmorAddon.data.EnableWeightSliderMale = true;
+                newArmorAddon.data.EnableWeightSliderFemale = true;
+                newArmorAddon.Race = "00000019";
+                newArmorAddon.AddDefaultRaces();
+                //if (keys.Count > 0) {
+                //    if (keys.Exists(d => d.Equals("arg", StringComparison.OrdinalIgnoreCase)))
+
+                //}
+
                 if (!newArmors.TryGetValue(key, out Armor newArmor))
                 {
                     newArmor = newArmor = Armors.AddNewItem(editorID + "AO");
                     newArmor.bipedBodyTemplate.FirstPersonFlags = newArmorAddon.bipedBodyTemplate.FirstPersonFlags;
                     newArmor.bipedBodyTemplate.ArmorType = newArmorAddon.bipedBodyTemplate.ArmorType;
                     newArmor.FULLName = folderPathInfo.Name.Capitalize() + " " + item.Key.Capitalize();
+                    newArmor.Race = "00000019";
                     newArmors.Add(key, newArmor);
                 }
                 newArmor.SetModelAssets(true, item.Value.male);
@@ -176,7 +186,6 @@ namespace TESV_EspEquipmentGenerator
                         newArmor.Value.MaleWorldModel.Model = newArmor.Value.FemaleWorldModel.Model;
                 }
             }
-            return;
             //var nifFiles = Directory.GetFiles(FolderPath, "*_1.nif", SearchOption.AllDirectories).
             //                                                    Where(d => !d.Contains("1stperson"));
             //List<ArmorAddon> newArmorAddons = new List<ArmorAddon>();

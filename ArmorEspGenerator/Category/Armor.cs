@@ -17,6 +17,12 @@ namespace TESV_EspEquipmentGenerator
         public ModelAlternateTextures MaleWorldModel;
         public ModelAlternateTextures FemaleWorldModel;
         public Armatures armatures;
+        public static string RaceKey => "RNAM - Race";
+        public string Race
+        {
+            get => handle.GetElement(RaceKey).GetValue();
+            set => handle.SetValue(RaceKey, value);
+        }
 
         Armor(PluginRecords<Armor> container, Handle target) : base(container, target) {
             armatures = new Armatures(this);

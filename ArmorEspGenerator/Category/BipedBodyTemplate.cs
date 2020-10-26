@@ -18,7 +18,7 @@ namespace TESV_EspEquipmentGenerator
     }
     public class BipedBodyTemplate : RecordObject
     {
-        public static string Signature => "Biped Body Template";
+        public static string Signature => "BOD2 - Biped Body Template";
         public override string signature => Signature;
         public override Handle handle {
             get {

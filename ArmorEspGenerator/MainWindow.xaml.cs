@@ -135,6 +135,7 @@ namespace TESV_EspEquipmentGenerator
                         DataInfos_treeView.AddWorldModelTreeNode(armor.FemaleWorldModel);
                         break;
                     case ArmorAddon armorAddon:
+                        //armorAddon.AdditionalRaces.GetElements().Select(d => d.GetValue().RemovePrefixTo(":").RemoveSuffixFromLast("]")).ToArray().ToContext().PromptInfo();
                         DataInfos_treeView.Items.Add(ArmorUI.BipedBodyTemplateField(armorAddon.bipedBodyTemplate));
                         DataInfos_treeView.Items.Add(armorAddon.handle.GetTreeNode(ArmorAddon.RaceKey));
                         DataInfos_treeView.AddWorldModelTreeNode(armorAddon.MaleWorldModel);

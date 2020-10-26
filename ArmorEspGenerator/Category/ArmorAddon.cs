@@ -10,16 +10,56 @@ using Yu5h1Tools.WPFExtension;
 namespace TESV_EspEquipmentGenerator
 {
     public class ArmorAddon : RecordElement<ArmorAddon>
-    {                
+    {
+        public class DNAMData : RecordObject
+        {
+            public static string Signature => "DNAM - Data";
+            public override string signature => Signature;
+
+            public int malePriority {
+                get => handle.GetInteger("Male Priority");
+                set => handle.SetInteger("Male Priority",value);
+            }
+            public int femalePriority
+            {
+                get => handle.GetInteger("Female Priority");
+                set => handle.SetInteger("Female Priority", value);
+            }
+            public Handle WeightSliderMale => handle.GetElement("Weight slider - Male");
+            public bool EnableWeightSliderMale {
+                get => ElementValues.GetFlag(WeightSliderMale, "", "Enabled");
+                set => ElementValues.SetFlag(WeightSliderMale, "", "Enabled",value);
+            }
+            public Handle WeightSliderFemale => handle.GetElement("Weight slider - Female");
+            public bool EnableWeightSliderFemale
+            {
+                get => ElementValues.GetFlag(WeightSliderFemale, "", "Enabled");
+                set => ElementValues.SetFlag(WeightSliderFemale, "", "Enabled", value);
+            }
+            public DNAMData(Handle Parent) : base(Parent) {}
+
+        }
         public const string Signature = "ARMA";
         public override string signature => Signature;
-
-        public static string RaceKey => "RNAM - Race";
+        
         public string Race {
             get => handle.GetElement(RaceKey).GetValue();
             set => handle.SetValue(RaceKey, value);
         }
-
+        public Handle AdditionalRaces
+        {
+            get => handle.GetElement("Additional Races");
+        }
+        public void AddDefaultRaces() {
+            foreach (var item in new string[] {"00013740","00013741","00013742","00013743","00013744","00013745",
+                    "00013746","00013747","00013748","00013749","00067CD8","00088794","0008883A",
+                    "0008883C","0008883D","00088840","00088844","00088845","00088846","00088884",
+                    "000A82B9","000A82BA","0010760A" })
+            {
+                handle.AddArrayItem("Additional Races", "", item);
+            }
+        }
+        public DNAMData data;
         public BipedBodyTemplate bipedBodyTemplate;
         public ModelAlternateTextures MaleWorldModel;
         public ModelAlternateTextures FemaleWorldModel;
@@ -31,6 +71,7 @@ namespace TESV_EspEquipmentGenerator
             FemaleWorldModel = new ModelAlternateTextures(target, false);
             Male1stPerson = new ModelAlternateTextures(target, true,true);
             Female1stPerson = new ModelAlternateTextures(target, false, true);
+            data = new DNAMData(handle);
         }
         public void SetModelAssets(bool maleOrFemale,EquipmentAsset asset) {
             if (asset != null)
@@ -55,4 +96,5 @@ namespace TESV_EspEquipmentGenerator
         public override string GetDataInfo() => ToString()+'\n'+ FemaleWorldModel.ToString();
         public static string MakeArmorAddonName(string txt, string suffix = "") => txt.MakeValidEditorID().RemoveSuffixFromLast("AA").TrimEndNumber() + suffix + "AA";
     }
+    
 }

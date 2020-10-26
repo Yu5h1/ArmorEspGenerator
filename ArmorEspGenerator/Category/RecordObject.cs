@@ -18,6 +18,7 @@ namespace TESV_EspEquipmentGenerator
     public abstract class RecordObject : IRecordObject
     {
         public const string FullNameKEY = "FULL - Name";
+        public static string RaceKey => "RNAM - Race";
         public abstract string signature { get; }
         public Handle parent { get; protected set; }
         public virtual Handle handle { get; protected set; }
