@@ -31,6 +31,7 @@ namespace TESV_EspEquipmentGenerator
             try
             {
                 InitializeComponent();
+                GameMod_lb.ToolTip = "Left : Meshes\nMiddle : Game Foldr\nRight:Textures";
                 current = this;
                 if (settings.WindowWidth > 300) Width = settings.WindowWidth;
                 if (settings.WindowHeight > 100) Height = settings.WindowHeight;
@@ -129,19 +130,21 @@ namespace TESV_EspEquipmentGenerator
                 {
                     case Armor armor:
                         DataInfos_treeView.Items.Add(armor.handle.GetTreeNode(RecordObject.FullNameKEY,true));
+                        DataInfos_treeView.Items.Add(armor.handle.GetTreeNode(ArmorAddon.RaceKey));
                         DataInfos_treeView.Items.Add(armor.handle.GetTreeNode(Armatures.Signature));
                         DataInfos_treeView.Items.Add(ArmorUI.BipedBodyTemplateField(armor.bipedBodyTemplate));
                         DataInfos_treeView.AddWorldModelTreeNode(armor.MaleWorldModel);
                         DataInfos_treeView.AddWorldModelTreeNode(armor.FemaleWorldModel);
                         break;
                     case ArmorAddon armorAddon:
-                        //armorAddon.AdditionalRaces.GetElements().Select(d => d.GetValue().RemovePrefixTo(":").RemoveSuffixFromLast("]")).ToArray().ToContext().PromptInfo();
                         DataInfos_treeView.Items.Add(ArmorUI.BipedBodyTemplateField(armorAddon.bipedBodyTemplate));
                         DataInfos_treeView.Items.Add(armorAddon.handle.GetTreeNode(ArmorAddon.RaceKey));
                         DataInfos_treeView.AddWorldModelTreeNode(armorAddon.MaleWorldModel);
                         DataInfos_treeView.AddWorldModelTreeNode(armorAddon.FemaleWorldModel);
                         DataInfos_treeView.AddWorldModelTreeNode(armorAddon.Male1stPerson);
                         DataInfos_treeView.AddWorldModelTreeNode(armorAddon.Female1stPerson);
+                        DataInfos_treeView.Items.Add(armorAddon.handle.GetTreeNode(ArmorAddon.AdditionalRacesKey));
+                        DataInfos_treeView.Items.Add(armorAddon.handle.GetTreeNode(ArmorAddon.DNAMData.Signature));
                         break;
                     case TextureSet textureSet:
                         for (int i = 0; i < 8; i++)
@@ -219,6 +222,9 @@ namespace TESV_EspEquipmentGenerator
                             plugin.AddArmorByArmaturesFromArmorAddon(selectedArmorAddons);
                         }
                     };
+                    //treeItem.AddMenuItem("Test").Click += (s, e) => {
+                        //armorAddon.DuplicateByShapeDiffuse();
+                    //};
                     break;
                 case TextureSet textureSet:
                     treeItem.HandleDragDrop(false, files =>
@@ -236,7 +242,16 @@ namespace TESV_EspEquipmentGenerator
             }.SetTextBlockHeader(typeof(T).Name + "s");
             records.Added += item => CreateRecordTreeItem(root, item);
             root.AddMenuItem("New").Click += (s, e) => records.AddNewItem();
-            root.AddMenuItem("Clear").Click += (s, e) => root.Items.Clear();
+            root.AddMenuItem("Clear").Click += (s, e) =>
+            {
+                foreach (var node in RecordsTreeView.selectedNodes)
+                {
+                    if (node.Parent == RecordsTreeView) {
+                        node.Items.Clear();
+                        records.Clear();
+                    }
+                }
+            };
             foreach (var item in records) CreateRecordTreeItem(root, item);
 
             return root;

@@ -33,29 +33,40 @@ namespace TESV_EspEquipmentGenerator
         }
         public void PrepareHandle()
         {
-            if (handle == null) handle = parent.AddElement(signature);
+            if (handle == null) {
+                if (parent == null) (GetType().Name + " parent is null").PromptWarnning();
+                else handle = parent.AddElement(signature);
+            } 
         }
         public virtual void Delete() => handle.Delete();
     }
-    public abstract class RecordArrayObject<T> : List<T>,IRecordObject
+    public abstract class RecordArrays<T> : List<T>,IRecordObject
     {
         public virtual string signature { get; }
-        public Handle parent { get; protected set; } 
+        public virtual Handle parent { get; protected set; }
         public virtual Handle handle => parent.GetElement(signature);
 
         public string DisplayName => handle.GetDisplayName();
 
-        public static implicit operator bool(RecordArrayObject<T> obj) => obj != null;
-        public RecordArrayObject(Handle Parent) => parent = Parent;
+        public static implicit operator bool(RecordArrays<T> obj) => obj != null;
+        public RecordArrays(Handle Parent) => parent = Parent;
         public new void Add(T item)
         {
             if (handle == null) parent.AddElement(signature);
             base.Add(item);
         }
         public virtual void Delete() => handle.Delete();
-        public void PrepareHandle()
+        public virtual bool PrepareHandle()
         {
-            if (handle == null) parent.AddElement(signature);
+            if (handle == null)
+            {
+                if (parent == null) (GetType().Name + " parent is null").PromptWarnning();
+                else {
+                    parent.AddElement(signature);
+                    return true;
+                }
+            }
+            return false;
         }
     }
     public abstract class RecordElement : RecordObject
@@ -70,7 +81,7 @@ namespace TESV_EspEquipmentGenerator
     }
     public interface IRecordElement
     {
-       void Duplicate();
+       object Duplicate(string newEditorID = "");
     }
     public abstract class RecordElement<T> : RecordElement, IRecordElement where T : RecordElement<T>
     {
@@ -79,8 +90,10 @@ namespace TESV_EspEquipmentGenerator
         public RecordElement(PluginRecords<T> container, Handle target) : base(container.handle, target) {
             Container = container;
         }
-        public void Duplicate() => Container.Duplicate((T)this); 
-
-        public override void Delete() => Container.RemoveAt(Container.FindIndex( d=>d.Equals(this)));
+        public object Duplicate(string newEditorID = "") => Container.Duplicate((T)this, newEditorID);
+        public override void Delete() {
+            handle.Delete();
+            Container.Remove((T)this);
+        }
     }
 }

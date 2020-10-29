@@ -12,6 +12,7 @@ namespace TESV_EspEquipmentGenerator
     public partial class Plugin : RecordElement
     {
         public static Plugin current;
+        public List<Handle> defaultRaces => SkyrimESM.GetRecords("RACE",false).ToList();
 
         public static string GetLoadedGameName()
         {
@@ -85,9 +86,12 @@ namespace TESV_EspEquipmentGenerator
         public string Description { get => GetValue(@"File Header\SNAM"); set => SetValue(@"File Header\SNAM", value); }
 
         public Handle[] GetRecords(string recordSignature = "", bool includeOverrides = false) => Records.GetRecords(handle, recordSignature, includeOverrides);
+
         public PluginRecords<TextureSet> TextureSets;
         public PluginRecords<Armor> Armors;
         public PluginRecords<ArmorAddon> ArmorAddons;
+
+
         public bool Save() {
             if (IsFileNotLockedElsePrompt(FullPath))
             {
@@ -244,7 +248,7 @@ namespace TESV_EspEquipmentGenerator
         public FileHeader(Handle Parent) : base(Parent) {}
 
     }
-    public class PluginMasters : RecordArrayObject<Handle>
+    public class PluginMasters : RecordArrays<Handle>
     {
         public static string Signature => "Master Files";
         public override string signature => Signature;

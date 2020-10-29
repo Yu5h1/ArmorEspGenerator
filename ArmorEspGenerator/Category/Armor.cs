@@ -17,7 +17,6 @@ namespace TESV_EspEquipmentGenerator
         public ModelAlternateTextures MaleWorldModel;
         public ModelAlternateTextures FemaleWorldModel;
         public Armatures armatures;
-        public static string RaceKey => "RNAM - Race";
         public string Race
         {
             get => handle.GetElement(RaceKey).GetValue();
@@ -40,8 +39,12 @@ namespace TESV_EspEquipmentGenerator
             if (maleOrfemale) MaleWorldModel.Model = asset.ItemModel;
             else FemaleWorldModel.Model = asset.ItemModel;
         }
+        public void CopyAlternateTextureSets(ModelAlternateTextures male, ModelAlternateTextures female) {
+            MaleWorldModel.CopyAlternateTexturesFrom(male);
+            FemaleWorldModel.CopyAlternateTexturesFrom(female);
+        }
     }
-    public class Armatures : RecordArrayObject<Handle>
+    public class Armatures : RecordArrays<Handle>
     {
         public static string Signature => "Armature";
         public override string signature => Signature;

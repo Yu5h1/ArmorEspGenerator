@@ -73,7 +73,9 @@ namespace TESV_EspEquipmentGenerator
             result.SetEditorID(newEditorID);
             return result;
         }
-        public static void Delete(this Handle handle, string path = "") => Elements.RemoveElement(handle, path);
+        public static void Delete(this Handle handle, string path = "") {
+            if (handle != null) Elements.RemoveElement(handle, path);
+        } 
         public static bool CompareSignature<T>(this Handle handle) => handle.GetSignature() == SignatureUtil.GetSignature<T>();
         public static int Count(this Handle handle) => Elements.ElementCount(handle);
         public static string GetDisplayName(this Handle handle) => handle == null ? "Null" : ElementValues.DisplayName(handle);

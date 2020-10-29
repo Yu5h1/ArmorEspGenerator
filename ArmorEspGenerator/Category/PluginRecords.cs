@@ -6,7 +6,7 @@ using Yu5h1Tools.WPFExtension;
 
 namespace TESV_EspEquipmentGenerator
 {
-    public class PluginRecords<T> : RecordArrayObject<T> where T : RecordElement<T>
+    public class PluginRecords<T> : RecordArrays<T> where T : RecordElement<T>
     {
         public override string signature => SignatureUtil.GetSignature<T>();
         public Plugin plugin;
@@ -73,9 +73,11 @@ namespace TESV_EspEquipmentGenerator
             }
         }
         public new void Clear()
-        {
+        {            
             for (int i = Count-1; i >= 0 ; i--)
-                this[i].Delete();
+            {
+                RemoveAt(i);
+            }
             base.Clear();
         }
     }

@@ -23,14 +23,7 @@ namespace TESV_EspEquipmentGenerator
         {
             try
             {
-                var shapesTextures = NifUtil.GetShapesTextureInfos(filename);
-                foreach (var item in shapesTextures)
-                {
-                    item.Value.Switch(2,5);
-                    item.Value.Switch(4,5);
-                    item.Value.Switch(3,4);
-                }
-                foreach (var item in shapesTextures)
+                foreach (var item in NifUtil.GetShapesTextureInfos(filename).TransferToTextureSetOrder())
                 {
                     var textureSet = TextureSets.AddNewItem(item.Key);
                     textureSet.CopyTexturePath(item.Value);
@@ -44,33 +37,31 @@ namespace TESV_EspEquipmentGenerator
 
         public List<TextureSet> AddTextureSetsByDifuseAssets(string[] defaultTexturesPath, params string[] files)
         {
+            
             var results = new List<TextureSet>();
             foreach (var path in files)
             {
+                var pathinfo = new PathInfo(path);
                 if (!IsLocateAtGameAssetsFolder(path)) return null;
 
                 var DifusePath = TrimTexturesPath(path);
                 var textureSet = TextureSets.Find(d => d.Difuse.Equals(DifusePath, StringComparison.OrdinalIgnoreCase));
                 if (textureSet == null)
                 {
-                    textureSet = TextureSets.AddNewItem(Path.GetFileNameWithoutExtension(path));
+                    textureSet = TextureSets.AddNewItem(PathInfo.Replace(pathinfo.Name,"_D",""));
                     textureSet.Difuse = DifusePath;
                 }
                 if (defaultTexturesPath != null)
                     if (defaultTexturesPath.Length > 7)
                         textureSet.CopyTexturePath(defaultTexturesPath, 0);
-
-                if (textureSet) results.Add(textureSet);
-                else "Create New TextureSet Failed ! ".PromptWarnning();
+                if (textureSet) {
+                    textureSet.FindTexturesByDiffuse();
+                    results.Add(textureSet);
+                }else "Create New TextureSet Failed ! ".PromptWarnning();
             }
             return results;
         }
-        public void GenerateEspByFolder(string shapeName)
-        {
-
-        }
-        //public static string ItemModelTag = "go";//"go" "gnd";
-        public bool CheckIsItemModel(ref string key,params string[] tags) {
+        public bool CheckIsDisplayModel(ref string key,params string[] tags) {
             foreach (var tag in tags)
             {
                 if (key.EndsWith(tag))
@@ -97,7 +88,7 @@ namespace TESV_EspEquipmentGenerator
                     key = key.TrimPrefix("1stperson");
                     Is1stperson = true;
                 }
-                IsItemModel = CheckIsItemModel(ref key, "gnd", "go");
+                IsItemModel = CheckIsDisplayModel(ref key, "gnd", "go");
 
                 if (MaleOrFemale == null)
                 {
@@ -124,84 +115,121 @@ namespace TESV_EspEquipmentGenerator
                 else data.Model = path;
             }
         }
-        
+        public void GenerateArmorsBySpeculateFolders(string path) {
+        }
+
         public void GenerateArmorsByFolder(string folderPath)
         {
-            PathInfo folderPathInfo = new PathInfo(folderPath);
-            var datas = new Dictionary<string, EquipmentAssets>();
-            string  MaleFolder = folderPathInfo.FindAny("m", "male"),
-                    FemaleFolder = folderPathInfo.FindAny("f", "female");
-
-            if (folderPathInfo.FindAny("f", "female", "m", "male") == "")
+            using (var p = new WaitCursorProcess())
             {
-                GetSortedNifsFromFolder(datas, folderPath);
-            }
-            else
-            {
-                GetSortedNifsFromFolder(datas, MaleFolder, true);
-                GetSortedNifsFromFolder(datas, FemaleFolder, false);
-            }
-            Dictionary<string, Armor> newArmors = new Dictionary<string, Armor>();
-            foreach (var item in datas)
-            {
-                var keys = item.Key.Split('_').ToList();
-                string key = keys[0];
-                //(item.Key + "::" +key + "\n" + item.Value.male.ToString() + "\n" + item.Value.female.ToString()).PromptInfo();
-                var editorID = folderPathInfo.Name.Capitalize() + item.Key.Capitalize();
-                ArmorAddon newArmorAddon = ArmorAddons.AddNewItem(editorID + "AA");
-                newArmorAddon.SetModelAssets(true, item.Value.male);
-                newArmorAddon.SetModelAssets(false, item.Value.female);
-                newArmorAddon.data.malePriority = 5;
-                newArmorAddon.data.femalePriority = 5;
-                newArmorAddon.data.EnableWeightSliderMale = true;
-                newArmorAddon.data.EnableWeightSliderFemale = true;
-                newArmorAddon.Race = "00000019";
-                newArmorAddon.AddDefaultRaces();
-                //if (keys.Count > 0) {
-                //    if (keys.Exists(d => d.Equals("arg", StringComparison.OrdinalIgnoreCase)))
+                PathInfo folderPathInfo = new PathInfo(folderPath);
+                string NameSet = folderPathInfo.Name.Capitalize();
+                var datas = new Dictionary<string, EquipmentAssets>();
+                string  MaleFolder = folderPathInfo.FindAny("m", "male"),
+                        FemaleFolder = folderPathInfo.FindAny("f", "female");
 
-                //}
-
-                if (!newArmors.TryGetValue(key, out Armor newArmor))
+                if (folderPathInfo.FindAny("f", "female", "m", "male") == "")
                 {
-                    newArmor = newArmor = Armors.AddNewItem(editorID + "AO");
-                    newArmor.bipedBodyTemplate.FirstPersonFlags = newArmorAddon.bipedBodyTemplate.FirstPersonFlags;
-                    newArmor.bipedBodyTemplate.ArmorType = newArmorAddon.bipedBodyTemplate.ArmorType;
-                    newArmor.FULLName = folderPathInfo.Name.Capitalize() + " " + item.Key.Capitalize();
-                    newArmor.Race = "00000019";
-                    newArmors.Add(key, newArmor);
+                    GetSortedNifsFromFolder(datas, folderPath);
                 }
-                newArmor.SetModelAssets(true, item.Value.male);
-                newArmor.SetModelAssets(false, item.Value.female);
-                newArmor.armatures.Add(newArmorAddon);
-            }
-            if (ShareGNDIfEmpty) {
-                foreach (var newArmor in newArmors)
+                else
                 {
-                    if (newArmor.Value.MaleWorldModel.Model == "" && newArmor.Value.FemaleWorldModel.Model == "")
-                        continue;
-                    if (newArmor.Value.FemaleWorldModel.Model == "" && newArmor.Value.MaleWorldModel.Model != "")
-                        newArmor.Value.FemaleWorldModel.Model = newArmor.Value.MaleWorldModel.Model;
-                    if (newArmor.Value.MaleWorldModel.Model == "" && newArmor.Value.FemaleWorldModel.Model != "")
-                        newArmor.Value.MaleWorldModel.Model = newArmor.Value.FemaleWorldModel.Model;
+                    GetSortedNifsFromFolder(datas, MaleFolder, true);
+                    GetSortedNifsFromFolder(datas, FemaleFolder, false);
                 }
+
+                Dictionary<string, Armor> newArmors = new Dictionary<string, Armor>();
+                List<ArmorAddon> newArmorAddons = new List<ArmorAddon>();
+                Dictionary<string, Armor> AlternateTexturesNewArmors = new Dictionary<string, Armor>();
+                Dictionary<string, List<ArmorAddon>> AlternateTexturesArmorAddonSets = new Dictionary<string, List<ArmorAddon>>();
+                foreach (var item in datas)
+                {
+                    var keys = item.Key.Split('_').ToList();
+                    string key = keys[0];
+                    //(item.Key + "::" +key + "\n" + item.Value.male.ToString() + "\n" + item.Value.female.ToString()).PromptInfo();
+                    var editorID = NameSet + item.Key.Capitalize();
+                    ArmorAddon newArmorAddon = ArmorAddons.AddNewItem(editorID + "AA");
+                    newArmorAddons.Add(newArmorAddon);
+                    newArmorAddon.SetModelAssets(item.Value.male,newArmorAddon.MaleWorldModel, newArmorAddon.Male1stPerson);
+                    newArmorAddon.SetModelAssets(item.Value.female, newArmorAddon.FemaleWorldModel, newArmorAddon.Female1stPerson);
+                    newArmorAddon.DNAM_Data.malePriority = 5;
+                    newArmorAddon.DNAM_Data.femalePriority = 5;
+                    newArmorAddon.DNAM_Data.EnableWeightSliderMale = item.Value.male.EnableWeightSlider;
+                    newArmorAddon.DNAM_Data.EnableWeightSliderFemale = item.Value.female.EnableWeightSlider;
+
+                    bool useDefaultRaces = true;
+                    if (keys.Count > 1)
+                    {
+                        var findRaces = defaultRaces.FindAll(d => d.GetEditorID().StartsWith(keys[1], StringComparison.OrdinalIgnoreCase));
+                        if (findRaces != null)
+                        {
+                            newArmorAddon.Race = findRaces.Find(d=>!d.GetEditorID().ToLower().Contains("vampire")).GetFormID();
+                            useDefaultRaces = false;
+                        }
+                    }
+
+                    if (useDefaultRaces) {
+                        newArmorAddon.Race = "00000019";
+                        newArmorAddon.AddDefaultRaces();
+                    }
+                    if (!newArmors.TryGetValue(key, out Armor newArmor))
+                    {
+                        newArmor = Armors.AddNewItem(editorID + "AO");
+                        newArmor.bipedBodyTemplate.FirstPersonFlags = newArmorAddon.bipedBodyTemplate.FirstPersonFlags;
+                        newArmor.bipedBodyTemplate.ArmorType = newArmorAddon.bipedBodyTemplate.ArmorType;
+                        newArmor.FULLName = NameSet + " " + item.Key.Capitalize();
+                        newArmor.Race = newArmorAddon.Race;
+                        newArmors.Add(key, newArmor);
+                    }
+                    newArmor.SetModelAssets(true, item.Value.male);
+                    newArmor.SetModelAssets(false, item.Value.female);
+                    newArmor.armatures.Add(newArmorAddon);
+
+                    var alternateTexturesArmorAddons = newArmorAddon.DuplicateByShapeDiffuse(0, out string[] ATtags);
+                    for (int i = 0; i < alternateTexturesArmorAddons.Count; i++)
+                    {
+                        var ataaddon = alternateTexturesArmorAddons[i];
+                        if (!AlternateTexturesArmorAddonSets.TryGetValue(ATtags[i], out List<ArmorAddon> ATaddons)) {
+                            ATaddons = new List<ArmorAddon>();
+                            AlternateTexturesArmorAddonSets.Add(ATtags[i], ATaddons);
+                        }
+                        ATaddons.Add(ataaddon);
+                        var ATKey = key + ATtags[i];
+                        if (!AlternateTexturesNewArmors.TryGetValue(ATKey, out Armor alternateTexturesnewArmor))
+                        {
+                            alternateTexturesnewArmor = (Armor)newArmor.Duplicate(editorID + ATtags[i] + "AO");
+                            alternateTexturesnewArmor.armatures.Clear();
+                            alternateTexturesnewArmor.FULLName = string.Join(" ", NameSet, item.Key.Capitalize(), ATtags[i]);
+                            alternateTexturesnewArmor.CopyAlternateTextureSets(ataaddon.MaleWorldModel, ataaddon.FemaleWorldModel);
+                            AlternateTexturesNewArmors.Add(ATKey, alternateTexturesnewArmor);
+                        }
+                        alternateTexturesnewArmor.armatures.Add(ataaddon);
+                    }
+                }
+                if (ShareGNDIfEmpty) {
+                    foreach (var newArmor in newArmors)
+                    {
+                        if (newArmor.Value.MaleWorldModel.Model == "" && newArmor.Value.FemaleWorldModel.Model == "")
+                            continue;
+                        if (newArmor.Value.FemaleWorldModel.Model == "" && newArmor.Value.MaleWorldModel.Model != "")
+                            newArmor.Value.FemaleWorldModel.Model = newArmor.Value.MaleWorldModel.Model;
+                        if (newArmor.Value.MaleWorldModel.Model == "" && newArmor.Value.FemaleWorldModel.Model != "")
+                            newArmor.Value.MaleWorldModel.Model = newArmor.Value.FemaleWorldModel.Model;
+                    }
+                }
+                var armorAll = AddArmorByArmaturesFromArmorAddons(NameSet + "AllAA", newArmorAddons);
+                armorAll.FULLName = NameSet + " All";
+                armorAll.Race = "00000019";
+     
+                foreach (var item in AlternateTexturesArmorAddonSets)
+                {
+                    if (item.Value==null || item.Value.Count == 0 || item.Value.Count == 1) continue;
+                    var ATArmorAll = AddArmorByArmaturesFromArmorAddons(NameSet + item.Key + "AllAA", item.Value);
+                    ATArmorAll.FULLName = string.Join(" ",NameSet , item.Key , "All") ;
+                    ATArmorAll.Race = "00000019";
+                }
+                p.succeed = true;
             }
-            //var nifFiles = Directory.GetFiles(FolderPath, "*_1.nif", SearchOption.AllDirectories).
-            //                                                    Where(d => !d.Contains("1stperson"));
-            //List<ArmorAddon> newArmorAddons = new List<ArmorAddon>();
-            //List<Armor> newArmorArmors = new List<Armor>();
-            //foreach (var nif in nifFiles)
-            //{
-            //    var nifPathInfo = new PathInfo(nif);
-            //    string name = PathInfo.GetName(nif).RemoveSuffixFrom("_1");
-            //    ArmorAddon newArmorAddon = AddArmorAddonByNifFile(nif, folderPathInfo.Name);
-            //    if (!newArmorAddons.Contains(newArmorAddon))
-            //    {
-            //        Armor newArmor = AddArmorByArmaturesFromArmorAddon(newArmorAddon);
-            //        newArmorArmors.Add(newArmor);
-            //        newArmorAddons.Add(newArmorAddon);
-            //    }
-            //}
         }
 
         public ArmorAddon AddArmorAddonByNifFile(string nifPath,string Nameprfix = "", bool CheckExists = true)
@@ -270,7 +298,9 @@ namespace TESV_EspEquipmentGenerator
 
         public Armor AddArmorByArmaturesFromArmorAddon(params ArmorAddon[] armorAddons)
                                     => AddArmorByArmaturesFromArmorAddons(armorAddons);
-        public Armor AddArmorByArmaturesFromArmorAddons(IEnumerable<ArmorAddon> armorAddons) {
+        public Armor AddArmorByArmaturesFromArmorAddons(IEnumerable<ArmorAddon> armorAddons)
+                                            => AddArmorByArmaturesFromArmorAddons("", armorAddons);
+        public Armor AddArmorByArmaturesFromArmorAddons(string newArmorID, IEnumerable<ArmorAddon> armorAddons) {
 
             foreach (var AO in Armors)
             {
@@ -292,7 +322,7 @@ namespace TESV_EspEquipmentGenerator
                 }
             }
             var firstArmorAddon = armorAddons.First();
-            var newArmorID = firstArmorAddon.EditorID.RemoveSuffixFromLast("AA")+"AO";
+            newArmorID = newArmorID == "" ? firstArmorAddon.EditorID.RemoveSuffixFromLast("AA")+"AO" : newArmorID;
             var newArmor = Armors.AddNewItem(newArmorID);
             var flags = BipedBodyTemplate.GetPartitionFlags();
             foreach (var item in armorAddons) {
@@ -312,35 +342,12 @@ namespace TESV_EspEquipmentGenerator
             }
             return newArmor;
         }
-        public void GenerateArmorsBySimilarDiffuses(ArmorAddon defaultArmorAddon)
+        public List<TextureSet> AddTextureSetsBySimilarDiffuses(string fileName ,int shapeIndex)
         {
-            bool MaleOfFemale = false;
-            var worldModel = defaultArmorAddon.GetWorldModel(MaleOfFemale);
-
-            for (int shapeIndex = 0; shapeIndex < worldModel.ShapesNames.Count; shapeIndex++)
-            {
-                var shapeName = worldModel.ShapesNames[shapeIndex];
-                if (shapeName.MatchAny("UUNP", "Body", "Hands", "Foot", "BaseShape")) continue;
-
-                
-                //TextureSet.FindSimilarDiffuseTextures();
-                //var textureSets = worldModel.AddTextsetsBySimilarDiffuses(targetShapeIndex);
-                //foreach (var textureset in textureSets)
-                //{
-                //    var difuseSuffix = textureset.Difuse.NameWithOutExtension().RemovePrefixTo("_").MakeValidEditorID().FirstCharToUpper();
-                //    var newArmorAddon = plugin.ArmorAddons.Duplicate(targetAA, ArmorAddon.MakeArmorAddonName(targetAA.EditorID, difuseSuffix));
-                //    var newWorldModel = newArmorAddon.GetWorldModel(MaleOfFemale);
-                //    newWorldModel.alternateTextures.Clear();
-                //    newWorldModel.alternateTextures.Set(worldModel.ShapesNames[targetShapeIndex], textureset);
-                //    var newArmor = plugin.Armors.Duplicate(this, EditorID.TrimEndNumber() + difuseSuffix);
-                //    newArmor.FULLName = FULLName.RemoveSuffixFrom("_", " ").TrimEndNumber() + " " + difuseSuffix;
-                //    newArmor.armatures.Clear();
-                //    newArmor.armatures.Add(newArmorAddon);
-                //}
-            }
-
+            var shapeTextures = NifUtil.GetShapeTexturesArrayByIndex(fileName,shapeIndex);
+            return AddTextureSetsByDifuseAssets(shapeTextures,
+                TextureSet.FindSimilarDiffuseTextures(Plugin.GetTexturesPath(shapeTextures[0])));
         }
-
 
         public static List<int> GetBodyPartsIndicesFromNif(string path) {
             List<int> bodyPartsIndices = new List<int>();

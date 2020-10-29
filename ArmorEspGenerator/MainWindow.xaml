@@ -16,7 +16,7 @@
         <ComboBox x:Name="GameMode_cb" Margin="59,11,2.5,0" Height="22" VerticalAlignment="Top" Padding="4,3,9,3"/>
         <Label x:Name="GameMod_lb" Content="Game :" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Height="27" Width="49" MouseDown="GameMod_lb_MouseDown" ToolTip=""/>
 
-        <CustomControls:MultiSelectTreeView x:Name="RecordsTreeView" Margin="10,38,2.535,31.96" AllowDeleteNode="True" KeyDown="RecordsTreeView_KeyDown"/>
+        <CustomControls:MultiSelectTreeView x:Name="RecordsTreeView" Margin="10,38,2.535,31.96" AllowDeleteNode="True" KeyDown="RecordsTreeView_KeyDown" ItemContainerStyle="{Binding Mode=OneWay, Source={StaticResource StretchTreeViewItemStyle}}"/>
         <CustomControls:MultiSelectTreeView x:Name="DataInfos_treeView" Grid.Column="2" Margin="2.564,38,9.822,31.96" HorizontalContentAlignment="Stretch" ItemContainerStyle="{Binding Mode=OneWay, Source={StaticResource StretchTreeViewItemStyle}}">
 
         </CustomControls:MultiSelectTreeView>

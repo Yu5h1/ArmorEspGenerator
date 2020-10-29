@@ -80,6 +80,7 @@
     <Compile Include="Category\Plugin.cs" />
     <Compile Include="Category\PluginRecords.cs" />
     <Compile Include="Category\PluginUtil.cs" />
+    <Compile Include="Category\Race.cs" />
     <Compile Include="Category\RecordHandle.cs" />
     <Compile Include="Category\TextureSet.cs" />
     <Compile Include="Category\ModelAlternateTextures.cs" />

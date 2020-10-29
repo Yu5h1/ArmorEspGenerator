@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-//using System.Linq;
 using System.IO;
 using System.Threading.Tasks;
 using XeLib.API;
 using XeLib;
 using Yu5h1Tools.WPFExtension;
+using System.Linq;
 
 namespace TESV_EspEquipmentGenerator
 {
@@ -46,6 +46,7 @@ namespace TESV_EspEquipmentGenerator
             get => handle.GetElement(RaceKey).GetValue();
             set => handle.SetValue(RaceKey, value);
         }
+        public const string AdditionalRacesKey = "Additional Races";
         public Handle AdditionalRaces
         {
             get => handle.GetElement("Additional Races");
@@ -59,7 +60,7 @@ namespace TESV_EspEquipmentGenerator
                 handle.AddArrayItem("Additional Races", "", item);
             }
         }
-        public DNAMData data;
+        public DNAMData DNAM_Data;
         public BipedBodyTemplate bipedBodyTemplate;
         public ModelAlternateTextures MaleWorldModel;
         public ModelAlternateTextures FemaleWorldModel;
@@ -71,13 +72,11 @@ namespace TESV_EspEquipmentGenerator
             FemaleWorldModel = new ModelAlternateTextures(target, false);
             Male1stPerson = new ModelAlternateTextures(target, true,true);
             Female1stPerson = new ModelAlternateTextures(target, false, true);
-            data = new DNAMData(handle);
+            DNAM_Data = new DNAMData(handle);
         }
-        public void SetModelAssets(bool maleOrFemale,EquipmentAsset asset) {
+        public void SetModelAssets(EquipmentAsset asset,ModelAlternateTextures worldModel, ModelAlternateTextures _1st) {
             if (asset != null)
             {
-                var worldModel = maleOrFemale ? MaleWorldModel : FemaleWorldModel;
-                var _1st = maleOrFemale ? Male1stPerson : Female1stPerson;
                 if (asset.Model != "") {
                     worldModel.Model = asset.Model;
                     bipedBodyTemplate.SetPartitionsFromNif(asset.Model);
@@ -95,6 +94,49 @@ namespace TESV_EspEquipmentGenerator
         public ModelAlternateTextures GetWorldModel(bool MaleOrFemale) => MaleOrFemale ? MaleWorldModel : FemaleWorldModel;
         public override string GetDataInfo() => ToString()+'\n'+ FemaleWorldModel.ToString();
         public static string MakeArmorAddonName(string txt, string suffix = "") => txt.MakeValidEditorID().RemoveSuffixFromLast("AA").TrimEndNumber() + suffix + "AA";
+
+        public List<ArmorAddon> DuplicateByShapeDiffuse(int shapeIndex ,out string[] tags) {
+            var results = new List<ArmorAddon>();
+
+            var femaleModelPath = Plugin.GetMeshesPath(FemaleWorldModel.Model);
+            var maleModelPath = Plugin.GetMeshesPath(MaleWorldModel.Model);
+            var defaultFemaleTextureSet = NifUtil.GetShapeTexturesArrayByIndex(femaleModelPath,shapeIndex).ShapeTextureOrderToTextureSetOrder();
+            var defaultMaleTextureSet = NifUtil.GetShapeTexturesArrayByIndex(maleModelPath, shapeIndex).ShapeTextureOrderToTextureSetOrder();
+
+            var ShareTXSTshapeIndicesF = NifUtil.GetShareTexturesShapesIndices(femaleModelPath, shapeIndex);
+            var ShareTXSTshapeIndicesM = NifUtil.GetShareTexturesShapesIndices(maleModelPath, shapeIndex);
+
+            var femaleTextures = TextureSet.FindSimilarDiffuseTextures(Plugin.GetTexturesPath(defaultFemaleTextureSet[0]), out string[] femaleDiffuseTags);
+            var maleTextures = TextureSet.FindSimilarDiffuseTextures(Plugin.GetTexturesPath(defaultMaleTextureSet[0]), out string[] maleDiffuseTags);
+
+            var femaleTextureSets = plugin.AddTextureSetsByDifuseAssets(defaultFemaleTextureSet, femaleTextures);
+            var maleTextureSets = plugin.AddTextureSetsByDifuseAssets(defaultMaleTextureSet, maleTextures);
+
+            tags = femaleDiffuseTags.Length > maleDiffuseTags.Length ? femaleDiffuseTags : maleDiffuseTags;
+
+            for (int i = 0; i < tags.Length; i++)
+            {
+                var newAA = Duplicate(EditorID.Insert(EditorID.LastIndexOf("AA"), tags[i])) as ArmorAddon;
+                if (i < femaleTextureSets.Count)
+                {
+                    foreach (var index in ShareTXSTshapeIndicesF)
+                    {
+                        newAA.FemaleWorldModel.alternateTextures.
+                                Set(newAA.FemaleWorldModel.ShapesNames[index], femaleTextureSets[i]);
+                    }
+                }
+                if (i < maleTextureSets.Count)
+                {
+                    foreach (var index in ShareTXSTshapeIndicesM)
+                    {
+                        newAA.MaleWorldModel.alternateTextures.
+                            Set(newAA.MaleWorldModel.ShapesNames[index], maleTextureSets[i]);
+                    }
+                }
+                results.Add(newAA);
+            }
+            return results;
+        }
     }
     
 }

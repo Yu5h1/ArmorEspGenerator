@@ -52,29 +52,44 @@ namespace TESV_EspEquipmentGenerator
             foreach (var index in ignoreIndices) indices.RemoveAt(indices.FindIndex(index));
             foreach (var index in indices) this[index] = textures[index];
         }
-        public static string[] FindSimilarDiffusesFromNif(string nifFile)
+        public static string[] FindSimilarDiffuseTextures(string difusefile)
+                                                    => FindSimilarDiffuseTextures(difusefile, out _);
+        public static string[] FindSimilarDiffuseTextures(string difusefile,out string[] tags)
         {
-            var result = new string[0];
-            var shapeNames = NifUtil.GetShapeNames(nifFile);
-            List<string> diffuses = new List<string>();
-            foreach (var item in shapeNames)
+            var results = new string[0];
+            tags = new string[0];
+            if (File.Exists(difusefile))
             {
-                //nifFile.get
+                string tag = Path.GetFileNameWithoutExtension(difusefile).RemoveSuffixFrom("_");
+                results = Directory.GetFiles(   Path.GetDirectoryName(difusefile), tag + "*.dds").
+                                                Where( d => d.Contains("_D") &&
+                                                !string.Equals(d, difusefile,
+                                                StringComparison.OrdinalIgnoreCase)).
+                                                ToArray();
+                tags = new string[results.Length];
+                for (int i = 0; i < results.Length; i++)
+                {
+                    tags[i] = Path.GetFileNameWithoutExtension(results[i]).Remove(0,tag.Length);
+                    tags[i] = PathInfo.Replace(tags[i],"_D","");
+                }
             }
-
-            return result;
-        }
-        public static string[] FindSimilarDiffuseTextures(string difuse)
-        {
-            var result = new string[0];
-            if (File.Exists(difuse))
-            {
-                string tag = Path.GetFileNameWithoutExtension(difuse).RemoveSuffixFrom("_");
-                result = Directory.GetFiles(Path.GetDirectoryName(difuse), tag + "*.dds").Where(d => !d.Contains("_n", "_s") && !string.Equals(d, difuse, StringComparison.OrdinalIgnoreCase)).ToArray();
-            }
-            return result;
+            return results;
         }
         public string[] ToArray() => texturesRGBA.ToArray();
+
+        string SpeculateTextureAsset(PathInfo diffusePathInfo,string value,string Key)
+        {
+            var predictPath = diffusePathInfo.ChangeName(PathInfo.Replace(diffusePathInfo.Name, "_D", "_"+ Key));
+            if (File.Exists(predictPath)) value = predictPath;
+            return value;
+        }
+        public void FindTexturesByDiffuse() {
+            var diffusePathInfo = new PathInfo(Plugin.GetTexturesPath(Difuse));
+            Normal = SpeculateTextureAsset(diffusePathInfo,Normal, "N");
+            Specular = SpeculateTextureAsset(diffusePathInfo, Specular, "S");
+            Environment = SpeculateTextureAsset(diffusePathInfo, Environment, "E");
+            EnvironmentMask = SpeculateTextureAsset(diffusePathInfo, EnvironmentMask, "EM");
+        }
     }
     public class TexturesRGBA : RecordObject
     {

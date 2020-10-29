@@ -19,8 +19,9 @@ namespace TESV_EspEquipmentGenerator
         }
         protected override void OnStartup(StartupEventArgs e)
         {
-            //string path = @"G:\Hentai\The Elder Scrolls\TESV\Data\meshes\test\TestF_1.nif";
-            //var r = NifUtil.GetShapesTextureInfos(path);
+            //string path = @"G:\Hentai\The Elder Scrolls\TESV\Data\Meshes\test\female\BellaBra_1.nif";
+            //NifUtil.GetShapeTexturesByIndex(path, 0).PromptInfo();
+            ////var r = NifUtil.GetShapesTextureInfos(path);
             //Shutdown();
             //return;
 

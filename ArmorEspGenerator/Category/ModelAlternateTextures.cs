@@ -36,14 +36,6 @@ namespace TESV_EspEquipmentGenerator
         public AlternateTextures alternateTextures;
 
         public string FullModelPath => Model == "" ? "" : Plugin.GetMeshesPath(Model);
-        public string[] GetShapeTextures(int shapeIndex) => NifUtil.GetShapeTextures(FullModelPath, ShapesNames[shapeIndex]).GetLines();
-
-        public List<TextureSet> AddTextsetsBySimilarDiffuses(Plugin plugin, int shapeIndex)
-        {
-            var shapeTextures = GetShapeTextures(shapeIndex);
-            return plugin.AddTextureSetsByDifuseAssets(shapeTextures,
-                TextureSet.FindSimilarDiffuseTextures(Plugin.GetTexturesPath(shapeTextures[0])));
-        }
         void UpdateShapesNames()
         {
             ShapesNames.Clear();
@@ -53,8 +45,6 @@ namespace TESV_EspEquipmentGenerator
             if (File.Exists(fullMeshPath)) shapesPathes = NifUtil.GetShapeNames(fullMeshPath);
             ShapesNames = new List<string>(shapesPathes);
         }
-
-
         public ModelAlternateTextures(Handle parent, bool maleOrfemale,bool isFirstPerson = false) : 
                      base(parent, parent.GetElement(Signature(maleOrfemale, isFirstPerson)))
         {
@@ -62,6 +52,15 @@ namespace TESV_EspEquipmentGenerator
             IsFirstPerson = isFirstPerson;
             UpdateShapesNames();
             alternateTextures = new AlternateTextures(this);
+        }
+        public void CopyAlternateTexturesFrom(ModelAlternateTextures data) {
+            if (ShapesNames.Count == 0 || Model == "" || data == null || data == this) return;
+            alternateTextures.Clear();
+            foreach (var item in data.alternateTextures)
+            {
+                int shapeindex = ShapesNames.IndexOf(item.ShapeName);
+                if (shapeindex >= 0) alternateTextures.Set(item);
+            }
         }
         public override string ToString() => Model + '\n' + alternateTextures.ToString();
     }

@@ -6,32 +6,38 @@ using XeLib.API;
 
 namespace TESV_EspEquipmentGenerator
 {
-    public class AlternateTextures : RecordArrayObject<AlternateTexture>
+    public class AlternateTextures : RecordArrays<AlternateTexture>
     {
-        public override string signature => worldModel.alternateTexturesKey;
-
-        public ModelAlternateTextures worldModel { get; private set; }
-        public List<string> ShapesNames => worldModel.ShapesNames;
+        public override string signature => Container.alternateTexturesKey;
+        public ModelAlternateTextures Container { get; private set; }
+        public List<string> ShapesNames => Container.ShapesNames;
         public List<Handle> AlternateTexturesHandles => handle.GetArrayItems("Alternate Texture").ToList();
-        public AlternateTextures(ModelAlternateTextures worldModel) : base(worldModel.handle)
+        public AlternateTextures(ModelAlternateTextures container) : base(container.handle)
         {
-            this.worldModel = worldModel;
+            Container = container;
             foreach (var item in AlternateTexturesHandles) Add(new AlternateTexture(this, item));
             //Sort((a, b) => a.ShapeIndex.CompareTo(b.ShapeIndex));
         }
-        public void Set(string shapeName, TextureSet textureSet) => Set(shapeName, textureSet.handle);
-
-        public void Set(string shapeName, Handle textureSet)
+        public override bool PrepareHandle()
         {
-            
-            if (handle == null) parent.AddElement(signature);
+            if (Container.handle == null) Container.PrepareHandle();
+            parent = Container.handle;
+            base.PrepareHandle();
+            return true;
+        }
+        public void Set(AlternateTexture data) => Set(data.ShapeName, data.NewTexture);
+        public void Set(string shapeName, TextureSet textureSet) => Set(shapeName, textureSet.handle);
+        public void Set(string shapeName, Handle textureSet) => Set(shapeName, textureSet.GetFormID());
+        public void Set(string shapeName, string textureSetID)
+        {
+            if (!ShapesNames.Exists(d => d.Equals(shapeName, System.StringComparison.OrdinalIgnoreCase))) return;
+            PrepareHandle();
             var element = Find(a => a.ShapeName == shapeName);
             if (element == null)
             {
-                Add(new AlternateTexture(this, handle.AddArrayItem(), shapeName, textureSet));
+                Add(new AlternateTexture(this, handle.AddArrayItem(), shapeName, textureSetID));
             }
-            else element.NewTexture = textureSet.GetFormID();
-            //Sort();
+            else element.NewTexture = textureSetID;
         }
         //public new void Sort()
         //{
@@ -97,14 +103,19 @@ namespace TESV_EspEquipmentGenerator
         public override string signature => Signature;
         public AlternateTextures container { get; private set; }
         public List<string> ShapesNames => container.ShapesNames;
-        public AlternateTexture(AlternateTextures alternateTextures, Handle target, string shapeName = "", Handle textureSet = null) :
-            base(alternateTextures.handle, target)
-
+        public AlternateTexture(AlternateTextures alternateTextures, Handle target, string shapeName = "", string textureSetID = "") :
+                                                            base(alternateTextures.handle, target)
         {
             container = alternateTextures;
             if (shapeName != "") ShapeName = shapeName;
-            if (textureSet != null) NewTexture = textureSet.GetRecordHeaderFormID();
+            if (textureSetID != "") NewTexture = textureSetID;
         }
+        public AlternateTexture(    AlternateTextures alternateTextures, Handle target,
+                                    string shapeName, Handle textureSet) :
+                                  this(alternateTextures, target, textureSet.GetFormID())
+        {}
+        
+
         public string ShapeName
         {
             get => handle.GetValue("3D Name");
