@@ -11,6 +11,12 @@ namespace TESV_EspEquipmentGenerator
 {
     public partial class Plugin : RecordElement
     {
+        public static Handle BaseHandle
+        {
+            get {
+                return Handle.BaseHandle;
+            } 
+        }
         public static Plugin current;
         public List<Handle> defaultRaces => SkyrimESM.GetRecords("RACE",false).ToList();
 
@@ -41,22 +47,20 @@ namespace TESV_EspEquipmentGenerator
         public static string GetTempName(string name) => name.ToLower().Replace(".esp", "_temp.esp");
         public static string GetTempFullPath(string name) => GetPluginFullPath(GetTempName(name));
 
-        public FileHeader fileHeader;
-        public PluginMasters pluginMasters;
+        public FileHeader fileHeader;        
 
         void Init(string pluginName) {
             PluginName = pluginName;
             TextureSets = new PluginRecords<TextureSet>(this, TextureSet.Create);
             ArmorAddons = new PluginRecords<ArmorAddon>(this, ArmorAddon.Create);
             Armors = new PluginRecords<Armor>(this, Armor.Create);
-            fileHeader = new FileHeader(handle);
-            pluginMasters = new PluginMasters(fileHeader);
+            fileHeader = new FileHeader(handle);            
         }
 
-        public Plugin(string pluginName, params string[] masterfiles) : base(Handle.BaseHandle, Handle.BaseHandle.AddElement(pluginName))
+        public Plugin(string pluginName, params string[] masterfiles) : base(BaseHandle, BaseHandle.AddElement(pluginName))
         {
             Init(pluginName);
-            pluginMasters.Add(masterfiles);
+            fileHeader.masters.Add(masterfiles);
         }
 
         Plugin(Handle target, string pluginName) : base(Handle.BaseHandle,target) {
@@ -64,7 +68,7 @@ namespace TESV_EspEquipmentGenerator
         }
         
 
-        public static Plugin Load(Setup.GameMode gameMode, string pluginName, bool AsTemp = false)
+        public static Plugin Load(string pluginName, bool AsTemp = false)
         {
             string espName = pluginName;
             var fullPluginPath = GetPluginFullPath(pluginName);
@@ -76,7 +80,7 @@ namespace TESV_EspEquipmentGenerator
                 if (IsFileNotLockedElsePrompt(tempPath))
                     File.Copy(fullPluginPath, tempPath, true);
             }
-            if (LoadPlugins(gameMode, espName)) {
+            if (LoadPlugins( espName)) {
                 current = new Plugin(Elements.GetElement(Handle.BaseHandle, espName), pluginName);
                 return current;
             }else return null;
@@ -210,7 +214,7 @@ namespace TESV_EspEquipmentGenerator
             }
             return true;
         }
-        public static bool LoadPlugins(Setup.GameMode gameMode, params string[] PluginsList)
+        public static bool LoadPlugins(params string[] PluginsList)
         {
             var missingMasters = GetMissingMastersInfo(PluginsList);
             if (missingMasters.Length > 0)
@@ -232,12 +236,30 @@ namespace TESV_EspEquipmentGenerator
             Messages.ClearMessages();
             return true;
         }
-        public static bool CreateNewPlugin(string pluginName, params string[] masterfiles) {
-            if (File.Exists(GetPluginFullPath(pluginName))) {
-                "Plugin already exists".PromptWarnning();
+        public static bool CreateNewPlugin(
+            Setup.GameMode gameMod,string pluginName,bool overwrite,Action<Plugin> workflow, params string[] masterfiles) {
+
+            Meta.Initialize();
+            Setup.SetGameMode(gameMod);
+            var fullPathInfo = new PathInfo(Setup.GetGamePath(gameMod) + @"\Data\" + pluginName);
+            if (IsFileLockedPrompt(fullPathInfo)) return false;
+            
+            if (File.Exists(fullPathInfo) && !overwrite) {
+                (fullPathInfo + " already exists ! ").PromptWarnning();
                 return false;
             }
-            var newPlugin = new Plugin(pluginName, masterfiles);
+            Setup.LoadPlugins(masterfiles.Join("\n"));
+            var state = Setup.LoaderState.IsInactive;
+            while (state != Setup.LoaderState.IsDone && state != Setup.LoaderState.HasError) state = Setup.GetLoaderStatus();
+            Messages.ClearMessages();
+
+            if (File.Exists(fullPathInfo)) File.Delete(fullPathInfo);
+
+            var pluginFileHandle = Files.AddFile(pluginName);
+            var newPlugin = new Plugin(pluginName,masterfiles);
+            workflow(newPlugin);
+            Files.SaveFile(pluginFileHandle, fullPathInfo);
+
             return true;
         }
     }
@@ -245,7 +267,19 @@ namespace TESV_EspEquipmentGenerator
     {
         public static string Signature => "File Header";
         public override string signature => Signature;
-        public FileHeader(Handle Parent) : base(Parent) {}
+        public string Author {
+            get => handle.GetValue("CNAM");
+            set => handle.SetValue("CNAM",value);
+        }
+        public string Description
+        {
+            get => handle.GetValue("SNAM");
+            set => handle.SetValue("SNAM", value);
+        }
+        public PluginMasters masters;
+        public FileHeader(Handle Parent) : base(Parent) {
+            masters = new PluginMasters(this);
+        }
 
     }
     public class PluginMasters : RecordArrays<Handle>
@@ -253,15 +287,24 @@ namespace TESV_EspEquipmentGenerator
         public static string Signature => "Master Files";
         public override string signature => Signature;
         public PluginMasters(FileHeader fileHeader) : base(fileHeader.handle) {
+            if (fileHeader.handle == null ) {
+                "FileHeader is null".PromptWarnning();
+            }
+            if (handle == null) {
+                parent.AddArrayItem(signature, "MAST", "Skyrim.esm");
+            }
             AddRange(handle.GetElements());
         }
         public void Add(params string[] masterFiles)
         {
-            foreach (var mast in masterFiles)
-            {
-                if (!Exists(mast)) {
-                    var newItem = handle.AddElement();
-                    newItem.SetValue("MAST", mast);
+            if (masterFiles.Length > 0) {
+                foreach (var mast in masterFiles)
+                {
+                    if (!Exists(mast))
+                    {
+                        var newItem = handle.AddElement();
+                        newItem.SetValue("MAST", mast);
+                    }
                 }
             }
         }

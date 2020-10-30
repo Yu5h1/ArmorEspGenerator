@@ -288,7 +288,7 @@ namespace TESV_EspEquipmentGenerator
                 loading_lb.Visibility = Visibility.Visible;
                 new Timer(0.1, () =>
                 {
-                    plugin = Plugin.Load(SelectedGameMode, Plugin_cb.Text, true);
+                    plugin = Plugin.Load(Plugin_cb.Text, true);
                     loading_lb.Visibility = Visibility.Hidden;
                     if (plugin)
                     {
@@ -347,7 +347,7 @@ namespace TESV_EspEquipmentGenerator
                         }, ".dds","nif");
                         RecordsTreeView.Items.Add(textureSetsNode);
                         save_btn.IsEnabled = true;
-                        Plugin_lb.ToolTip = "Dependencies : \n" + plugin.pluginMasters.ToMasterNames().Join("\n   ");
+                        Plugin_lb.ToolTip = "Dependencies : \n" + plugin.fileHeader.masters.ToMasterNames().Join("\n   ");
                     }
                 }).Start();
             }
@@ -448,7 +448,7 @@ namespace TESV_EspEquipmentGenerator
         }
         private void NewPlugin_btn_Click(object sender, RoutedEventArgs e)
         {
-            Plugin.CreateNewPlugin(Plugin_cb.Text);
+            Plugin.CreateNewPlugin(SelectedGameMode,Plugin_cb.Text,false,null);
         }
         private void Grid_MouseUp(object sender, MouseButtonEventArgs e)
         {

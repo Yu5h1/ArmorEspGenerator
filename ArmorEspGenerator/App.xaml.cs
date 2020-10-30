@@ -2,6 +2,7 @@
 using System.IO;
 using System.Windows;
 using Yu5h1Tools.WPFExtension;
+using XeLib.API;
 
 namespace TESV_EspEquipmentGenerator
 {
@@ -19,24 +20,31 @@ namespace TESV_EspEquipmentGenerator
         }
         protected override void OnStartup(StartupEventArgs e)
         {
-            //string path = @"G:\Hentai\The Elder Scrolls\TESV\Data\Meshes\test\female\BellaBra_1.nif";
-            //NifUtil.GetShapeTexturesByIndex(path, 0).PromptInfo();
-            ////var r = NifUtil.GetShapesTextureInfos(path);
+            //Plugin.CreateNewPlugin(Setup.GameMode.TES5, "TestNewESP.esp", true, (plugin) => {
+
+            //});
             //Shutdown();
             //return;
-
             args = e.Args;
             if (args.Length == 1) {
-                var fileExtension = Path.GetExtension(args[0]).ToLower();
-                if (File.GetAttributes(args[0]).HasFlag(FileAttributes.Directory))
+                var pathinfo = new PathInfo(args[0]);
+                if (pathinfo.IsDirectory)
                 {
-                    var NIFfiles =  Directory.GetFiles(args[0], "*_1.nif", SearchOption.AllDirectories);
-                    foreach (var item in NIFfiles)
+                    var game = Plugin.AssetsFromWhichGame(pathinfo);
+                    if (game != null)
                     {
-                        
+                        if (game == Setup.GameMode.TES5 || game == Setup.GameMode.SSE) {
+                            Plugin.CreateNewPlugin((Setup.GameMode)game, pathinfo.Name + ".esp", true, (plugin) =>
+                            {
+                                plugin.GenerateArmorsBySpeculateFolder(pathinfo);
+                            });
+                        }
+
                     }
-                }else {
-                    switch (fileExtension)
+                    else "Folder path does not exists in Game Data Folder".PromptInfo(); ;
+                }
+                else {
+                    switch (pathinfo.extension.ToLower())
                     {
                         case ".nif":
                             LaunchWithoutWindow = true;
@@ -53,6 +61,9 @@ namespace TESV_EspEquipmentGenerator
                     }
                 }
                 Shutdown();
+            }else if (args.Length > 1)
+            {
+
             }
             base.OnStartup(e);
         }
