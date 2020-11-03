@@ -4,6 +4,7 @@ using System.IO;
 using Yu5h1Tools.WPFExtension;
 using System.Linq;
 using XeLib.API;
+using System.Diagnostics;
 
 namespace TESV_EspEquipmentGenerator
 {
@@ -63,7 +64,7 @@ namespace TESV_EspEquipmentGenerator
         public bool CheckIsDisplayModel(ref string key, params string[] tags) {
             foreach (var tag in tags)
             {
-                if (key.EndsWith(tag))
+                if (key.EndsWith(tag,StringComparison.OrdinalIgnoreCase))
                 {
                     key = key.Remove(key.Length - tag.Length);
                     return true;
@@ -71,7 +72,7 @@ namespace TESV_EspEquipmentGenerator
             }
             return false;
         }
-        public static StringComparison MaleFemaleComparison = StringComparison.OrdinalIgnoreCase;
+        public static StringComparison MaleFemaleStringComparison = StringComparison.OrdinalIgnoreCase;
         public static bool ShareGNDIfEmpty = true;
         public void GetSortedNifsFromFolder(Dictionary<string, EquipmentAssets> datas, string folderPath, bool? MaleOrFemale = null) {
             if (!Directory.Exists(folderPath)) return;
@@ -81,8 +82,8 @@ namespace TESV_EspEquipmentGenerator
                 bool IsItemModel = false, Is1stperson = false, IsMaleOrFemale = true;
                 var pathinfo = new PathInfo(path);
                 var nameParts = pathinfo.Name.Split('_').ToList();
-                var key = nameParts[0].ToLower();
-                if (key.Contains("1stperson"))
+                var key = nameParts[0];
+                if (key.Contains("1stperson",StringComparison.OrdinalIgnoreCase))
                 {
                     key = key.TrimPrefix("1stperson");
                     Is1stperson = true;
@@ -91,11 +92,11 @@ namespace TESV_EspEquipmentGenerator
 
                 if (MaleOrFemale == null)
                 {
-                    IsMaleOrFemale = !key.EndsWith("F", MaleFemaleComparison) ||
+                    IsMaleOrFemale = !key.EndsWith("F", MaleFemaleStringComparison) ||
                                                         nameParts.ExistsAny((ele, arg) =>
                                                        ele.Equals(arg, StringComparison.OrdinalIgnoreCase),
                                                         "f", "female");
-                    if (key.EndsWith("F", MaleFemaleComparison) || key.EndsWith("M", MaleFemaleComparison))
+                    if (key.EndsWith("F", MaleFemaleStringComparison) || key.EndsWith("M", MaleFemaleStringComparison))
                         key = key.Remove(key.Length - 1);
                 }
                 else IsMaleOrFemale = (bool)MaleOrFemale;
@@ -114,17 +115,25 @@ namespace TESV_EspEquipmentGenerator
                 else data.Model = path;
             }
         }
-        public void GenerateArmorsBySpeculateFolder(string path) {
-            path.PromptInfo();
+        public bool GenerateArmorsBySpeculateFolder(string folderPath, Func<double,bool> progress ) {
+            bool canceled = false;
+            var subfolders = Directory.GetDirectories(folderPath, "*");
+            for (int i = 0; i < subfolders.Length; i++)
+            {
+                var subfolder = subfolders[i];
+                GenerateArmorsByFolder(subfolder, (p) => {
+                   return progress((i + p) / subfolders.Length);
+                });
+            }
+            return canceled;
         }
-
-        public void GenerateArmorsByFolder(string folderPath)
+        public void GenerateArmorsByFolder(string folderPath, Func<double,bool> progress)
         {
-            using (var p = new WaitCursorProcess())
+            try
             {
                 PathInfo folderPathInfo = new PathInfo(folderPath);
                 string NameSet = folderPathInfo.Name.Capitalize();
-                var datas = new Dictionary<string, EquipmentAssets>();
+                var datas = new Dictionary<string, EquipmentAssets>(StringComparer.OrdinalIgnoreCase);
                 string MaleFolder = folderPathInfo.FindAny("m", "male"),
                         FemaleFolder = folderPathInfo.FindAny("f", "female");
 
@@ -138,12 +147,18 @@ namespace TESV_EspEquipmentGenerator
                     GetSortedNifsFromFolder(datas, FemaleFolder, false);
                 }
 
-                Dictionary<string, Armor> newArmors = new Dictionary<string, Armor>();
+                Dictionary<string, Armor> newArmors = new Dictionary<string, Armor>(StringComparer.OrdinalIgnoreCase);
                 List<ArmorAddon> newArmorAddons = new List<ArmorAddon>();
-                Dictionary<string, Armor> AlternateTexturesNewArmors = new Dictionary<string, Armor>();
-                Dictionary<string, List<ArmorAddon>> AlternateTexturesArmorAddonSets = new Dictionary<string, List<ArmorAddon>>();
+                Dictionary<string, Armor> AlternateTexturesNewArmors = new Dictionary<string, Armor>(StringComparer.OrdinalIgnoreCase);
+                Dictionary<string, List<ArmorAddon>> AlternateTexturesArmorAddonSets = new Dictionary<string, List<ArmorAddon>>(StringComparer.OrdinalIgnoreCase);
+                    
+
+                double phaseValue = 0;
                 foreach (var item in datas)
                 {
+                    phaseValue += 1;
+                    //(phaseValue / datas.Count).print();
+                    if (progress(phaseValue / datas.Count)) return;
                     var keys = item.Key.Split('_').ToList();
                     string key = keys[0];
                     //(item.Key + "::" +key + "\n" + item.Value.male.ToString() + "\n" + item.Value.female.ToString()).PromptInfo();
@@ -228,7 +243,10 @@ namespace TESV_EspEquipmentGenerator
                     ATArmorAll.FULLName = string.Join(" ", NameSet, item.Key, "All");
                     ATArmorAll.Race = "00000019";
                 }
-                p.succeed = true;
+            }
+            catch (Exception error)
+            {
+                error.Message.PromptError();
             }
         }
 

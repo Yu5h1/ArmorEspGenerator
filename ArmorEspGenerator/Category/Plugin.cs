@@ -6,6 +6,7 @@ using XeLib.API;
 using XeLib;
 using static InformationViewer;
 using Yu5h1Tools.WPFExtension;
+using System.Threading.Tasks;
 
 namespace TESV_EspEquipmentGenerator
 {
@@ -54,7 +55,7 @@ namespace TESV_EspEquipmentGenerator
             TextureSets = new PluginRecords<TextureSet>(this, TextureSet.Create);
             ArmorAddons = new PluginRecords<ArmorAddon>(this, ArmorAddon.Create);
             Armors = new PluginRecords<Armor>(this, Armor.Create);
-            fileHeader = new FileHeader(handle);            
+            fileHeader = new FileHeader(this);            
         }
 
         public Plugin(string pluginName, params string[] masterfiles) : base(BaseHandle, BaseHandle.AddElement(pluginName))
@@ -236,35 +237,68 @@ namespace TESV_EspEquipmentGenerator
             Messages.ClearMessages();
             return true;
         }
-        public static bool CreateNewPlugin(
-            Setup.GameMode gameMod,string pluginName,bool overwrite,Action<Plugin> workflow, params string[] masterfiles) {
+
+        public static void CreateNewPlugin(
+            Setup.GameMode gameMod,string pluginName,bool overwrite,Func<Plugin,PupopProgress,bool> workflow, params string[] masterfiles) {
 
             Meta.Initialize();
+            currentGameMode = gameMod;
             Setup.SetGameMode(gameMod);
             var fullPathInfo = new PathInfo(Setup.GetGamePath(gameMod) + @"\Data\" + pluginName);
-            if (IsFileLockedPrompt(fullPathInfo)) return false;
+            if (IsFileLockedPrompt(fullPathInfo)) return;
             
             if (File.Exists(fullPathInfo) && !overwrite) {
                 (fullPathInfo + " already exists ! ").PromptWarnning();
-                return false;
+                return;
             }
-            Setup.LoadPlugins(masterfiles.Join("\n"));
-            var state = Setup.LoaderState.IsInactive;
-            while (state != Setup.LoaderState.IsDone && state != Setup.LoaderState.HasError) state = Setup.GetLoaderStatus();
-            Messages.ClearMessages();
 
-            if (File.Exists(fullPathInfo)) File.Delete(fullPathInfo);
+            var title = "Generating " + gameMod.ToString() + @"...data\" + pluginName;
+            PupopProgress p = new PupopProgress()
+            {
+                ProgressText = title,                
+            };
+            p.Show();
+            Task.Run(new Func<Handle>(() =>
+            {
+                List<string> masterfileslist = new List<string>() { "Skyrim.esm" };
+                masterfileslist.AddRange(masterfiles);
+                p.Dispatcher.BeginInvoke(new Action(()=> {
+                    p.Value = 5;
+                    p.Title = "Loading Masters....";
+                } ));
+                Setup.LoadPlugins(masterfileslist.Join("\n"));
+                var state = Setup.LoaderState.IsInactive;
+                while (state != Setup.LoaderState.IsDone && state != Setup.LoaderState.HasError) {
+                    state = Setup.GetLoaderStatus();
+                }
+                Messages.ClearMessages();
 
-            var pluginFileHandle = Files.AddFile(pluginName);
-            var newPlugin = new Plugin(pluginName,masterfiles);
-            workflow(newPlugin);
-            Files.SaveFile(pluginFileHandle, fullPathInfo);
+                p.Dispatcher.BeginInvoke(new Action(() => {
+                    p.Value = 15;
+                    p.Title = "Creating EsP....";
+                }));
 
-            return true;
+                if (File.Exists(fullPathInfo)) File.Delete(fullPathInfo);
+                var pluginFileHandle = Files.AddFile(pluginName);
+                current = new Plugin(pluginName, masterfileslist.ToArray());
+
+                p.Dispatcher.BeginInvoke(new Action(() => {
+                    p.MoveNextStep(85);
+                }));
+
+                workflow?.Invoke(current, p);
+
+                return pluginFileHandle;
+
+            })).ContinueWith(task=> {
+                Files.SaveFile(task.Result, fullPathInfo);
+                p.Dispatcher.BeginInvoke(new Action(() => p.Close()));
+            });
         }
     }
     public class FileHeader : RecordObject
     {
+        public Plugin plugin;
         public static string Signature => "File Header";
         public override string signature => Signature;
         public string Author {
@@ -277,35 +311,39 @@ namespace TESV_EspEquipmentGenerator
             set => handle.SetValue("SNAM", value);
         }
         public PluginMasters masters;
-        public FileHeader(Handle Parent) : base(Parent) {
+        public FileHeader(Plugin plugin) : base(plugin.handle) {
+            this.plugin = plugin;
             masters = new PluginMasters(this);
         }
 
     }
     public class PluginMasters : RecordArrays<Handle>
     {
+        public FileHeader fileHeader;
         public static string Signature => "Master Files";
         public override string signature => Signature;
         public PluginMasters(FileHeader fileHeader) : base(fileHeader.handle) {
+            this.fileHeader = fileHeader;
             if (fileHeader.handle == null ) {
                 "FileHeader is null".PromptWarnning();
             }
             if (handle == null) {
-                parent.AddArrayItem(signature, "MAST", "Skyrim.esm");
+                Masters.AddMaster(fileHeader.plugin.handle, "Skyrim.esm");
             }
-            AddRange(handle.GetElements());
+            
         }
         public void Add(params string[] masterFiles)
         {
             if (masterFiles.Length > 0) {
-                foreach (var mast in masterFiles)
+                Clear();
+                foreach (var master in masterFiles)
                 {
-                    if (!Exists(mast))
+                    if (!Exists(master))
                     {
-                        var newItem = handle.AddElement();
-                        newItem.SetValue("MAST", mast);
+                        Masters.AddMaster(fileHeader.plugin.handle, master);
                     }
                 }
+                AddRange(handle.GetElements());
             }
         }
         public void Remove(string masterFile)

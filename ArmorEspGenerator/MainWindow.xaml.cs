@@ -240,20 +240,12 @@ namespace TESV_EspEquipmentGenerator
                 HorizontalAlignment = HorizontalAlignment.Stretch,
                 ItemContainerStyle = (Style)MainWindow.current.FindResource("StretchTreeViewItemStyle")
             }.SetTextBlockHeader(typeof(T).Name + "s");
+            root.Tag = records;
             records.Added += item => CreateRecordTreeItem(root, item);
-            root.AddMenuItem("New").Click += (s, e) => records.AddNewItem();
-            root.AddMenuItem("Clear").Click += (s, e) =>
-            {
-                foreach (var node in RecordsTreeView.selectedNodes)
-                {
-                    if (node.Parent == RecordsTreeView) {
-                        node.Items.Clear();
-                        records.Clear();
-                    }
-                }
-            };
+            root.AddMultiSelectionMenuItem(RecordsTreeView, "New");
+            root.AddMultiSelectionMenuItem(RecordsTreeView, "Clear");
             foreach (var item in records) CreateRecordTreeItem(root, item);
-
+            records.Cleared += () => root.Items.Clear();
             return root;
         }
         public void ReStartApplication() {
@@ -302,7 +294,7 @@ namespace TESV_EspEquipmentGenerator
                                 var pathInfo = new PathInfo(path);
                                 if (pathInfo.IsDirectory)
                                 {
-                                    plugin.GenerateArmorsByFolder(path);
+                                    //plugin.GenerateArmorsByFolder(path);
                                 }
                                 else
                                 {
@@ -387,7 +379,7 @@ namespace TESV_EspEquipmentGenerator
         {
             try
             {
-                if (App.LaunchWithoutWindow == false)
+                if (IsSettingLoaded)
                 {
                     try
                     {
@@ -448,7 +440,7 @@ namespace TESV_EspEquipmentGenerator
         }
         private void NewPlugin_btn_Click(object sender, RoutedEventArgs e)
         {
-            Plugin.CreateNewPlugin(SelectedGameMode,Plugin_cb.Text,false,null);
+            //Plugin.CreateNewPlugin(SelectedGameMode,Plugin_cb.Text,false,null);
         }
         private void Grid_MouseUp(object sender, MouseButtonEventArgs e)
         {

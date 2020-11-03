@@ -84,7 +84,13 @@
     <Compile Include="Category\RecordHandle.cs" />
     <Compile Include="Category\TextureSet.cs" />
     <Compile Include="Category\ModelAlternateTextures.cs" />
+    <Compile Include="DefaultValueConfigureWindow.xaml.cs">
+      <DependentUpon>DefaultValueConfigureWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Extension\HandleEx.cs" />
+    <Compile Include="PupopProgress.xaml.cs">
+      <DependentUpon>PupopProgress.xaml</DependentUpon>
+    </Compile>
     <Compile Include="UserInterfaces\ArmorUI.cs" />
     <Compile Include="UserInterfaces\RecordsUI.cs" />
     <Compile Include="Extension\SignatureUtil.cs" />
@@ -92,6 +98,10 @@
     <Compile Include="NifUtil.cs" />
     <Compile Include="Category\RecordObject.cs" />
     <Compile Include="Settings.cs" />
+    <Page Include="DefaultValueConfigureWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -104,6 +114,10 @@
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Page Include="PupopProgress.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs">

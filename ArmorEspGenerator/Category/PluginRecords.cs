@@ -13,6 +13,7 @@ namespace TESV_EspEquipmentGenerator
 
         
         public Action<T> Added;
+        public Action Cleared;
         Func<PluginRecords<T>, Handle, T> Constructor;
 
         public PluginRecords(Plugin plugin, Func<PluginRecords<T>, Handle, T> constructor):
@@ -38,8 +39,8 @@ namespace TESV_EspEquipmentGenerator
             }
             return result;
         }
-
-        public T AddNewItem(string editorID = "")
+        public T New() => AddNewItem("");
+        public T AddNewItem(string editorID)
         {
             PrepareHandle();
             if (editorID.Equals(string.Empty)) editorID = ("New" + typeof(T).Name);
@@ -79,6 +80,7 @@ namespace TESV_EspEquipmentGenerator
                 RemoveAt(i);
             }
             base.Clear();
+            Cleared?.Invoke();
         }
     }
 

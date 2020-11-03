@@ -15,6 +15,10 @@ namespace TESV_EspEquipmentGenerator
         string DisplayName { get; }
         void Delete();
     }
+    public interface IRecordArrayObject : IRecordObject
+    {
+        void Clear();
+    }
     public abstract class RecordObject : IRecordObject
     {
         public const string FullNameKEY = "FULL - Name";
@@ -40,7 +44,7 @@ namespace TESV_EspEquipmentGenerator
         }
         public virtual void Delete() => handle.Delete();
     }
-    public abstract class RecordArrays<T> : List<T>,IRecordObject
+    public abstract class RecordArrays<T> : List<T>, IRecordArrayObject
     {
         public virtual string signature { get; }
         public virtual Handle parent { get; protected set; }
