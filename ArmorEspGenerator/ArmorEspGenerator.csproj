@@ -88,6 +88,8 @@
       <DependentUpon>DefaultValueConfigureWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="Extension\HandleEx.cs" />
+    <Compile Include="Extension\Notifier.cs" />
+    <Compile Include="Extension\Win32IconUtil.cs" />
     <Compile Include="PupopProgress.xaml.cs">
       <DependentUpon>PupopProgress.xaml</DependentUpon>
     </Compile>

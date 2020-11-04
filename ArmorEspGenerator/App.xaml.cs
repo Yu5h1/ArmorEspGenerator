@@ -27,55 +27,50 @@ namespace TESV_EspEquipmentGenerator
             //Shutdown();
             //return;
             args = e.Args;
-            if (args.Length == 1)
+
+            if (args.Length > 0)
             {
-                var pathinfo = new PathInfo(args[0]);
-                if (pathinfo.IsDirectory)
+                if (args.Length == 1)
                 {
-                    var game = Plugin.AssetsFromWhichGame(pathinfo);
-                    if (game != null)
+                    var pathinfo = new PathInfo(args[0]);
+                    if (pathinfo.IsDirectory)
                     {
-                        if (game == Setup.GameMode.TES5 || game == Setup.GameMode.SSE)
+                        var game = Plugin.AssetsFromWhichGame(pathinfo);
+                        if (game != null)
                         {
-           
-                            Plugin.CreateNewPlugin((Setup.GameMode)game, pathinfo.Name + ".esp", true, (plugin,p) =>
+                            if (game == Setup.GameMode.TES5 || game == Setup.GameMode.SSE)
                             {
-                                plugin.fileHeader.Author = pathinfo.Name;
-                                plugin.GenerateArmorsBySpeculateFolder(pathinfo, progressValue =>
-                               {
-                                   p.Dispatcher.BeginInvoke(new Action(() =>
-                                   {
-                                       p.normalizeValue = progressValue;
-                                   }));
-                                   return false;
-                               });
-                                return false;
-                            });
-                        }else "Only support TESV or TESVSE".PromptInfo();
-                    }else "Folder path does not exists in Game Data Folder Or the regedit setting of your game is uncurrect.".PromptInfo(); ;
-                }
-                else
-                {
-                    switch (pathinfo.extension.ToLower())
-                    {
-                        case ".nif":
-                            if (File.Exists(args[0]))
-                            {
-                                var bodyparts = PartitionsUtil.ConvertIndicesToBodyParts(Plugin.GetBodyPartsIndicesFromNif(args[0]));
-                                bodyparts.ToStringWithNumber().PromptInfo();
-                                bodyparts.BSDismemberBodyPartsToPartitions().ToStringWithNumber().PromptInfo();
 
+                                Plugin.CreateNewPlugin((Setup.GameMode)game, pathinfo.Name + ".esp", true, (plugin, progressInfo) =>
+                                {
+                                    plugin.fileHeader.Author = pathinfo.Name;
+                                    plugin.GenerateArmorsBySpeculateFolder(pathinfo, progressValue =>
+                                    {
+                                        progressInfo.SetProcessIcon(0.1 + (progressValue * 0.8));
+                                        progressInfo.Text = "....." + (progressValue * 100).ToString() + "%";
+                                        return false;
+                                    });
+
+                                    return false;
+                                });
                             }
-                            break;
-                        case ".esp":
+                            else
+                            {
+                                "Only support TESV or TESVSE".PromptWarnning();
+                                Shutdown();
+                            }
 
-                            break;
+                        }
+                        else
+                        {
+                            "Folder path does not exists in Game Data Folder Or the regedit setting of your game is uncurrect.".PromptWarnning();
+                            Shutdown();
+                        }
                     }
+                } else {
+                    "Only one parameter is allowed".PromptWarnning();
+                    Shutdown();
                 }
-            }
-            else if (args.Length > 1)
-            {
-
             }
             else {
                 Win32Util.ForceSingleInstance(this);

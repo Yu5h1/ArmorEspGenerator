@@ -7,6 +7,7 @@ using XeLib;
 using static InformationViewer;
 using Yu5h1Tools.WPFExtension;
 using System.Threading.Tasks;
+using NotifyIcon = System.Windows.Forms.NotifyIcon;
 
 namespace TESV_EspEquipmentGenerator
 {
@@ -239,7 +240,7 @@ namespace TESV_EspEquipmentGenerator
         }
 
         public static void CreateNewPlugin(
-            Setup.GameMode gameMod,string pluginName,bool overwrite,Func<Plugin,PupopProgress,bool> workflow, params string[] masterfiles) {
+            Setup.GameMode gameMod,string pluginName,bool overwrite,Func<Plugin,NotifyIcon,bool> workflow, params string[] masterfiles) {
 
             Meta.Initialize();
             currentGameMode = gameMod;
@@ -253,19 +254,32 @@ namespace TESV_EspEquipmentGenerator
             }
 
             var title = "Generating " + gameMod.ToString() + @"...data\" + pluginName;
-            PupopProgress p = new PupopProgress()
-            {
-                ProgressText = title,                
-            };
-            p.Show();
+            //PupopProgress p = new PupopProgress()
+            //{
+            //    ProgressText = title,                
+            //};
+            //p.Show();
+            var notifyIcon = new NotifyIcon();
+            notifyIcon.Visible = true;
+            notifyIcon.SetProcessIcon(0);
+            notifyIcon.ShowBalloonTip(1000, " Starting Generate Esp", title, System.Windows.Forms.ToolTipIcon.Info);
+            notifyIcon.ContextMenu = new System.Windows.Forms.ContextMenu();
+            notifyIcon.ContextMenu.MenuItems.Add("Closed", (s, e) => {
+                notifyIcon.Icon = null;
+                App.Current.Shutdown();
+            });
+
             Task.Run(new Func<Handle>(() =>
             {
+
                 List<string> masterfileslist = new List<string>() { "Skyrim.esm" };
                 masterfileslist.AddRange(masterfiles);
-                p.Dispatcher.BeginInvoke(new Action(()=> {
-                    p.Value = 5;
-                    p.Title = "Loading Masters....";
-                } ));
+                //p.Dispatcher.BeginInvoke(new Action(()=> {
+                //    p.Value = 5;
+                //    p.Title = "Loading Masters....";
+                //} ));
+                notifyIcon.Text = "10%";
+                notifyIcon.SetProcessIcon(0.1);
                 Setup.LoadPlugins(masterfileslist.Join("\n"));
                 var state = Setup.LoaderState.IsInactive;
                 while (state != Setup.LoaderState.IsDone && state != Setup.LoaderState.HasError) {
@@ -273,26 +287,33 @@ namespace TESV_EspEquipmentGenerator
                 }
                 Messages.ClearMessages();
 
-                p.Dispatcher.BeginInvoke(new Action(() => {
-                    p.Value = 15;
-                    p.Title = "Creating EsP....";
-                }));
+                //p.Dispatcher.BeginInvoke(new Action(() => {
+                //    p.Value = 15;
+                //    p.Title = "Creating EsP....";
+                //}));
 
                 if (File.Exists(fullPathInfo)) File.Delete(fullPathInfo);
                 var pluginFileHandle = Files.AddFile(pluginName);
                 current = new Plugin(pluginName, masterfileslist.ToArray());
 
-                p.Dispatcher.BeginInvoke(new Action(() => {
-                    p.MoveNextStep(85);
-                }));
+                //p.Dispatcher.BeginInvoke(new Action(() => {
+                //    p.MoveNextStep(85);
+                //}));
 
-                workflow?.Invoke(current, p);
+                workflow?.Invoke(current, notifyIcon);
 
                 return pluginFileHandle;
 
             })).ContinueWith(task=> {
+                notifyIcon.SetProcessIcon(1);
                 Files.SaveFile(task.Result, fullPathInfo);
-                p.Dispatcher.BeginInvoke(new Action(() => p.Close()));
+             
+                notifyIcon.ShowBalloonTip(1000, " Completed ! ", title+" is Finished.", System.Windows.Forms.ToolTipIcon.Info);
+                notifyIcon.BalloonTipClosed += (s, e) => {
+                    notifyIcon.Icon = null;
+                    App.Current.Shutdown();
+                };
+                //p.Dispatcher.BeginInvoke(new Action(() => p.Close()));                
             });
         }
     }
