@@ -5,7 +5,7 @@ public static class Notifier
 {
     public static Pen arcOutLinePen = new Pen(Color.SteelBlue, 4);
     public static Pen arcPen = new Pen(Color.Lime, 2);
-    public static Brush fontColor = new SolidBrush(Color.Black);
+    public static Brush fontColor = new SolidBrush(Color.FromArgb(30,30,30));
     public static Rectangle ArcRect = new Rectangle(1, 1, 13, 13);
     public static Font espFont = new Font("Microsoft Sans Serif", 10, FontStyle.Italic, GraphicsUnit.Pixel);
     public static StringFormat stringFormat = new StringFormat()

@@ -55,14 +55,16 @@ namespace TESV_EspEquipmentGenerator
         public static string[] FindSimilarDiffuseTextures(string difusefile)
                                                     => FindSimilarDiffuseTextures(difusefile, out _);
         public static string[] FindSimilarDiffuseTextures(string difusefile,out string[] tags)
-        {
+        {            
             var results = new string[0];
             tags = new string[0];
-            if (File.Exists(difusefile))
+            var difusePath = new PathInfo(difusefile);            
+            if (difusePath.Exists && difusePath.extension.EndsWith(".dds",StringComparison.OrdinalIgnoreCase)
+                && !difusePath.Name.MatchAny("femalebody_1"))
             {
-                string tag = Path.GetFileNameWithoutExtension(difusefile).RemoveSuffixFrom("_");
-                results = Directory.GetFiles(   Path.GetDirectoryName(difusefile), tag + "*.dds").
-                                                Where( d => d.Contains("_D") &&
+                string tag = difusePath.Name.RemoveSuffixFrom("_");
+                results = Directory.GetFiles( difusePath.directory, tag + "*.dds").
+                                                Where( d => (!d.Contains("_n.","_s.","_sk.","_e.", "_em.")) &&
                                                 !string.Equals(d, difusefile,
                                                 StringComparison.OrdinalIgnoreCase)).
                                                 ToArray();
@@ -72,6 +74,7 @@ namespace TESV_EspEquipmentGenerator
                     tags[i] = Path.GetFileNameWithoutExtension(results[i]).Remove(0,tag.Length);
                     tags[i] = PathInfo.Replace(tags[i],"_D","");
                 }
+                //(difusePath + "\n" + results.ToContext()).PromptInfo();
             }
             return results;
         }

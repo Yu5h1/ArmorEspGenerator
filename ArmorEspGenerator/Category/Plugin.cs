@@ -239,12 +239,14 @@ namespace TESV_EspEquipmentGenerator
             return true;
         }
 
-        public static void CreateNewPlugin(
-            Setup.GameMode gameMod,string pluginName,bool overwrite,Func<Plugin,NotifyIcon,bool> workflow, params string[] masterfiles) {
+        public static void CreateNewPlugin( Setup.GameMode gameMod,string pluginName,
+                                            bool overwrite,Func<Plugin,NotifyIcon,bool> workflow,
+                                            params string[] masterfiles) {
 
+            
             Meta.Initialize();
             currentGameMode = gameMod;
-            Setup.SetGameMode(gameMod);
+            Setup.SetGameMode(gameMod);            
             var fullPathInfo = new PathInfo(Setup.GetGamePath(gameMod) + @"\Data\" + pluginName);
             if (IsFileLockedPrompt(fullPathInfo)) return;
             
@@ -274,10 +276,7 @@ namespace TESV_EspEquipmentGenerator
 
                 List<string> masterfileslist = new List<string>() { "Skyrim.esm" };
                 masterfileslist.AddRange(masterfiles);
-                //p.Dispatcher.BeginInvoke(new Action(()=> {
-                //    p.Value = 5;
-                //    p.Title = "Loading Masters....";
-                //} ));
+
                 notifyIcon.Text = "10%";
                 notifyIcon.SetProcessIcon(0.1);
                 Setup.LoadPlugins(masterfileslist.Join("\n"));
@@ -287,33 +286,30 @@ namespace TESV_EspEquipmentGenerator
                 }
                 Messages.ClearMessages();
 
-                //p.Dispatcher.BeginInvoke(new Action(() => {
-                //    p.Value = 15;
-                //    p.Title = "Creating EsP....";
-                //}));
-
                 if (File.Exists(fullPathInfo)) File.Delete(fullPathInfo);
                 var pluginFileHandle = Files.AddFile(pluginName);
                 current = new Plugin(pluginName, masterfileslist.ToArray());
-
-                //p.Dispatcher.BeginInvoke(new Action(() => {
-                //    p.MoveNextStep(85);
-                //}));
-
                 workflow?.Invoke(current, notifyIcon);
-
                 return pluginFileHandle;
-
             })).ContinueWith(task=> {
                 notifyIcon.SetProcessIcon(1);
                 Files.SaveFile(task.Result, fullPathInfo);
-             
+
+                var activationPathInfo = new PathInfo(Path.Combine(Meta.GetGlobal("AppDataPath"), "plugins.txt"));
+                if (activationPathInfo.Exists && !activationPathInfo.IsLocked)
+                {
+                    var activationInfo = File.ReadAllLines(activationPathInfo).ToList();
+                    var PluginIndex = activationInfo.FindIndex(d => d.EndsWith(pluginName));
+                    string pluginActivateInfo = gameMod == Setup.GameMode.TES5 ? pluginName : "*" + pluginName;
+                    if (PluginIndex < 0) activationInfo.Add(pluginActivateInfo);
+                    else activationInfo[PluginIndex] = pluginActivateInfo;
+                    File.WriteAllLines(activationPathInfo, activationInfo);
+                }
                 notifyIcon.ShowBalloonTip(1000, " Completed ! ", title+" is Finished.", System.Windows.Forms.ToolTipIcon.Info);
                 notifyIcon.BalloonTipClosed += (s, e) => {
                     notifyIcon.Icon = null;
                     App.Current.Shutdown();
                 };
-                //p.Dispatcher.BeginInvoke(new Action(() => p.Close()));                
             });
         }
     }

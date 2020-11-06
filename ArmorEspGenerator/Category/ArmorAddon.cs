@@ -95,19 +95,46 @@ namespace TESV_EspEquipmentGenerator
         public override string GetDataInfo() => ToString()+'\n'+ FemaleWorldModel.ToString();
         public static string MakeArmorAddonName(string txt, string suffix = "") => txt.MakeValidEditorID().RemoveSuffixFromLast("AA").TrimEndNumber() + suffix + "AA";
 
-        public List<ArmorAddon> DuplicateByShapeDiffuse(int shapeIndex ,out string[] tags) {
+        public List<ArmorAddon> DuplicateByShapeDiffuse(out string[] tags,params string[] ignoreDiffuseNames) {
+            int femaleShapeIndex = 0, maleShapeIndex = 0;
             tags = new string[0];
             var results = new List<ArmorAddon>();
             try
             {
-
                 var femaleModelPath = Plugin.GetMeshesPath(FemaleWorldModel.Model);
                 var maleModelPath = Plugin.GetMeshesPath(MaleWorldModel.Model);
-                var defaultFemaleTextureSet = NifUtil.GetShapeTexturesArrayByIndex(femaleModelPath, shapeIndex).ShapeTextureOrderToTextureSetOrder();
-                var defaultMaleTextureSet = NifUtil.GetShapeTexturesArrayByIndex(maleModelPath, shapeIndex).ShapeTextureOrderToTextureSetOrder();
 
-                var ShareTXSTshapeIndicesF = NifUtil.GetShareTexturesShapesIndices(femaleModelPath, shapeIndex);
-                var ShareTXSTshapeIndicesM = NifUtil.GetShareTexturesShapesIndices(maleModelPath, shapeIndex);
+                var femaleTexturesInfo = NifUtil.GetShapesTextureInfos(femaleModelPath);
+                var maleTexturesInfo = NifUtil.GetShapesTextureInfos(maleModelPath);
+                //femaleTexturesInfo.Select(d => d.name + "\n" + d.textures.ToContext()).ToContext().PromptInfo();
+                //maleTexturesInfo.Select(d => d.name + "\n" + d.textures.ToContext()).ToContext().PromptInfo();
+                var defaultFemaleTextureSet = new string[] { "" };
+                if (femaleShapeIndex < femaleTexturesInfo.Count)
+                    defaultFemaleTextureSet = femaleTexturesInfo[femaleShapeIndex].textures;
+                var defaultMaleTextureSet = new string[] { "" };
+                if (maleShapeIndex < maleTexturesInfo.Count)
+                    defaultMaleTextureSet = maleTexturesInfo[maleShapeIndex].textures;
+
+                
+
+                if (ignoreDiffuseNames.Length > 0)
+                {
+                    while ( femaleShapeIndex < femaleTexturesInfo.Count &&
+                            PathInfo.GetName(defaultFemaleTextureSet[0]).MatchAny(ignoreDiffuseNames))
+                    {
+                        femaleShapeIndex++;
+                        defaultFemaleTextureSet = femaleTexturesInfo[femaleShapeIndex].textures;
+                    }
+                    while ( maleShapeIndex < maleTexturesInfo.Count &&
+                            PathInfo.GetName(defaultMaleTextureSet[0]).MatchAny(ignoreDiffuseNames))
+                    {
+                        maleShapeIndex++;
+                        defaultMaleTextureSet = maleTexturesInfo[maleShapeIndex].textures;
+                    }
+                }
+
+                var ShareTXSTshapeIndicesF = NifUtil.GetShareTexturesShapesIndices(femaleModelPath, femaleShapeIndex);
+                var ShareTXSTshapeIndicesM = NifUtil.GetShareTexturesShapesIndices(maleModelPath, maleShapeIndex);
 
                 var femaleTextures = TextureSet.FindSimilarDiffuseTextures(Plugin.GetTexturesPath(defaultFemaleTextureSet[0]), out string[] femaleDiffuseTags);
                 var maleTextures = TextureSet.FindSimilarDiffuseTextures(Plugin.GetTexturesPath(defaultMaleTextureSet[0]), out string[] maleDiffuseTags);
@@ -141,7 +168,7 @@ namespace TESV_EspEquipmentGenerator
             }
             catch (Exception error)
             {
-                error.Message.PromptError();
+                ("DuplicateByShapeDiffuse " + error.Message).PromptError();
                 throw;
             }
             return results;
