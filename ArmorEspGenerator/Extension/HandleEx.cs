@@ -33,6 +33,8 @@ namespace TESV_EspEquipmentGenerator
         public static Elements.ValueTypes GetValueType(this Handle handle, string path = "") => Elements.ValueType(handle);
         public static int GetInteger(this Handle handle, string path = "") => ElementValues.GetIntValue(handle, path);
         public static void SetInteger(this Handle handle, string path = "",int value = 0) => ElementValues.SetIntValue(handle, path,value);
+        public static double GetFloat(this Handle handle, string path = "") => ElementValues.GetFloatValue(handle, path);
+        public static void SetFloat(this Handle handle, string path = "", double value = 0) => ElementValues.SetFloatValue(handle, path, value);
         public static void SetValue(this Handle handle,string value) => ElementValues.SetValue(handle, "", value);
         public static void SetValue(this Handle handle, string path, string value)
         {

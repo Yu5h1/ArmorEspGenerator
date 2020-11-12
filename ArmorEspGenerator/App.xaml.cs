@@ -20,14 +20,17 @@ namespace TESV_EspEquipmentGenerator
         }
         protected override void OnStartup(StartupEventArgs e)
         {
-            //"G:\Hentai\The Elder Scrolls\TESV\Data\meshes\test"
-            //Plugin.CreateNewPlugin(Setup.GameMode.TES5, "TestNewESP.esp", true, (plugin) => {
-
-            //});
+            //Plugin.SetGameMode(Setup.GameMode.TES5);
+            //Plugin.LoadPlugins("Skyrim.esm");
+            
+            ////p.handle.GetDisplayName().PromptInfo();
+            ////"G:\Hentai\The Elder Scrolls\TESV\Data\meshes\test"
+            ////Plugin.CreateNewPlugin(Setup.GameMode.TES5, "TestNewESP.esp", true, (plugin) => {
+            ////});
             //Shutdown();
             //return;
-            args = e.Args;
 
+            args = e.Args;
             if (args.Length > 0)
             {
                 if (args.Length == 1)
@@ -52,7 +55,7 @@ namespace TESV_EspEquipmentGenerator
                                     });
 
                                     return false;
-                                });
+                                },"Skyrim.esm");
                             }
                             else
                             {

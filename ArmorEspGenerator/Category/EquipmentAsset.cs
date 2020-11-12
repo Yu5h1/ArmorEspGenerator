@@ -43,4 +43,6 @@ namespace TESV_EspEquipmentGenerator
         public override string ToString()
                                 => "Model:" + PathInfo.GetName(Model) + "\n1stPerson:" + PathInfo.GetName(_1stPerson) + "\nInventory Item Model:" + PathInfo.GetName(ItemModel);
     }
+
+    
 }

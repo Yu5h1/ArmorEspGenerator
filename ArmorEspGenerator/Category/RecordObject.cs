@@ -53,25 +53,29 @@ namespace TESV_EspEquipmentGenerator
         public string DisplayName => handle.GetDisplayName();
 
         public static implicit operator bool(RecordArrays<T> obj) => obj != null;
-        public RecordArrays(Handle Parent) => parent = Parent;
-        public new void Add(T item)
-        {
-            if (handle == null) parent.AddElement(signature);
-            base.Add(item);
+        public RecordArrays(Handle Parent) {
+            parent = Parent;            
         }
-        public virtual void Delete() => handle.Delete();
         public virtual bool PrepareHandle()
         {
             if (handle == null)
             {
                 if (parent == null) (GetType().Name + " parent is null").PromptWarnning();
-                else {
+                else
+                {
                     parent.AddElement(signature);
                     return true;
                 }
             }
             return false;
         }
+        public new void Add(T item)
+        {
+            PrepareHandle();
+            base.Add(item);
+        }
+        public virtual void Delete() => handle.Delete();
+
     }
     public abstract class RecordElement : RecordObject
     {        
@@ -97,7 +101,7 @@ namespace TESV_EspEquipmentGenerator
         public object Duplicate(string newEditorID = "") => Container.Duplicate((T)this, newEditorID);
         public override void Delete() {
             handle.Delete();
-            Container.Remove((T)this);
+            Container?.Remove((T)this);
         }
     }
 }

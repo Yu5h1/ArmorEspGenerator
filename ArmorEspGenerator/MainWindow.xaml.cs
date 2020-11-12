@@ -131,10 +131,16 @@ namespace TESV_EspEquipmentGenerator
                     case Armor armor:
                         DataInfos_treeView.Items.Add(armor.handle.GetTreeNode(RecordObject.FullNameKEY,true));
                         DataInfos_treeView.Items.Add(armor.handle.GetTreeNode(ArmorAddon.RaceKey));
-                        DataInfos_treeView.Items.Add(armor.handle.GetTreeNode(Armatures.Signature));
+                        DataInfos_treeView.Items.Add(armor.handle.GetTreeNode(Armatures.Signature));                        
                         DataInfos_treeView.Items.Add(ArmorUI.BipedBodyTemplateField(armor.bipedBodyTemplate));
                         DataInfos_treeView.AddWorldModelTreeNode(armor.MaleWorldModel);
                         DataInfos_treeView.AddWorldModelTreeNode(armor.FemaleWorldModel);
+
+                        DataInfos_treeView.Items.Add(armor.handle.GetTreeNode(Keywords.Signature));
+                        DataInfos_treeView.Items.Add(armor.handle.GetTreeNode(Armor.ValueKey));
+                        DataInfos_treeView.Items.Add(armor.handle.GetTreeNode(Armor.WeightKey));
+                        DataInfos_treeView.Items.Add(armor.handle.GetTreeNode(Armor.RatingKey));
+
                         break;
                     case ArmorAddon armorAddon:
                         DataInfos_treeView.Items.Add(ArmorUI.BipedBodyTemplateField(armorAddon.bipedBodyTemplate));
@@ -206,6 +212,7 @@ namespace TESV_EspEquipmentGenerator
             };
             treeItem.AddMenuItem("Duplicate","Ctrl + D").Click += (s, e) => DuplicateSelected();
             treeItem.AddMenuItem("Delete").Click += (s, e) => RecordsTreeView.DeleteSelectedNodes();
+    
             switch (item)
             {
                 case Armor armor:
@@ -213,6 +220,7 @@ namespace TESV_EspEquipmentGenerator
                     treeItem.AddMenuItem("Generate Armors By Similar Diffuses").Click += (s, e) =>
                     {
                     };
+                    treeItem.AddMultiSelectionMenuItem(RecordsTreeView,"Save Default Setting");
                     break;
                 case ArmorAddon armorAddon:
                     treeItem.AddMenuItem("Generate Armor(s) By Selected ArmorAddons").Click += (s, e) => {
@@ -229,7 +237,7 @@ namespace TESV_EspEquipmentGenerator
                 case TextureSet textureSet:
                     treeItem.HandleDragDrop(false, files =>
                     {
-                        plugin.AddTextureSetsByDifuseAssets(textureSet.ToArray(), files);
+                        plugin.AddTextureSetsByDifuseAssets(true,textureSet.ToArray(), files);
                     }, ".dds");
                     break;
             }
@@ -333,7 +341,7 @@ namespace TESV_EspEquipmentGenerator
                                 if (Path.GetExtension(dropfile) == ".nif")
                                     plugin.AddTextureSetsByNif(dropfile);
                                 else
-                                    plugin.AddTextureSetsByDifuseAssets(null, dropfile);
+                                    plugin.AddTextureSetsByDifuseAssets(true,null, dropfile);
                             }
                             
                         }, ".dds","nif");

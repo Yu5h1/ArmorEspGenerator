@@ -19,6 +19,25 @@ namespace TESV_EspEquipmentGenerator
                 return Handle.BaseHandle;
             } 
         }
+        public static Dictionary<string, string> GetGlobalInfos()
+        {
+            Dictionary<string, string> results = new Dictionary<string, string>();
+            string content = Meta.GetGlobals();
+            if (content != "")
+            {
+                foreach (var line in content.GetLines())
+                {
+                    if (line.Contains('='))
+                    {
+                        var data = line.Split('=');
+                        results.Add(data[0], data[1]);
+                    }
+                }
+            }
+            return results;
+        }
+        public static bool IsGameSpecifed => GetGlobalInfos().ContainsKey("GameName");
+
         public static Plugin current;
         public List<Handle> defaultRaces => SkyrimESM.GetRecords("RACE",false).ToList();
 
@@ -53,10 +72,13 @@ namespace TESV_EspEquipmentGenerator
 
         void Init(string pluginName) {
             PluginName = pluginName;
+            print("Construct " + pluginName + " {Plugin} instance.");
+
             TextureSets = new PluginRecords<TextureSet>(this, TextureSet.Create);
             ArmorAddons = new PluginRecords<ArmorAddon>(this, ArmorAddon.Create);
             Armors = new PluginRecords<Armor>(this, Armor.Create);
-            fileHeader = new FileHeader(this);            
+            fileHeader = new FileHeader(this);
+            print(pluginName + " is generated ! ");
         }
 
         public Plugin(string pluginName, params string[] masterfiles) : base(BaseHandle, BaseHandle.AddElement(pluginName))
@@ -68,30 +90,10 @@ namespace TESV_EspEquipmentGenerator
         Plugin(Handle target, string pluginName) : base(Handle.BaseHandle,target) {
             Init(pluginName);
         }
-        
-
-        public static Plugin Load(string pluginName, bool AsTemp = false)
-        {
-            string espName = pluginName;
-            var fullPluginPath = GetPluginFullPath(pluginName);
-            if (!File.Exists(fullPluginPath)) return null;
-            if (AsTemp)
-            {
-                espName = GetTempName(pluginName);
-                var tempPath = GetPluginFullPath(espName);
-                if (IsFileNotLockedElsePrompt(tempPath))
-                    File.Copy(fullPluginPath, tempPath, true);
-            }
-            if (LoadPlugins( espName)) {
-                current = new Plugin(Elements.GetElement(Handle.BaseHandle, espName), pluginName);
-                return current;
-            }else return null;
-        }
-
         public string Author { get => GetValue(@"File Header\CNAM"); set => SetValue(@"File Header\CNAM", value); }
         public string Description { get => GetValue(@"File Header\SNAM"); set => SetValue(@"File Header\SNAM", value); }
 
-        public Handle[] GetRecords(string recordSignature = "", bool includeOverrides = false) => Records.GetRecords(handle, recordSignature, includeOverrides);
+        public Handle[] GetRecords(string recordSignature = "", bool includeOverrides = false) => handle.GetRecords(recordSignature, includeOverrides);
 
         public PluginRecords<TextureSet> TextureSets;
         public PluginRecords<Armor> Armors;
@@ -111,14 +113,8 @@ namespace TESV_EspEquipmentGenerator
         }
         public void UnLoad() {
             if (File.Exists(GetTempFullPath())) {
-                //var loadedFiles = Setup.GetLoadedFileNames(true);
-                //for (int i = loadedFiles.Length - 1; i >= 0; i--)
-                //{
-                //    handle.GetElement(Handle)
-                //}
                 //Setup.UnloadPlugin(handle);
                 Meta.Close();
-                //Meta.Release(Handle.BaseHandle);
                 File.Delete(GetTempFullPath());
             }
         }
@@ -162,11 +158,17 @@ namespace TESV_EspEquipmentGenerator
                 try
                 {
                     var header = Setup.LoadPluginHeader(PluginName);
-                    var masters = header.GetElements()[0].GetElement("Master Files").GetElements();
-                    results = new string[masters.Length];
-                    for (int i = 0; i < results.Length; i++)
-                        results[i] = masters[i].GetValue("MAST");
-                    Setup.UnloadPlugin(header);
+                    if (header == null)
+                    {
+                        (PluginName + " has no header.").PromptWarnning();
+                    } else
+                    {
+                        var masterfiles = header.GetElements()[0].GetElement("Master Files");
+                        if (masterfiles != null) {
+                            results = masterfiles.GetElements().Select(d=>d.GetValue("MAST")).ToArray();
+                            Setup.UnloadPlugin(header);
+                        }
+                    }
                 }
                 catch (Exception error)
                 {
@@ -179,33 +181,57 @@ namespace TESV_EspEquipmentGenerator
         public static string[] GetMissingMastersInfo(params string[] PluginsList) {
             List<string> missingMasters = new List<string>();
 
-            foreach (var pluginName in PluginsList)
+            try
             {
-                if (File.Exists(GetPluginFullPath(pluginName)))
+                foreach (var pluginName in PluginsList)
                 {
-                    var masters = GetMasterNames(pluginName);
-                    foreach (var master in masters)
+                    if (pluginName.Equals("Skyrim.esm",StringComparison.OrdinalIgnoreCase)) continue;
+                    if (File.Exists(GetPluginFullPath(pluginName)))
                     {
-                        if (!File.Exists(GetPluginFullPath(master))) {
-                            if (!missingMasters.Contains(master))
-                                missingMasters.Add(master);
+                        var mastersName = GetMasterNames(pluginName);
+                        foreach (var master in mastersName)
+                        {
+                            if (!File.Exists(GetPluginFullPath(master)))
+                            {
+                                if (!missingMasters.Contains(master))
+                                    missingMasters.Add(master);
+                            }
                         }
-                    }
+                    } else if (!missingMasters.Contains(pluginName))
+                        missingMasters.Add(pluginName);
                 }
-                else if (!missingMasters.Contains(pluginName))
-                    missingMasters.Add(pluginName);
+            } catch (Exception e)
+            {
+                e.Message.PromptError();
+                throw;
             }
+
             return missingMasters.ToArray();
         }
         public static Handle GetActivePlugin(string pluginName)
                                                     => Handle.BaseHandle.GetElement(pluginName);
         public static Handle[] GetActivePluginRecords(string pluginName,string search = "",bool includeOverrides = false)
                                             => GetActivePlugin(pluginName).GetRecords(search,includeOverrides);
+        public static Handle[] FindRecords(string search, bool includeOverrides = false)
+        {
+            var results = current.GetRecords(search, includeOverrides);
+            if (results.Length == 0) {
+                for (int i = current.fileHeader.masters.Count-1; i >=0 ; i--)
+                {
+                    results = GetActivePluginRecords(current.fileHeader.masters[i].GetValue(), search, includeOverrides);
+                    if (results.Length > 0) break;
+                }
+            }
+            return results;
+        }
         public static bool SetGameMode(Setup.GameMode gameMode) {
             
             try
             {
                 currentGameMode = gameMode;
+                print("Initializing XEditLib");
+                Meta.Initialize();
+                print("Setting game mode to "+ gameMode.ToString());
                 Meta.Initialize();
                 Setup.SetGameMode(gameMode);
             }
@@ -227,6 +253,7 @@ namespace TESV_EspEquipmentGenerator
             try
             {
                 Setup.LoadPlugins(string.Join("\n", PluginsList));
+                print("Loading...");
             }
             catch (Exception error)
             {
@@ -235,8 +262,33 @@ namespace TESV_EspEquipmentGenerator
             }
             var state = Setup.LoaderState.IsInactive;
             while (state != Setup.LoaderState.IsDone && state != Setup.LoaderState.HasError) state = Setup.GetLoaderStatus();
+            Console.WriteLine(Messages.GetMessages());
             Messages.ClearMessages();
+
             return true;
+        }
+        public static Plugin Load(string pluginName, bool AsTemp = false)
+        {
+            if (!IsGameSpecifed)
+            {
+                "No Game type specified.".PromptWarnning();
+                return null;
+            }
+            string espName = pluginName;
+            var fullPluginPath = GetPluginFullPath(pluginName);
+            if (!File.Exists(fullPluginPath)) return null;
+            if (AsTemp)
+            {
+                espName = GetTempName(pluginName);
+                var tempPath = GetPluginFullPath(espName);
+                if (IsFileNotLockedElsePrompt(tempPath))
+                    File.Copy(fullPluginPath, tempPath, true);
+            }
+            if (LoadPlugins(espName))
+            {
+                current = new Plugin(Elements.GetElement(Handle.BaseHandle, espName), pluginName);
+                return current;
+            } else return null;
         }
 
         public static void CreateNewPlugin( Setup.GameMode gameMod,string pluginName,
@@ -256,11 +308,7 @@ namespace TESV_EspEquipmentGenerator
             }
 
             var title = "Generating " + gameMod.ToString() + @"...data\" + pluginName;
-            //PupopProgress p = new PupopProgress()
-            //{
-            //    ProgressText = title,                
-            //};
-            //p.Show();
+
             var notifyIcon = new NotifyIcon();
             notifyIcon.Visible = true;
             notifyIcon.SetProcessIcon(0);
@@ -299,13 +347,18 @@ namespace TESV_EspEquipmentGenerator
                 if (activationPathInfo.Exists && !activationPathInfo.IsLocked)
                 {
                     var activationInfo = File.ReadAllLines(activationPathInfo).ToList();
-                    var PluginIndex = activationInfo.FindIndex(d => d.EndsWith(pluginName));
-                    string pluginActivateInfo = gameMod == Setup.GameMode.TES5 ? pluginName : "*" + pluginName;
+
+                    var PluginIndex = activationInfo.FindIndex(d => d.EndsWith(pluginName,StringComparison.OrdinalIgnoreCase));
+
+                    string pluginActivateInfo = pluginName;
+                    if (gameMod == Setup.GameMode.SSE) pluginActivateInfo = "*" + pluginActivateInfo;
+
                     if (PluginIndex < 0) activationInfo.Add(pluginActivateInfo);
                     else activationInfo[PluginIndex] = pluginActivateInfo;
+
                     File.WriteAllLines(activationPathInfo, activationInfo);
                 }
-                notifyIcon.ShowBalloonTip(1000, " Completed ! ", title+" is Finished.", System.Windows.Forms.ToolTipIcon.Info);
+                notifyIcon.ShowBalloonTip(100, " Completed ! ", title+" is Finished.", System.Windows.Forms.ToolTipIcon.Info);
                 notifyIcon.BalloonTipClosed += (s, e) => {
                     notifyIcon.Icon = null;
                     App.Current.Shutdown();
@@ -344,10 +397,6 @@ namespace TESV_EspEquipmentGenerator
             if (fileHeader.handle == null ) {
                 "FileHeader is null".PromptWarnning();
             }
-            if (handle == null) {
-                Masters.AddMaster(fileHeader.plugin.handle, "Skyrim.esm");
-            }
-            
         }
         public void Add(params string[] masterFiles)
         {

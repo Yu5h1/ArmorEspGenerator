@@ -79,7 +79,9 @@
     <Compile Include="Category\Armor.cs" />
     <Compile Include="Category\ArmorAddon.cs" />
     <Compile Include="Category\BipedBodyTemplate.cs" />
+    <Compile Include="Category\DefaultEquipmentsValue.cs" />
     <Compile Include="Category\EquipmentAsset.cs" />
+    <Compile Include="Category\Keywords.cs" />
     <Compile Include="Category\Partitions.cs" />
     <Compile Include="Category\Plugin.cs" />
     <Compile Include="Category\PluginRecords.cs" />
@@ -153,9 +155,7 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Controls\" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\Icon.ico" />
+    <Folder Include="Resources\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

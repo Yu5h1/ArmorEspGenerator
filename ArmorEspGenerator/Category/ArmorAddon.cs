@@ -106,16 +106,13 @@ namespace TESV_EspEquipmentGenerator
 
                 var femaleTexturesInfo = NifUtil.GetShapesTextureInfos(femaleModelPath);
                 var maleTexturesInfo = NifUtil.GetShapesTextureInfos(maleModelPath);
-                //femaleTexturesInfo.Select(d => d.name + "\n" + d.textures.ToContext()).ToContext().PromptInfo();
-                //maleTexturesInfo.Select(d => d.name + "\n" + d.textures.ToContext()).ToContext().PromptInfo();
+
                 var defaultFemaleTextureSet = new string[] { "" };
                 if (femaleShapeIndex < femaleTexturesInfo.Count)
                     defaultFemaleTextureSet = femaleTexturesInfo[femaleShapeIndex].textures;
                 var defaultMaleTextureSet = new string[] { "" };
                 if (maleShapeIndex < maleTexturesInfo.Count)
                     defaultMaleTextureSet = maleTexturesInfo[maleShapeIndex].textures;
-
-                
 
                 if (ignoreDiffuseNames.Length > 0)
                 {
@@ -139,8 +136,8 @@ namespace TESV_EspEquipmentGenerator
                 var femaleTextures = TextureSet.FindSimilarDiffuseTextures(Plugin.GetTexturesPath(defaultFemaleTextureSet[0]), out string[] femaleDiffuseTags);
                 var maleTextures = TextureSet.FindSimilarDiffuseTextures(Plugin.GetTexturesPath(defaultMaleTextureSet[0]), out string[] maleDiffuseTags);
 
-                var femaleTextureSets = plugin.AddTextureSetsByDifuseAssets(defaultFemaleTextureSet, femaleTextures);
-                var maleTextureSets = plugin.AddTextureSetsByDifuseAssets(defaultMaleTextureSet, maleTextures);
+                var femaleTextureSets = plugin.AddTextureSetsByDifuseAssets(false,defaultFemaleTextureSet, femaleTextures);
+                var maleTextureSets = plugin.AddTextureSetsByDifuseAssets(false, defaultMaleTextureSet, maleTextures);
 
                 tags = femaleDiffuseTags.Length > maleDiffuseTags.Length ? femaleDiffuseTags : maleDiffuseTags;
 

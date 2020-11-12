@@ -1,15 +1,19 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Linq;
 using XeLib.API;
 using XeLib;
-using Yu5h1Tools.WPFExtension;
 
 namespace TESV_EspEquipmentGenerator
 {
+
     public class Armor : RecordElement<Armor>
     {
+        public static readonly string[] ArmorTypes = new string[]
+        {
+            "Clothing",
+            "Heavy Armor",
+            "Light Armor"
+        };
+
         public const string Signature = "ARMO";
         public override string signature => Signature;
         public string FULLName { get => GetValue(FullNameKEY); set => SetValue(FullNameKEY, value); }
@@ -17,20 +21,38 @@ namespace TESV_EspEquipmentGenerator
         public ModelAlternateTextures MaleWorldModel;
         public ModelAlternateTextures FemaleWorldModel;
         public Armatures armatures;
+        public Keywords keywords;
+        public static string ValueKey = @"DATA\Value";
+        public static string WeightKey = @"DATA\Weight";
+        public int Value {
+            get => handle.GetInteger(ValueKey);
+            set => handle.SetInteger(ValueKey, value);
+        }
+        public double Weight
+        {
+            get => handle.GetFloat(WeightKey);
+            set => handle.SetFloat(WeightKey, value);
+        }
+        public static string RatingKey = "DNAM";
+        public double Rating
+        {
+            get => handle.GetFloat(RatingKey);
+            set => handle.SetFloat(RatingKey, value);
+        }
         public string Race
         {
             get => handle.GetElement(RaceKey).GetValue();
             set => handle.SetValue(RaceKey, value);
         }
-
-        Armor(PluginRecords<Armor> container, Handle target) : base(container, target) {
+        public Armor(Handle target, PluginRecords<Armor> container = null) : base(container, target) {
             armatures = new Armatures(this);
             bipedBodyTemplate = new BipedBodyTemplate(target);
             MaleWorldModel = new ModelAlternateTextures(target, true);
             FemaleWorldModel = new ModelAlternateTextures(target, false);
+            keywords = new Keywords(target);
         }
         public static Armor Create(PluginRecords<Armor> container, Handle handle) {
-            if (handle.CompareSignature<Armor>()) return new Armor(container, handle);
+            if (handle.CompareSignature<Armor>()) return new Armor(handle, container);
             else return null;
         }
         public void SetModelAssets(bool maleOrfemale,EquipmentAsset asset) {
@@ -43,6 +65,7 @@ namespace TESV_EspEquipmentGenerator
             MaleWorldModel.CopyAlternateTexturesFrom(male);
             FemaleWorldModel.CopyAlternateTexturesFrom(female);
         }
+        public void SaveDefaultSetting() => DefaultEquipmentsValue.Add(new DefaultEquipmentsValue(this,EditorID));
     }
     public class Armatures : RecordArrays<Handle>
     {
@@ -52,7 +75,7 @@ namespace TESV_EspEquipmentGenerator
         public string Name;
         public Armatures(Armor armor):base(armor.handle)
         {
-            this.armor = armor;            
+            this.armor = armor;
             AddRange(handle.GetArrayItems("MODL").ToList());
         }
         public bool[] Add(params ArmorAddon[] items)

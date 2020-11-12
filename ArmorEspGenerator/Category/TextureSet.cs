@@ -22,8 +22,9 @@ namespace TESV_EspEquipmentGenerator
         {
             if (handle.CompareSignature<TextureSet>()) return new TextureSet(container, handle);
             else return null;
-        }        
-        public static string[] DisplayNames => new string[]{
+        }     
+        
+        public static readonly string[] DisplayNames = new string[8]{
              "Difuse",
              "Normal/Gloss",
              "Environment Mask/Subsurface Tint",
@@ -33,6 +34,19 @@ namespace TESV_EspEquipmentGenerator
              "Multilayer",
              "Backlight Mask/Specular"
         };
+        public static int Count => DisplayNames.Length;
+
+        public static string[][] TextureSlotNameTags => new string[][]{
+            new string[] { "d" },
+           new string[] { "n","msn" },
+           new string[] { "EM" },
+           new string[] { "sk" },
+           new string[] { "h" },
+           new string[] { "e" },
+           new string[] { "mt" },
+           new string[] { "s" },
+        };
+
         public string Difuse { get => texturesRGBA.Difuse; set => texturesRGBA.Difuse = value; }
         public string Normal { get => texturesRGBA.Normal; set => texturesRGBA.Normal = value; }
         public string EnvironmentMask { get => texturesRGBA.EnvironmentMask; set => texturesRGBA.EnvironmentMask = value; }
@@ -80,18 +94,37 @@ namespace TESV_EspEquipmentGenerator
         }
         public string[] ToArray() => texturesRGBA.ToArray();
 
-        string SpeculateTextureAsset(PathInfo diffusePathInfo,string value,string Key)
-        {
-            var predictPath = diffusePathInfo.ChangeName(PathInfo.Replace(diffusePathInfo.Name, "_D", "_"+ Key));
-            if (File.Exists(predictPath)) value = predictPath;
-            return value;
+        public string SpeculateTextureByTag(PathInfo diffuse, List<string> assets,string[] Keys) {
+            string result = "";
+            if (diffuse.Name.ToLower().Contains("_d"))
+            {
+                //Keys.ToContext().PromptInfo();
+                foreach (var key in Keys)
+                {
+                    result = assets.Find(d => d.Equals(
+                        diffuse.ChangeName(diffuse.Name.ToLower().Replace("_d", "_" + key)),
+                        StringComparison.OrdinalIgnoreCase));
+                    if (!result.IsNullOrEmpty()) break;
+                }
+            } else {
+                result = assets.Find(d => Keys.Any( key => d.EndsWith(
+                                                    "_"+key+".dds",
+                                                    StringComparison.OrdinalIgnoreCase)));
+            }
+            return result.IsNullOrEmpty() ? "" : result;
         }
+
         public void FindTexturesByDiffuse() {
             var diffusePathInfo = new PathInfo(Plugin.GetTexturesPath(Difuse));
-            Normal = SpeculateTextureAsset(diffusePathInfo,Normal, "N");
-            Specular = SpeculateTextureAsset(diffusePathInfo, Specular, "S");
-            Environment = SpeculateTextureAsset(diffusePathInfo, Environment, "E");
-            EnvironmentMask = SpeculateTextureAsset(diffusePathInfo, EnvironmentMask, "EM");
+            var tag = diffusePathInfo.Name.Split('_')[0];
+            var texturesWithSameTag = Directory.GetFiles( diffusePathInfo.directory,tag + "*.dds").
+                                                            Where(d=> !d.ToLower().EndsWith(Difuse)).ToList();
+            //ignore diffuse index 1
+            for (int i = 1; i < Count; i++)
+            {
+                var value = SpeculateTextureByTag(diffusePathInfo, texturesWithSameTag, TextureSlotNameTags[i]);
+                if (!value.IsNullOrEmpty()) texturesRGBA.SetTexture(i,value);
+            }
         }
     }
     public class TexturesRGBA : RecordObject

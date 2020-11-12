@@ -10,6 +10,12 @@ namespace TESV_EspEquipmentGenerator
     public static class NifUtil
     {
         [DllImport("NifUtility.dll", CallingConvention = CallingConvention.Cdecl)]
+        [return:MarshalAs(UnmanagedType.I1)]
+        public static extern bool HasCollisionObject([MarshalAs(UnmanagedType.LPStr)]string filePath);
+        [DllImport("NifUtility.dll", CallingConvention = CallingConvention.Cdecl)]
+        [return:MarshalAs(UnmanagedType.I1)]
+        public static extern bool IsGroundItemObject([MarshalAs(UnmanagedType.LPStr)]string filePath);
+        [DllImport("NifUtility.dll", CallingConvention = CallingConvention.Cdecl)]
         public static extern string GetShapesName([MarshalAs(UnmanagedType.LPStr)]string filename);
         public static string[] GetShapeNames(string filename) => GetShapesName(filename).GetLines();
         [DllImport("NifUtility.dll", CallingConvention = CallingConvention.Cdecl)]
@@ -27,16 +33,18 @@ namespace TESV_EspEquipmentGenerator
         public static List<(string name, string[] textures)> GetShapesTextureInfos(string filename) {
             var results = new List<(string name, string[] textures)>();
             var pathinfo = new PathInfo(filename);
-            if (pathinfo.Exists) {
+            if (pathinfo.Exists && pathinfo.extension.EndsWith("nif",StringComparison.OrdinalIgnoreCase)) {
                 var items = GetTexturesFromAllShapes(filename).GetLines();
-                int count = items.Length / 10;
-                for (int i = 0; i < count; i++)
-                {
-                    var begin = i * 10;
-                    var shapeName = items[begin];
-                    var textures = new string[9];
-                    for (int o = 0; o < 9; o++) textures[o] = items[begin + 1 + o];
-                    results.Add((shapeName, textures));
+                if (items.Length > 1) {
+                    int count = items.Length / 10;
+                    for (int i = 0; i < count; i++)
+                    {
+                        var begin = i * 10;
+                        var shapeName = items[begin];
+                        var textures = new string[9];
+                        for (int o = 0; o < 9; o++) textures[o] = items[begin + 1 + o];
+                        results.Add((shapeName, textures));
+                    }
                 }
             }
             return results;

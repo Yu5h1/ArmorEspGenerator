@@ -21,11 +21,15 @@ namespace TESV_EspEquipmentGenerator
         {
             this.plugin = plugin;
             Constructor = constructor;
-            foreach (var item in plugin.GetRecords(signature)) Add(item);
+
+            var records = plugin.GetRecords(signature);
+            for (int i = 0; i < records.Length; i++)
+            {
+                Add(records[i]);
+            }
         }
         public new void Add(T item)
         {
-            PrepareHandle();
             base.Add(item);
             Added?.Invoke(item);
         }
