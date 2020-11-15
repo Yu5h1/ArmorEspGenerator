@@ -5,6 +5,8 @@ VisualStudioVersion = 15.0.28307.1000
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ArmorEspGenerator", "ArmorEspGenerator\ArmorEspGenerator.csproj", "{4ED8A0E6-029E-4BC0-9065-6BDDD5F0DA33}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DefaultEquipmentsValueConfiguration", "DefaultEquipmentsValueConfiguration\DefaultEquipmentsValueConfiguration.csproj", "{9E1213A8-A223-48AD-8BE0-E2651C9A0F2B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{4ED8A0E6-029E-4BC0-9065-6BDDD5F0DA33}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4ED8A0E6-029E-4BC0-9065-6BDDD5F0DA33}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4ED8A0E6-029E-4BC0-9065-6BDDD5F0DA33}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9E1213A8-A223-48AD-8BE0-E2651C9A0F2B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9E1213A8-A223-48AD-8BE0-E2651C9A0F2B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9E1213A8-A223-48AD-8BE0-E2651C9A0F2B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9E1213A8-A223-48AD-8BE0-E2651C9A0F2B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
