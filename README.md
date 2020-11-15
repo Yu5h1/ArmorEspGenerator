@@ -3,10 +3,10 @@ This program is used to create/modify Armor Type esp
 
 
 **Libraries used:**
-
+* .Net framework Winform NotifyIcon and WPF
 * xedit-lib
-* XeLibSharp
-* ousnius's NIFLib
+* [XeLibSharp](https://github.com/nam3less/XeLibSharp)
+* [ousnius's NIFLib](https://github.com/ousnius/BodySlide-and-Outfit-Studio/tree/dev/lib/NIF)
 
 **IDE used:**
   
