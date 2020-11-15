@@ -134,7 +134,7 @@ namespace TESV_EspEquipmentGenerator
         }
         public void GenerateArmorsByFolder(string folderPath, Func<double,bool> progress)
         {
-            var defaultEquipmentsValues = DefaultEquipmentsValue.Load();
+            DefaultEquipmentsValue.Load();
             PathInfo folderPathInfo = new PathInfo(folderPath);
             string NameSet = folderPathInfo.Name.Capitalize();
             var datas = new Dictionary<string, EquipmentAssets>(StringComparer.OrdinalIgnoreCase);
@@ -206,15 +206,7 @@ namespace TESV_EspEquipmentGenerator
                         newArmor.bipedBodyTemplate.ArmorType = newArmorAddon.bipedBodyTemplate.ArmorType;
                         newArmor.FULLName = NameSet + " " + item.Key.Capitalize();
                         newArmor.Race = newArmorAddon.Race;
-                        var defaultArmorSetting = defaultEquipmentsValues.Find(d => editorID.Contains(StringComparison.OrdinalIgnoreCase, d.Tags.ToArray()));
-                        if (defaultArmorSetting != null)
-                        {
-                            newArmor.bipedBodyTemplate.ArmorType = defaultArmorSetting.ArmorType;
-                            newArmor.Rating = defaultArmorSetting.Rating;
-                            newArmor.Value = defaultArmorSetting.Value;
-                            newArmor.Weight = defaultArmorSetting.Weight;
-                            newArmor.keywords.Add(defaultArmorSetting.Keywords.ToArray());
-                        }
+                        newArmor.LoadDefaultSettring();
                         newArmors.Add(key, newArmor);
                     }
                     newArmor.SetModelAssets(true, item.Value.male);

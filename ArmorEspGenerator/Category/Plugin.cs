@@ -216,9 +216,10 @@ namespace TESV_EspEquipmentGenerator
         {
             var results = current.GetRecords(search, includeOverrides);
             if (results.Length == 0) {
-                for (int i = current.fileHeader.masters.Count-1; i >=0 ; i--)
+                var masters = current.fileHeader.masters;
+                for (int i = masters.Count-1; i >=0 ; i--)
                 {
-                    results = GetActivePluginRecords(current.fileHeader.masters[i].GetValue(), search, includeOverrides);
+                    results = GetActivePluginRecords(masters.GetMasterName(i), search, includeOverrides);
                     if (results.Length > 0) break;
                 }
             }
@@ -394,10 +395,10 @@ namespace TESV_EspEquipmentGenerator
         public override string signature => Signature;
         public PluginMasters(FileHeader fileHeader) : base(fileHeader.handle) {
             this.fileHeader = fileHeader;
-            if (fileHeader.handle == null ) {
-                "FileHeader is null".PromptWarnning();
-            }
+            if (fileHeader.handle == null) "FileHeader is null".PromptWarnning();
+            else AddRange(handle.GetElements());
         }
+        public string GetMasterName(int index) => this[index].GetValue("MAST");
         public void Add(params string[] masterFiles)
         {
             if (masterFiles.Length > 0) {

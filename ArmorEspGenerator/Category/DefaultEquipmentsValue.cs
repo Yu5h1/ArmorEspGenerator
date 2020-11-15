@@ -11,6 +11,8 @@ namespace TESV_EspEquipmentGenerator
     [Serializable]
     public class DefaultEquipmentsValue
     {
+        public static PathInfo location => new PathInfo(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "DefaultEquipmentsValue.xml"));
+        public static List<DefaultEquipmentsValue> current = null;
         public List<string> Tags;
         public string ArmorType;
         public int Value = 0;
@@ -40,21 +42,22 @@ namespace TESV_EspEquipmentGenerator
                                         tags){ }
 
         public XElement ToXElement() => xmlUtil.ToXElement(this);
-        
+        public override string ToString()
+            => string.Join("\n", "Tags : " + Tags.Join(","), "ArmorType : "+ ArmorType, "Value : "+ Value,
+                "Weight : "+ Weight, "Rating : "+Rating, "Keywords : \n"+ Keywords.ToContext("     "));
 
-        public static PathInfo location => new PathInfo(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "DefaultEquipmentsValue.xml"));
         public static void CreateDefaultEquipmentsValue(List<DefaultEquipmentsValue> datas)
         {
+            
             var xDoc = new XDocument();
             xDoc.SetRoot("Root");
             xDoc.Save(location);
         }
         public static List<DefaultEquipmentsValue> Load(XDocument xdoc) {
-            var results = new List<DefaultEquipmentsValue>();
+            current = new List<DefaultEquipmentsValue>();
             if (xdoc.Root != null)
-            foreach (var item in xdoc.Root.Elements())
-                results.Add(item.ToObject<DefaultEquipmentsValue>());
-            return results;
+            foreach (var item in xdoc.Root.Elements()) current.Add(item.ToObject<DefaultEquipmentsValue>());
+            return current;
         }
         public static List<DefaultEquipmentsValue> Load() {
             if (!location.Exists) return new List<DefaultEquipmentsValue>();

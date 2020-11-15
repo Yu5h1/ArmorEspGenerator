@@ -118,7 +118,7 @@ namespace TESV_EspEquipmentGenerator
             }
 
         }
-        public void ShowSelectedRecord()
+        public void RefreshSelectedRecord()
         {
             var curSelectedItem = RecordsTreeView.selectedNode;
             if (curSelectedItem == null) return;
@@ -136,10 +136,10 @@ namespace TESV_EspEquipmentGenerator
                         DataInfos_treeView.AddWorldModelTreeNode(armor.MaleWorldModel);
                         DataInfos_treeView.AddWorldModelTreeNode(armor.FemaleWorldModel);
 
-                        DataInfos_treeView.Items.Add(armor.handle.GetTreeNode(Keywords.Signature));
-                        DataInfos_treeView.Items.Add(armor.handle.GetTreeNode(Armor.ValueKey));
-                        DataInfos_treeView.Items.Add(armor.handle.GetTreeNode(Armor.WeightKey));
-                        DataInfos_treeView.Items.Add(armor.handle.GetTreeNode(Armor.RatingKey));
+                        DataInfos_treeView.Items.Add(armor.handle.GetTreeNode(Armor.Keywords.Signature));
+                        DataInfos_treeView.Items.Add(armor.handle.GetTreeNode(Armor.ValueKey,true));
+                        DataInfos_treeView.Items.Add(armor.handle.GetTreeNode(Armor.WeightKey, true));
+                        DataInfos_treeView.Items.Add(armor.handle.GetTreeNode(Armor.RatingKey, true));
 
                         break;
                     case ArmorAddon armorAddon:
@@ -190,7 +190,7 @@ namespace TESV_EspEquipmentGenerator
         }
         private void RecordsTreeView_SelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
         {
-            ShowSelectedRecord();
+            RefreshSelectedRecord();
         }
         public void CreateRecordTreeItem<T>(TreeViewItem root,T item) where T : RecordElement<T>
         {
@@ -221,6 +221,12 @@ namespace TESV_EspEquipmentGenerator
                     {
                     };
                     treeItem.AddMultiSelectionMenuItem(RecordsTreeView,"Save Default Setting");
+                    treeItem.AddMenuItem("Load Default Setting").Click += (s, e) =>
+                    {
+                        if (DefaultEquipmentsValue.current == null) DefaultEquipmentsValue.Load();
+                       armor.LoadDefaultSettring();
+                       RefreshSelectedRecord();
+                    };
                     break;
                 case ArmorAddon armorAddon:
                     treeItem.AddMenuItem("Generate Armor(s) By Selected ArmorAddons").Click += (s, e) => {
@@ -230,9 +236,7 @@ namespace TESV_EspEquipmentGenerator
                             plugin.AddArmorByArmaturesFromArmorAddon(selectedArmorAddons);
                         }
                     };
-                    //treeItem.AddMenuItem("Test").Click += (s, e) => {
-                        //armorAddon.DuplicateByShapeDiffuse();
-                    //};
+                
                     break;
                 case TextureSet textureSet:
                     treeItem.HandleDragDrop(false, files =>
@@ -325,7 +329,7 @@ namespace TESV_EspEquipmentGenerator
                                 else
                                 {
                                     plugin.AddArmorAddonByNifFile(path);
-                                    ShowSelectedRecord();
+                                    RefreshSelectedRecord();
                                 }
                             }
                         }, ".nif", "folder");

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Yu5h1Tools.WPFExtension;
 using System.Linq;
+using Yu5h1Tools.WPFExtension;
 
 namespace TESV_EspEquipmentGenerator
 {

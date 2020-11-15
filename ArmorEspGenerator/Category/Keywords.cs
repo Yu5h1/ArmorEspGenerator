@@ -7,22 +7,14 @@ using XeLib;
 
 namespace TESV_EspEquipmentGenerator
 {
-    public class Keywords : RecordArrays<Handle>
+    public class Keywords : RecordElement<Keywords>
     {
-        public static string Signature => "KWDA";
+        public new string Signature = "KYWD";
         public override string signature => Signature;
 
-        public Keywords(Handle Parent) : base(Parent)
+        public Keywords(PluginRecords<Keywords> container, Handle target) : base(container, target)
         {
-            var elements = handle.GetElements();
-            if (handle != null && elements.Length > 0) AddRange(elements);
-        }
-        public void Add(params string[] IDs) {
-            foreach (var id in IDs)
-            {
-               var found = Plugin.FindRecords(id, true);
-                if (found.Length > 0) Add(found[0]);
-            }
+            
         }
     }
 }

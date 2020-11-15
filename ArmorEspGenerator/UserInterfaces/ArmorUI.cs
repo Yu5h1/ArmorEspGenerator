@@ -47,13 +47,13 @@ namespace TESV_EspEquipmentGenerator
             pathSelector.SetPathBy += (txt) => Plugin.TrimMeshesPath(txt);
             pathSelector.TextChanged += (s, e) => {
                 modelAlternateTextures.Model = pathSelector.Text;
-                MainWindow.current.ShowSelectedRecord();
+                MainWindow.current.RefreshSelectedRecord();
             };
             modelTreeitem.Header = pathSelector;
 
             pathSelector.labelControl.AddMenuItem("BodyParts to Partitions").Click += (s, e) => {
                 //worldModel.BodyPartsToPartitions();
-                MainWindow.current.ShowSelectedRecord();
+                MainWindow.current.RefreshSelectedRecord();
             };
             result.IsExpanded = true;
 
@@ -88,7 +88,7 @@ namespace TESV_EspEquipmentGenerator
                                 try
                                 {
                                     modelAlternateTextures.alternateTextures.Set(shapeName, textureSet);
-                                    MainWindow.current.ShowSelectedRecord();
+                                    MainWindow.current.RefreshSelectedRecord();
                                 }
                                 catch (Exception error)
                                 {

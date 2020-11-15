@@ -1,6 +1,7 @@
 ﻿using System.Linq;
 using XeLib.API;
 using XeLib;
+using Yu5h1Tools.WPFExtension;
 
 namespace TESV_EspEquipmentGenerator
 {
@@ -37,7 +38,7 @@ namespace TESV_EspEquipmentGenerator
         public double Rating
         {
             get => handle.GetFloat(RatingKey);
-            set => handle.SetFloat(RatingKey, value);
+            set => handle.SetValue(RatingKey, value.ToString());
         }
         public string Race
         {
@@ -66,6 +67,43 @@ namespace TESV_EspEquipmentGenerator
             FemaleWorldModel.CopyAlternateTexturesFrom(female);
         }
         public void SaveDefaultSetting() => DefaultEquipmentsValue.Add(new DefaultEquipmentsValue(this,EditorID));
+        public void LoadDefaultSettring() {
+            var data = DefaultEquipmentsValue.current.Find(d => EditorID.Contains(System.StringComparison.OrdinalIgnoreCase, d.Tags.ToArray()));
+            if (data != null)
+            {
+                bipedBodyTemplate.ArmorType = data.ArmorType;
+                Value =  data.Value;
+                Weight = data.Weight;
+                Rating = data.Rating;
+                keywords.Add(data.Keywords.ToArray());
+            }
+        }
+        public class Keywords : RecordArrays<Handle>
+        {
+            public static string Signature => "KWDA";
+            public override string signature => Signature;
+
+            public Keywords(Handle Parent) : base(Parent)
+            {
+
+                if (handle != null)
+                {
+                    var elements = handle.GetElements();
+                    if (elements.Length > 0) AddRange(elements);
+                }
+            }
+            public void Add(params string[] IDs)
+            {
+                Plugin.SkyrimESM.GetRecords(signature).Length.PromptInfo();
+                var found = Plugin.FindRecords(Signature, true);
+                found.Length.PromptInfo();
+                //foreach (var id in IDs)
+                //{
+                //    var found = Plugin.FindRecords(Signature, true);
+                //    //if (found.Length > 0) Add(found[0]);
+                //}
+            }
+        }
     }
     public class Armatures : RecordArrays<Handle>
     {

@@ -96,8 +96,8 @@ namespace TESV_EspEquipmentGenerator
         public static string MakeValidEditorID(this string txt)
         {
             if (txt.IsNullOrEmpty()) return "";
-            txt = txt.Split('_').Select(d => d.FirstCharToUpper()).Join();
-            txt = txt.Split(' ').Select(d => d.FirstCharToUpper()).Join();
+            txt = txt.Split('_').Select(d => d.Capitalize()).Join();
+            txt = txt.Split(' ').Select(d => d.Capitalize()).Join();
             return new Regex("[^a-zA-Z0-9]").Replace(txt, "");
         }
     }
