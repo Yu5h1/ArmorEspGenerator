@@ -74,17 +74,10 @@ namespace TESV_EspEquipmentGenerator
             PluginName = pluginName;
             print("Construct " + pluginName + " {Plugin} instance.");
 
-            try
-            {
-                TextureSets = new PluginRecords<TextureSet>(this, TextureSet.Create);
-                ArmorAddons = new PluginRecords<ArmorAddon>(this, ArmorAddon.Create);
-                Armors = new PluginRecords<Armor>(this, Armor.Create);
-                fileHeader = new FileHeader(this);
-            } catch (Exception error)
-            {
-                error.Message.PromptError();
-                throw;
-            }
+            TextureSets = new PluginRecords<TextureSet>(this, TextureSet.Create);
+            ArmorAddons = new PluginRecords<ArmorAddon>(this, ArmorAddon.Create);
+            Armors = new PluginRecords<Armor>(this, Armor.Create);
+            fileHeader = new FileHeader(this);
 
             print(pluginName + " is generated ! ");
         }
@@ -346,27 +339,27 @@ namespace TESV_EspEquipmentGenerator
 
                 var pluginFileHandle = Files.AddFile(pluginName);
                 current = new Plugin(pluginName, masterfileslist.ToArray());
-                //workflow?.Invoke(current, notifyIcon);
+                workflow?.Invoke(current, notifyIcon);
                 return pluginFileHandle;
             })).ContinueWith(task=> {
                 notifyIcon.SetProcessIcon(1);
                 Files.SaveFile(task.Result, fullPathInfo);
-
+                //active plugin
                 var activationPathInfo = new PathInfo(Path.Combine(Meta.GetGlobal("AppDataPath"), "plugins.txt"));
-                //if (activationPathInfo.Exists && !activationPathInfo.IsLocked)
-                //{
-                //    var activationInfo = File.ReadAllLines(activationPathInfo).ToList();
+                if (activationPathInfo.Exists && !activationPathInfo.IsLocked)
+                {
+                    var activationInfo = File.ReadAllLines(activationPathInfo).ToList();
 
-                //    var PluginIndex = activationInfo.FindIndex(d => d.EndsWith(pluginName,StringComparison.OrdinalIgnoreCase));
+                    var PluginIndex = activationInfo.FindIndex(d => d.EndsWith(pluginName, StringComparison.OrdinalIgnoreCase));
 
-                //    string pluginActivateInfo = pluginName;
-                //    if (gameMod == Setup.GameMode.SSE) pluginActivateInfo = "*" + pluginActivateInfo;
+                    string pluginActivateInfo = pluginName;
+                    if (gameMod == Setup.GameMode.SSE) pluginActivateInfo = "*" + pluginActivateInfo;
 
-                //    if (PluginIndex < 0) activationInfo.Add(pluginActivateInfo);
-                //    else activationInfo[PluginIndex] = pluginActivateInfo;
+                    if (PluginIndex < 0) activationInfo.Add(pluginActivateInfo);
+                    else activationInfo[PluginIndex] = pluginActivateInfo;
 
-                //    File.WriteAllLines(activationPathInfo, activationInfo);
-                //}
+                    File.WriteAllLines(activationPathInfo, activationInfo);
+                }
                 notifyIcon.ShowBalloonTip(100, " Completed ! ", title+" is Finished.", System.Windows.Forms.ToolTipIcon.Info);
                 notifyIcon.BalloonTipClosed += (s, e) => {
                     notifyIcon.Icon = null;
@@ -398,17 +391,21 @@ namespace TESV_EspEquipmentGenerator
     }
     public class PluginMasters : RecordArrays<Handle>
     {
-        public FileHeader fileHeader;
         public static string Signature => "Master Files";
         public override string signature => Signature;
+
+        public FileHeader fileHeader;
         public PluginMasters(FileHeader fileHeader) : base(fileHeader.handle) {
             this.fileHeader = fileHeader;
             if (fileHeader.handle == null) "FileHeader is null".PromptWarnning();
+            else if (handle == null)
+                Masters.AddMaster(fileHeader.plugin.handle, "Skyrim.esm");
             else AddRange(handle.GetElements());
+            
         }
         public string GetMasterName(int index) => this[index].GetValue("MAST");
         public void Add(params string[] masterFiles)
-        {
+        {            
             if (masterFiles.Length > 0) {
                 Clear();
                 foreach (var master in masterFiles)
