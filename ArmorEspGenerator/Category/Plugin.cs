@@ -74,10 +74,18 @@ namespace TESV_EspEquipmentGenerator
             PluginName = pluginName;
             print("Construct " + pluginName + " {Plugin} instance.");
 
-            TextureSets = new PluginRecords<TextureSet>(this, TextureSet.Create);
-            ArmorAddons = new PluginRecords<ArmorAddon>(this, ArmorAddon.Create);
-            Armors = new PluginRecords<Armor>(this, Armor.Create);
-            fileHeader = new FileHeader(this);
+            try
+            {
+                TextureSets = new PluginRecords<TextureSet>(this, TextureSet.Create);
+                ArmorAddons = new PluginRecords<ArmorAddon>(this, ArmorAddon.Create);
+                Armors = new PluginRecords<Armor>(this, Armor.Create);
+                fileHeader = new FileHeader(this);
+            } catch (Exception error)
+            {
+                error.Message.PromptError();
+                throw;
+            }
+
             print(pluginName + " is generated ! ");
         }
 
@@ -208,22 +216,24 @@ namespace TESV_EspEquipmentGenerator
 
             return missingMasters.ToArray();
         }
-        public static Handle GetActivePlugin(string pluginName)
+        public static Handle GetActivePluginHandle(string pluginName)
                                                     => Handle.BaseHandle.GetElement(pluginName);
         public static Handle[] GetActivePluginRecords(string pluginName,string search = "",bool includeOverrides = false)
-                                            => GetActivePlugin(pluginName).GetRecords(search,includeOverrides);
-        public static Handle[] FindRecords(string search, bool includeOverrides = false)
+                                            => GetActivePluginHandle(pluginName).GetRecords(search,includeOverrides);
+        public static Handle FindRecord(Predicate<Handle> predicate,string signature, bool includeOverrides = false)
         {
-            var results = current.GetRecords(search, includeOverrides);
-            if (results.Length == 0) {
+            var result = current.handle.FindRecord(predicate,signature, includeOverrides);
+            if (result == null) {
                 var masters = current.fileHeader.masters;
-                for (int i = masters.Count-1; i >=0 ; i--)
+                var found =GetActivePluginHandle(masters.GetMasterName(0)).FindRecord(d=>d.GetEditorID()== "ArmorHeavy","KYWD",true);
+
+                for (int i = masters.Count - 1; i >= 0; i--)
                 {
-                    results = GetActivePluginRecords(masters.GetMasterName(i), search, includeOverrides);
-                    if (results.Length > 0) break;
+                    result = GetActivePluginHandle(masters.GetMasterName(i)).FindRecord(predicate,signature,includeOverrides);
+                    if (result != null) break;
                 }
             }
-            return results;
+            return result;
         }
         public static bool SetGameMode(Setup.GameMode gameMode) {
             
@@ -295,8 +305,6 @@ namespace TESV_EspEquipmentGenerator
         public static void CreateNewPlugin( Setup.GameMode gameMod,string pluginName,
                                             bool overwrite,Func<Plugin,NotifyIcon,bool> workflow,
                                             params string[] masterfiles) {
-
-            
             Meta.Initialize();
             currentGameMode = gameMod;
             Setup.SetGameMode(gameMod);            
@@ -322,7 +330,6 @@ namespace TESV_EspEquipmentGenerator
 
             Task.Run(new Func<Handle>(() =>
             {
-
                 List<string> masterfileslist = new List<string>() { "Skyrim.esm" };
                 masterfileslist.AddRange(masterfiles);
 
@@ -330,35 +337,36 @@ namespace TESV_EspEquipmentGenerator
                 notifyIcon.SetProcessIcon(0.1);
                 Setup.LoadPlugins(masterfileslist.Join("\n"));
                 var state = Setup.LoaderState.IsInactive;
-                while (state != Setup.LoaderState.IsDone && state != Setup.LoaderState.HasError) {
+                while (state != Setup.LoaderState.IsDone && state != Setup.LoaderState.HasError)
+                {
                     state = Setup.GetLoaderStatus();
                 }
+                if (File.Exists(fullPathInfo)) File.Delete(fullPathInfo);
                 Messages.ClearMessages();
 
-                if (File.Exists(fullPathInfo)) File.Delete(fullPathInfo);
                 var pluginFileHandle = Files.AddFile(pluginName);
                 current = new Plugin(pluginName, masterfileslist.ToArray());
-                workflow?.Invoke(current, notifyIcon);
+                //workflow?.Invoke(current, notifyIcon);
                 return pluginFileHandle;
             })).ContinueWith(task=> {
                 notifyIcon.SetProcessIcon(1);
                 Files.SaveFile(task.Result, fullPathInfo);
 
                 var activationPathInfo = new PathInfo(Path.Combine(Meta.GetGlobal("AppDataPath"), "plugins.txt"));
-                if (activationPathInfo.Exists && !activationPathInfo.IsLocked)
-                {
-                    var activationInfo = File.ReadAllLines(activationPathInfo).ToList();
+                //if (activationPathInfo.Exists && !activationPathInfo.IsLocked)
+                //{
+                //    var activationInfo = File.ReadAllLines(activationPathInfo).ToList();
 
-                    var PluginIndex = activationInfo.FindIndex(d => d.EndsWith(pluginName,StringComparison.OrdinalIgnoreCase));
+                //    var PluginIndex = activationInfo.FindIndex(d => d.EndsWith(pluginName,StringComparison.OrdinalIgnoreCase));
 
-                    string pluginActivateInfo = pluginName;
-                    if (gameMod == Setup.GameMode.SSE) pluginActivateInfo = "*" + pluginActivateInfo;
+                //    string pluginActivateInfo = pluginName;
+                //    if (gameMod == Setup.GameMode.SSE) pluginActivateInfo = "*" + pluginActivateInfo;
 
-                    if (PluginIndex < 0) activationInfo.Add(pluginActivateInfo);
-                    else activationInfo[PluginIndex] = pluginActivateInfo;
+                //    if (PluginIndex < 0) activationInfo.Add(pluginActivateInfo);
+                //    else activationInfo[PluginIndex] = pluginActivateInfo;
 
-                    File.WriteAllLines(activationPathInfo, activationInfo);
-                }
+                //    File.WriteAllLines(activationPathInfo, activationInfo);
+                //}
                 notifyIcon.ShowBalloonTip(100, " Completed ! ", title+" is Finished.", System.Windows.Forms.ToolTipIcon.Info);
                 notifyIcon.BalloonTipClosed += (s, e) => {
                     notifyIcon.Icon = null;

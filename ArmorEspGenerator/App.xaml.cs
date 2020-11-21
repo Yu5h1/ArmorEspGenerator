@@ -43,19 +43,26 @@ namespace TESV_EspEquipmentGenerator
                         {
                             if (game == Setup.GameMode.TES5 || game == Setup.GameMode.SSE)
                             {
-
-                                Plugin.CreateNewPlugin((Setup.GameMode)game, pathinfo.Name + ".esp", true, (plugin, progressInfo) =>
+                                try
                                 {
-                                    plugin.fileHeader.Author = pathinfo.Name;
-                                    plugin.GenerateArmorsBySpeculateFolder(pathinfo, progressValue =>
+                                    Plugin.CreateNewPlugin((Setup.GameMode)game, pathinfo.Name + ".esp", true, (plugin, progressInfo) =>
                                     {
-                                        progressInfo.SetProcessIcon(0.1 + (progressValue * 0.8));
-                                        progressInfo.Text = "....." + (progressValue * 100).ToString() + "%";
-                                        return false;
-                                    });
+                                        plugin.fileHeader.Author = pathinfo.Name;
+                                        plugin.GenerateArmorsBySpeculateFolder(pathinfo, progressValue =>
+                                        {
+                                            progressInfo.SetProcessIcon(0.1 + (progressValue * 0.8));
+                                            progressInfo.Text = "....." + (progressValue * 100).ToString() + "%";
+                                            return false;
+                                        });
 
-                                    return false;
-                                },"Skyrim.esm");
+                                        return false;
+                                    }, "Skyrim.esm");
+                                } catch (Exception error)
+                                {
+                                    error.Message.PromptError();
+                                    throw;
+                                }
+       
                             }
                             else
                             {

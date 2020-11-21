@@ -67,7 +67,7 @@
     </Reference>
     <Reference Include="Yu5h1Tools.WPFExtension, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>C:\Users\Yushi\Documents\Visual Studio 2017\Projects\Yu5h1Lib\WPFExtension\Yu5h1Tools.WPFExtension\bin\Release\Yu5h1Tools.WPFExtension.dll</HintPath>
+      <HintPath>..\..\..\Yu5h1Lib\WPFExtension\Yu5h1Tools.WPFExtension\bin\Release\Yu5h1Tools.WPFExtension.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>

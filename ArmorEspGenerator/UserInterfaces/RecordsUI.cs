@@ -64,8 +64,12 @@ namespace TESV_EspEquipmentGenerator
                         };
                         if (EnabledEdit) textbox.TextChanged += (s, e) => handle.SetValue(textbox.Text);
                         result.SetControlLabel(handle.GetDisplayName(), textbox);
-                    }
-                    else {
+                    } else if (DefineNames.Length == 1)
+                    {
+                        foreach (var element in handle.GetElements())
+                            result.Items.Add(element.GetTreeNode());
+                    } else
+                    {
                         foreach (var define in DefineNames)
                             result.Items.Add(handle.GetTreeNode(define));
                     }

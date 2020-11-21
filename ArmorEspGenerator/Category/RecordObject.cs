@@ -79,7 +79,7 @@ namespace TESV_EspEquipmentGenerator
     }
     public abstract class RecordElement : RecordObject
     {        
-        public static string Signature { get; set; }
+        //public static string Signature { get; set; }
         public static Handle SkyrimESM => Handle.BaseHandle.GetElement("Skyrim.esm");
         public string FormID => handle.GetFormID();
         public string EditorID { get => handle.GetEditorID(); set => handle.SetEditorID(value); }

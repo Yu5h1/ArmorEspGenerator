@@ -10,7 +10,6 @@ namespace TESV_EspEquipmentGenerator
     {
         public override string signature => SignatureUtil.GetSignature<T>();
         public Plugin plugin;
-
         
         public Action<T> Added;
         public Action Cleared;
@@ -22,14 +21,11 @@ namespace TESV_EspEquipmentGenerator
             this.plugin = plugin;
             Constructor = constructor;
 
-            var records = plugin.GetRecords(signature);
-            for (int i = 0; i < records.Length; i++)
-            {
-                Add(records[i]);
-            }
+            foreach (var item in plugin.GetRecords(signature)) Add(item);
         }
         public new void Add(T item)
         {
+            PrepareHandle();
             base.Add(item);
             Added?.Invoke(item);
         }

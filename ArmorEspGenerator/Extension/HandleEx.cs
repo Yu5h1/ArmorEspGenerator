@@ -3,6 +3,7 @@ using XeLib;
 using System.Linq;
 using System.Text.RegularExpressions;
 using Yu5h1Tools.WPFExtension;
+using System;
 
 namespace TESV_EspEquipmentGenerator
 {
@@ -85,6 +86,11 @@ namespace TESV_EspEquipmentGenerator
         public static Elements.ElementTypes GetElementType(this Handle handle) => Elements.ElementType(handle);
 
         public static Handle[] GetRecords(this Handle handle,string search = "",bool includeOverrides = false) => Records.GetRecords(handle, search, includeOverrides);
+        public static Handle FindRecord(this Handle handle,Predicate<Handle> predicate, string search = "", bool includeOverrides = false) {
+            var records = Records.GetRecords(handle, search, includeOverrides);
+            if (records.Length > 0) return records.ToList().Find(predicate);
+            return null;
+        } 
 
         public static string GetRecordHeaderFormID(this Handle handle) {
             var RecordHeader = handle.GetElement("Record Header");

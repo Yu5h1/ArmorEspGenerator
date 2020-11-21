@@ -68,14 +68,14 @@ namespace TESV_EspEquipmentGenerator
         }
         public void SaveDefaultSetting() => DefaultEquipmentsValue.Add(new DefaultEquipmentsValue(this,EditorID));
         public void LoadDefaultSettring() {
-            var data = DefaultEquipmentsValue.current.Find(d => EditorID.Contains(System.StringComparison.OrdinalIgnoreCase, d.Tags.ToArray()));
+            var data = DefaultEquipmentsValue.current.Find(d => EditorID.Contains(System.StringComparison.Ordinal, d.Tags.ToArray()));
             if (data != null)
             {
                 bipedBodyTemplate.ArmorType = data.ArmorType;
                 Value =  data.Value;
                 Weight = data.Weight;
                 Rating = data.Rating;
-                keywords.Add(data.Keywords.ToArray());
+                keywords.AddByEditorIDs(data.Keywords.ToArray());
             }
         }
         public class Keywords : RecordArrays<Handle>
@@ -92,16 +92,17 @@ namespace TESV_EspEquipmentGenerator
                     if (elements.Length > 0) AddRange(elements);
                 }
             }
-            public void Add(params string[] IDs)
+            public void AddByEditorIDs(params string[] EditorIDs)
             {
-                Plugin.SkyrimESM.GetRecords(signature).Length.PromptInfo();
-                var found = Plugin.FindRecords(Signature, true);
-                found.Length.PromptInfo();
-                //foreach (var id in IDs)
-                //{
-                //    var found = Plugin.FindRecords(Signature, true);
-                //    //if (found.Length > 0) Add(found[0]);
-                //}
+                //PrepareHandle();
+                foreach (var id in EditorIDs)
+                {
+                    var found = Plugin.FindRecord(h => h.GetEditorID().Equals(id), "KYWD", true);
+                    if (found != null)
+                    {
+                        Add(parent.AddArrayItem(signature, "", found.GetRecordHeaderFormID()));
+                    }
+                }
             }
         }
     }
@@ -123,7 +124,7 @@ namespace TESV_EspEquipmentGenerator
             for (int i = 0; i < items.Length; i++)
             {
                 var item = items[i];
-                if (Count == 0)
+                if (Count == 0)//First
                 {
                     armor.handle.SetValue(@"Armature\MODL", item.handle.GetFormID() );
                     Add(handle.GetElement("MODL"));

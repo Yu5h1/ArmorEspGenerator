@@ -9,8 +9,10 @@ namespace TESV_EspEquipmentGenerator
 {
     public class Keywords : RecordElement<Keywords>
     {
-        public new string Signature = "KYWD";
+        public static string Signature = "KYWD";
         public override string signature => Signature;
+
+        public static Handle[] GetHandles() => SkyrimESM.GetRecords(Signature);
 
         public Keywords(PluginRecords<Keywords> container, Handle target) : base(container, target)
         {
