@@ -93,7 +93,7 @@ namespace TESV_EspEquipmentGenerator
 
         public ModelAlternateTextures GetWorldModel(bool MaleOrFemale) => MaleOrFemale ? MaleWorldModel : FemaleWorldModel;
         public override string GetDataInfo() => ToString()+'\n'+ FemaleWorldModel.ToString();
-        public static string MakeArmorAddonName(string txt, string suffix = "") => txt.MakeValidEditorID().RemoveSuffixFromLast("AA").TrimEndNumber() + suffix + "AA";
+        public static string MakeArmorAddonName(string txt, string suffix = "") => txt.MakeValidEditorID().TrimAfterLast("AA").TrimEndNumber() + suffix + "AA";
 
         public List<ArmorAddon> DuplicateByShapeDiffuse(out string[] tags,params string[] ignoreDiffuseNames) {
             int femaleShapeIndex = 0, maleShapeIndex = 0;
@@ -116,13 +116,13 @@ namespace TESV_EspEquipmentGenerator
 
                 if (ignoreDiffuseNames.Length > 0)
                 {
-                    while ( femaleShapeIndex < femaleTexturesInfo.Count &&
+                    while (femaleShapeIndex < femaleTexturesInfo.Count &&
                             PathInfo.GetName(defaultFemaleTextureSet[0]).MatchAny(ignoreDiffuseNames))
                     {
                         femaleShapeIndex++;
                         defaultFemaleTextureSet = femaleTexturesInfo[femaleShapeIndex].textures;
                     }
-                    while ( maleShapeIndex < maleTexturesInfo.Count &&
+                    while (maleShapeIndex < maleTexturesInfo.Count &&
                             PathInfo.GetName(defaultMaleTextureSet[0]).MatchAny(ignoreDiffuseNames))
                     {
                         maleShapeIndex++;
@@ -136,36 +136,46 @@ namespace TESV_EspEquipmentGenerator
                 var femaleTextures = TextureSet.FindSimilarDiffuseTextures(Plugin.GetTexturesPath(defaultFemaleTextureSet[0]), out string[] femaleDiffuseTags);
                 var maleTextures = TextureSet.FindSimilarDiffuseTextures(Plugin.GetTexturesPath(defaultMaleTextureSet[0]), out string[] maleDiffuseTags);
 
-                var femaleTextureSets = plugin.AddTextureSetsByDifuseAssets(false,defaultFemaleTextureSet, femaleTextures);
+                
+                
+                var femaleTextureSets = plugin.AddTextureSetsByDifuseAssets(false, defaultFemaleTextureSet, femaleTextures);
                 var maleTextureSets = plugin.AddTextureSetsByDifuseAssets(false, defaultMaleTextureSet, maleTextures);
 
                 tags = femaleDiffuseTags.Length > maleDiffuseTags.Length ? femaleDiffuseTags : maleDiffuseTags;
 
-                for (int i = 0; i < tags.Length; i++)
+                try
                 {
-                    var newAA = Duplicate(EditorID.Insert(EditorID.LastIndexOf("AA"), tags[i])) as ArmorAddon;
-                    if (i < femaleTextureSets.Count)
+                    for (int i = 0; i < tags.Length; i++)
                     {
-                        foreach (var index in ShareTXSTshapeIndicesF)
+                        var newAA = Duplicate(EditorID.Insert(EditorID.LastIndexOf("AA"), tags[i])) as ArmorAddon;
+                        if (i < femaleTextureSets.Count)
                         {
-                            newAA.FemaleWorldModel.alternateTextures.
-                                    Set(newAA.FemaleWorldModel.ShapesNames[index], femaleTextureSets[i]);
+                            foreach (var index in ShareTXSTshapeIndicesF)
+                            {
+                                newAA.FemaleWorldModel.alternateTextures.
+                                        Set(newAA.FemaleWorldModel.ShapesNames[index], femaleTextureSets[i]);
+                            }
                         }
-                    }
-                    if (i < maleTextureSets.Count)
-                    {
-                        foreach (var index in ShareTXSTshapeIndicesM)
+                        if (i < maleTextureSets.Count)
                         {
-                            newAA.MaleWorldModel.alternateTextures.
-                                Set(newAA.MaleWorldModel.ShapesNames[index], maleTextureSets[i]);
+                            foreach (var index in ShareTXSTshapeIndicesM)
+                            {
+                                newAA.MaleWorldModel.alternateTextures.
+                                    Set(newAA.MaleWorldModel.ShapesNames[index], maleTextureSets[i]);
+                            }
                         }
+                        results.Add(newAA);
                     }
-                    results.Add(newAA);
+
+                } catch (Exception error)
+                {
+                    ("DuplicateByShapeDiffuse assign new armoraddon" + error.Message).PopupError();
+                    throw;
                 }
-            }
-            catch (Exception error)
+
+            } catch (Exception error)
             {
-                ("DuplicateByShapeDiffuse " + error.Message).PromptError();
+                ("DuplicateByShapeDiffuse " + error.Message).PopupError();
                 throw;
             }
             return results;

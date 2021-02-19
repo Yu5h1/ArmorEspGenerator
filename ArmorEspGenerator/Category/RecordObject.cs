@@ -38,7 +38,7 @@ namespace TESV_EspEquipmentGenerator
         public void PrepareHandle()
         {
             if (handle == null) {
-                if (parent == null) (GetType().Name + " parent is null").PromptWarnning();
+                if (parent == null) (GetType().Name + " parent is null").PopupWarnning();
                 else handle = parent.AddElement(signature);
             } 
         }
@@ -60,7 +60,7 @@ namespace TESV_EspEquipmentGenerator
         {
             if (handle == null)
             {
-                if (parent == null) (GetType().Name + " parent is null").PromptWarnning();
+                if (parent == null) (GetType().Name + " parent is null").PopupWarnning();
                 else
                 {
                     parent.AddElement(signature);

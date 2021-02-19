@@ -7,8 +7,6 @@ namespace TESV_EspEquipmentGenerator
 {
     public static class StringEx
     {
-        public static string TrimEndNumber(this string txt)
-          => txt.TrimEnd(new[] { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' });
         public static string RemovePrefixTo(this string txt, params string[] filter)
         {
             foreach (var item in filter)

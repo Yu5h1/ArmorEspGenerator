@@ -92,7 +92,7 @@ namespace TESV_EspEquipmentGenerator
                                 }
                                 catch (Exception error)
                                 {
-                                    error.Message.PromptError();
+                                    error.Message.PopupError();
                                 }
                         
                             };

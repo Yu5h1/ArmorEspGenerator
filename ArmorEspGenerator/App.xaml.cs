@@ -23,7 +23,7 @@ namespace TESV_EspEquipmentGenerator
             //Plugin.SetGameMode(Setup.GameMode.TES5);
             //Plugin.LoadPlugins("Skyrim.esm");
             
-            ////p.handle.GetDisplayName().PromptInfo();
+            ////p.handle.GetDisplayName().PopupInfo();
             ////"G:\Hentai\The Elder Scrolls\TESV\Data\meshes\test"
             ////Plugin.CreateNewPlugin(Setup.GameMode.TES5, "TestNewESP.esp", true, (plugin) => {
             ////});
@@ -45,40 +45,38 @@ namespace TESV_EspEquipmentGenerator
                             {
                                 try
                                 {
-                                    Plugin.CreateNewPlugin((Setup.GameMode)game, pathinfo.Name + ".esp", true, (plugin, progressInfo) =>
+                                    Plugin.CreateNewPlugin((Setup.GameMode)game, pathinfo.Name + ".esp", (plugin, progressInfo) =>
                                     {
                                         plugin.fileHeader.Author = pathinfo.Name;
-                                        plugin.GenerateArmorsBySpeculateFolder(pathinfo, progressValue =>
+                                        return plugin.GenerateArmorsBySpeculateFolder(pathinfo, progressValue =>
                                         {
                                             progressInfo.SetProcessIcon(0.1 + (progressValue * 0.8));
                                             progressInfo.Text = "....." + (progressValue * 100).ToString() + "%";
                                             return false;
                                         });
-
-                                        return false;
                                     }, "Skyrim.esm");
                                 } catch (Exception error)
                                 {
-                                    error.Message.PromptError();
+                                    error.Message.PopupError();
                                     throw;
                                 }
        
                             }
                             else
                             {
-                                "Only support TESV or TESVSE".PromptWarnning();
+                                "Only support TESV or TESVSE".PopupWarnning();
                                 Shutdown();
                             }
 
                         }
                         else
                         {
-                            "Folder path does not exists in Game Data Folder Or the regedit setting of your game is uncurrect.".PromptWarnning();
+                            "Folder path does not exists in Game Data Folder Or the regedit setting of your game is uncurrect.".PopupWarnning();
                             Shutdown();
                         }
                     }
                 } else {
-                    "Only one parameter is allowed".PromptWarnning();
+                    "Only one parameter is allowed".PopupWarnning();
                     Shutdown();
                 }
             }

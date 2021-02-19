@@ -76,9 +76,9 @@ namespace TESV_EspEquipmentGenerator
             if (difusePath.Exists && difusePath.extension.EndsWith(".dds",StringComparison.OrdinalIgnoreCase)
                 && !difusePath.Name.MatchAny("femalebody_1"))
             {
-                string tag = difusePath.Name.RemoveSuffixFrom("_");
+                string tag = difusePath.Name.TrimAfter("_");
                 results = Directory.GetFiles( difusePath.directory, tag + "*.dds").
-                                                Where( d => (!d.Contains("_n.","_s.","_sk.","_e.", "_em.")) &&
+                                                Where( d => (!d.Contains("_n.","_s.","_sk.","_e.", "_em.", "_m.")) &&
                                                 !string.Equals(d, difusefile,
                                                 StringComparison.OrdinalIgnoreCase)).
                                                 ToArray();
@@ -116,6 +116,10 @@ namespace TESV_EspEquipmentGenerator
 
         public void FindTexturesByDiffuse() {
             var diffusePathInfo = new PathInfo(Plugin.GetTexturesPath(Difuse));
+            if (!Directory.Exists(diffusePathInfo.directory)) {
+                ("\""+diffusePathInfo.directory + "\" does not exists").PopupWarnning();
+                return;
+            }
             var tag = diffusePathInfo.Name.Split('_')[0];
             var texturesWithSameTag = Directory.GetFiles( diffusePathInfo.directory,tag + "*.dds").
                                                             Where(d=> !d.ToLower().EndsWith(Difuse)).ToList();
@@ -138,8 +142,10 @@ namespace TESV_EspEquipmentGenerator
         {
             var key = GetTextureKey(index);
             if (index < 0 || index > 7) throw new OutOfMemoryException();
+            
             if (value == string.Empty) handle.Delete(key);
             else value = Plugin.TrimTexturesPath(value);
+            
             PrepareHandle();
             SetValue(key, value);
         }

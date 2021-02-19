@@ -102,7 +102,7 @@ namespace TESV_EspEquipmentGenerator
 
 
         public bool Save() {
-            if (IsFileNotLockedElsePrompt(FullPath))
+            if (IsFileNotLockedElsePopup(FullPath))
             {
                 using (var p = new WaitCursorProcess())
                 {
@@ -146,7 +146,7 @@ namespace TESV_EspEquipmentGenerator
         {
             if (!ContainDataFolderInPath(path)) return true;
             var result = path.ToLower().Contains(GetGameDataPath().ToLower());
-            if (!result) (GetGameDataPath()+"\n\n"+path+"\n\nThe Drop files are not locate at Selected Game's folder").PromptWarnning();
+            if (!result) (GetGameDataPath()+"\n\n"+path+"\n\nThe Drop files are not locate at Selected Game's folder").PopupWarnning();
             return result;
         }
 
@@ -161,7 +161,7 @@ namespace TESV_EspEquipmentGenerator
                     var header = Setup.LoadPluginHeader(PluginName);
                     if (header == null)
                     {
-                        (PluginName + " has no header.").PromptWarnning();
+                        (PluginName + " has no header.").PopupWarnning();
                     } else
                     {
                         var masterfiles = header.GetElements()[0].GetElement("Master Files");
@@ -173,7 +173,7 @@ namespace TESV_EspEquipmentGenerator
                 }
                 catch (Exception error)
                 {
-                    error.Message.PromptError();
+                    error.Message.PopupError();
                 }
             }
             return results;
@@ -203,7 +203,7 @@ namespace TESV_EspEquipmentGenerator
                 }
             } catch (Exception e)
             {
-                e.Message.PromptError();
+                e.Message.PopupError();
                 throw;
             }
 
@@ -251,7 +251,7 @@ namespace TESV_EspEquipmentGenerator
             var missingMasters = GetMissingMastersInfo(PluginsList);
             if (missingMasters.Length > 0)
             {
-                ("The dependent modules are missing : \n" + missingMasters.Join("\n")).PromptWarnning();
+                ("The dependent modules are missing : \n" + missingMasters.Join("\n")).PopupWarnning();
                 return false;
             }
             try
@@ -261,7 +261,7 @@ namespace TESV_EspEquipmentGenerator
             }
             catch (Exception error)
             {
-                error.Message.PromptWarnning();
+                error.Message.PopupWarnning();
                 return false;
             }
             var state = Setup.LoaderState.IsInactive;
@@ -275,7 +275,7 @@ namespace TESV_EspEquipmentGenerator
         {
             if (!IsGameSpecifed)
             {
-                "No Game type specified.".PromptWarnning();
+                "No Game type specified.".PopupWarnning();
                 return null;
             }
             string espName = pluginName;
@@ -285,7 +285,7 @@ namespace TESV_EspEquipmentGenerator
             {
                 espName = GetTempName(pluginName);
                 var tempPath = GetPluginFullPath(espName);
-                if (IsFileNotLockedElsePrompt(tempPath))
+                if (IsFileNotLockedElsePopup(tempPath))
                     File.Copy(fullPluginPath, tempPath, true);
             }
             if (LoadPlugins(espName))
@@ -296,17 +296,25 @@ namespace TESV_EspEquipmentGenerator
         }
 
         public static void CreateNewPlugin( Setup.GameMode gameMod,string pluginName,
-                                            bool overwrite,Func<Plugin,NotifyIcon,bool> workflow,
+                                            Func<Plugin,NotifyIcon,bool> workflow,
                                             params string[] masterfiles) {
             Meta.Initialize();
             currentGameMode = gameMod;
             Setup.SetGameMode(gameMod);            
             var fullPathInfo = new PathInfo(Setup.GetGamePath(gameMod) + @"\Data\" + pluginName);
-            if (IsFileLockedPrompt(fullPathInfo)) return;
-            
-            if (File.Exists(fullPathInfo) && !overwrite) {
-                (fullPathInfo + " already exists ! ").PromptWarnning();
+            if (IsFileLockedPopup(fullPathInfo)) {
+                App.Current.Shutdown();
                 return;
+            }
+
+            if (File.Exists(fullPathInfo))
+            {
+                if ((fullPathInfo.fullPath + " already exists. Do you want to overwrite it ? ").
+                     YesNoBox("Plugin Overwrite Query")) File.Delete(fullPathInfo);
+                else { 
+                    App.Current.Shutdown();
+                    return;
+                }
             }
 
             var title = "Generating " + gameMod.ToString() + @"...data\" + pluginName;
@@ -334,7 +342,6 @@ namespace TESV_EspEquipmentGenerator
                 {
                     state = Setup.GetLoaderStatus();
                 }
-                if (File.Exists(fullPathInfo)) File.Delete(fullPathInfo);
                 Messages.ClearMessages();
 
                 var pluginFileHandle = Files.AddFile(pluginName);
@@ -397,7 +404,7 @@ namespace TESV_EspEquipmentGenerator
         public FileHeader fileHeader;
         public PluginMasters(FileHeader fileHeader) : base(fileHeader.handle) {
             this.fileHeader = fileHeader;
-            if (fileHeader.handle == null) "FileHeader is null".PromptWarnning();
+            if (fileHeader.handle == null) "FileHeader is null".PopupWarnning();
             else if (handle == null)
                 Masters.AddMaster(fileHeader.plugin.handle, "Skyrim.esm");
             else AddRange(handle.GetElements());

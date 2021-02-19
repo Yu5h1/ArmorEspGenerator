@@ -6,7 +6,6 @@ using IEnumerable = System.Collections.IEnumerable;
 
 public static class NifUtil
 {
-
     [DllImport("NifUtility.dll", CallingConvention = CallingConvention.Cdecl)]
     [return:MarshalAs(UnmanagedType.I1)]
     public static extern bool HasCollisionObject([MarshalAs(UnmanagedType.LPStr)]string filePath);
@@ -15,18 +14,39 @@ public static class NifUtil
     public static extern bool IsGroundItemObject([MarshalAs(UnmanagedType.LPStr)]string filePath);
     [DllImport("NifUtility.dll", CallingConvention = CallingConvention.Cdecl)]
     public static extern string GetShapesName([MarshalAs(UnmanagedType.LPStr)]string filename);
-    public static string[] GetShapeNames(string filename) => GetShapesName(filename).Split('\n');
     [DllImport("NifUtility.dll", CallingConvention = CallingConvention.Cdecl)]
     public static extern string GetShapeTexturesByIndex([MarshalAs(UnmanagedType.LPStr)]string fileName,Int32 index);
-    public static string[] GetShapeTexturesArrayByIndex(string fileName, int index)
-                                            => GetShapeTexturesByIndex(fileName, index).GetLines();
     [DllImport("NifUtility.dll", CallingConvention = CallingConvention.Cdecl)]
     public static extern string GetShapeTextures([MarshalAs(UnmanagedType.LPStr)]string filename, [MarshalAs(UnmanagedType.LPStr)]string shapename);
-    public static string[] GetShapeTexturesArray(string filename, string shapename)
-                                                    => GetShapeTextures(filename, shapename).GetLines();
-
     [DllImport("NifUtility.dll", CallingConvention = CallingConvention.Cdecl)]
     public static extern string GetTexturesFromAllShapes([MarshalAs(UnmanagedType.LPStr)]string filename);
+    [DllImport("NifUtility.dll", CallingConvention = CallingConvention.Cdecl)]
+    public static extern string GetBSDismemberBodyParts([MarshalAs(UnmanagedType.LPStr)]string filename);
+    [DllImport("NifUtility.dll", CallingConvention = CallingConvention.Cdecl)]
+    public static extern string GetEyesTexture([MarshalAs(UnmanagedType.LPStr)]string filename);
+    [DllImport("NifUtility.dll", CallingConvention = CallingConvention.Cdecl)]
+    public static extern string GetBrowsTexture([MarshalAs(UnmanagedType.LPStr)]string filename);
+    [DllImport("NifUtility.dll", CallingConvention = CallingConvention.Cdecl)]
+    public static extern void SetEyesTexture([MarshalAs(UnmanagedType.LPStr)]string filePath, [MarshalAs(UnmanagedType.LPStr)]string texturePath);
+    [DllImport("NifUtility.dll", CallingConvention = CallingConvention.Cdecl)]
+    public static extern void SetBrowsTexture([MarshalAs(UnmanagedType.LPStr)]string filePath, [MarshalAs(UnmanagedType.LPStr)]string texturePath);
+    [DllImport("NifUtility.dll", CallingConvention = CallingConvention.Cdecl)]
+    public static extern void ConvertExtraData_HDTtoSMPDefaultBBPs([MarshalAs(UnmanagedType.LPStr)]string filePath);
+    [DllImport("NifUtility.dll", CallingConvention = CallingConvention.Cdecl)]
+    public static extern void ReplaceSmpPath([MarshalAs(UnmanagedType.LPStr)]string filePath, [MarshalAs(UnmanagedType.LPStr)]string searchfor, [MarshalAs(UnmanagedType.LPStr)]string replacewith);
+    [DllImport("NifUtility.dll", CallingConvention = CallingConvention.Cdecl)]
+    public static extern void ReplaceShapesName([MarshalAs(UnmanagedType.LPStr)]string filePath, [MarshalAs(UnmanagedType.LPStr)]string searchfor, [MarshalAs(UnmanagedType.LPStr)]string replacewith);
+    [DllImport("NifUtility.dll", CallingConvention = CallingConvention.Cdecl)]
+    public static extern void SetFaceGlossiness([MarshalAs(UnmanagedType.LPStr)]string filePath,float glossiness);
+    [DllImport("NifUtility.dll", CallingConvention = CallingConvention.Cdecl)]
+    public static extern void ReplaceTexturePath([MarshalAs(UnmanagedType.LPStr)]string filePath, [MarshalAs(UnmanagedType.LPStr)]string searchfor, [MarshalAs(UnmanagedType.LPStr)]string replacewith);
+
+    public static string[] GetShapeNames(string filename) => GetShapesName(filename).Split('\n');
+
+    public static string[] GetShapeTexturesArrayByIndex(string fileName, int index)
+                                            => GetShapeTexturesByIndex(fileName, index).GetLines();
+    public static string[] GetShapeTexturesArray(string filename, string shapename)
+                                                    => GetShapeTextures(filename, shapename).GetLines();
 
     public static List<(string name, string[] textures)> GetShapesTextureInfos(string filename) {
         var results = new List<(string name, string[] textures)>();
@@ -47,8 +67,6 @@ public static class NifUtil
         }
         return results;
     }
-    [DllImport("NifUtility.dll", CallingConvention = CallingConvention.Cdecl)]
-    public static extern string GetBSDismemberBodyParts([MarshalAs(UnmanagedType.LPStr)]string filename);
 
     public static List<(string shapeName, string[] textures)> TransferToTextureSetOrder(this List<(string shapeName, string[] textures)> infos)
     {
@@ -84,19 +102,5 @@ public static class NifUtil
         return results.ToArray();
     }
 
-    [DllImport("NifUtility.dll", CallingConvention = CallingConvention.Cdecl)]
-    public static extern string GetEyesTexture([MarshalAs(UnmanagedType.LPStr)]string filename);
-    [DllImport("NifUtility.dll", CallingConvention = CallingConvention.Cdecl)]
-    public static extern string GetBrowsTexture([MarshalAs(UnmanagedType.LPStr)]string filename);
-
-    [DllImport("NifUtility.dll", CallingConvention = CallingConvention.Cdecl)]
-    public static extern void SetEyesTexture([MarshalAs(UnmanagedType.LPStr)]string filePath, [MarshalAs(UnmanagedType.LPStr)]string texturePath);
-    [DllImport("NifUtility.dll", CallingConvention = CallingConvention.Cdecl)]
-    public static extern void SetBrowsTexture([MarshalAs(UnmanagedType.LPStr)]string filePath, [MarshalAs(UnmanagedType.LPStr)]string texturePath);
-
-    [DllImport("NifUtility.dll", CallingConvention = CallingConvention.Cdecl)]
-    public static extern void Test([MarshalAs(UnmanagedType.LPStr)]string filePath);
-    [DllImport("NifUtility.dll", CallingConvention = CallingConvention.Cdecl)]
-    public static extern void TestAllMethods([MarshalAs(UnmanagedType.LPStr)]string filePath);
 }
 

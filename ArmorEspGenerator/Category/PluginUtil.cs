@@ -18,8 +18,8 @@ namespace TESV_EspEquipmentGenerator
             if (index >= 0) value = value.Substring(index + folder.Length).RemovePrefixUtilEmpty(@"\");
             return value;
         }
-        public static string TrimTexturesPath(string value) => value.TrimPrefix("textures", 1);
-        public static string TrimMeshesPath(string value) => value.TrimPrefix("meshes", 1);
+        public static string TrimTexturesPath(string value) => value.TrimBeforeLast("textures",true).TrimStartSlash();
+        public static string TrimMeshesPath(string value) => value.TrimBeforeLast("meshes", true).TrimStartSlash();
 
         public void AddTextureSetsByNif(string filename)
         {
@@ -33,47 +33,43 @@ namespace TESV_EspEquipmentGenerator
             }
             catch (Exception error)
             {
-                error.Message.PromptError();
+                error.Message.PopupError();
             }
         }
 
-        public List<TextureSet> AddTextureSetsByDifuseAssets(bool promptLog,string[] defaultTexturesPath, params string[] files)
+        public List<TextureSet> AddTextureSetsByDifuseAssets(bool PopupLog,string[] defaultTexturesPath, params string[] files)
         {
-
             var results = new List<TextureSet>();
             foreach (var path in files)
             {
-                var pathinfo = new PathInfo(path);
-                if (!IsLocateAtGameAssetsFolder(path)) return null;
-
-                var DifusePath = TrimTexturesPath(path);
-                var textureSet = TextureSets.Find(d => d.Difuse.Equals(DifusePath, StringComparison.OrdinalIgnoreCase));
-                if (textureSet == null)
+                try
                 {
-                    textureSet = TextureSets.AddNewItem(PathInfo.Replace(pathinfo.Name, "_D", ""));
-                    textureSet.Difuse = DifusePath;
-                } else if (promptLog) (textureSet.Difuse + " already exists.Which FormId is " + textureSet.FormID).PromptInfo();
-                
-                if (defaultTexturesPath != null)
-                    if (defaultTexturesPath.Length > 7)
+                    var pathinfo = new PathInfo(path);
+                    if (!IsLocateAtGameAssetsFolder(path)) return null;
+                    var DifusePath = TrimTexturesPath(path);
+                    var textureSet = TextureSets.Find(d => d.Difuse.Equals(DifusePath, StringComparison.OrdinalIgnoreCase));
+                    if (textureSet == null)
+                    {
+                        textureSet = TextureSets.AddNewItem(PathInfo.Replace(pathinfo.Name, "_D", ""));
+                        textureSet.Difuse = DifusePath;                        
+                    } else if (PopupLog) (textureSet.Difuse + " already exists.Which FormId is " + textureSet.FormID).PopupInfo();
+
+                    if (defaultTexturesPath != null && defaultTexturesPath.Length > 7) {
                         textureSet.CopyTexturePath(defaultTexturesPath, 0);
-                if (textureSet) {
-                    textureSet.FindTexturesByDiffuse();
-                    results.Add(textureSet);
-                } else "Create New TextureSet Failed ! ".PromptWarnning();
+                    }
+                    if (textureSet)
+                    {
+                        textureSet.FindTexturesByDiffuse();
+                        results.Add(textureSet);
+                    } else "Create New TextureSet Failed ! ".PopupWarnning();
+                } catch (Exception error)
+                {
+                    error.Message.PopupError();
+                    throw;
+                }
+
             }
             return results;
-        }
-        public bool CheckIsDisplayModel(ref string key, params string[] tags) {
-            foreach (var tag in tags)
-            {
-                if (key.EndsWith(tag))
-                {
-                    key = key.Remove(key.Length - tag.Length);
-                    return true;
-                }
-            }
-            return false;
         }
         public static StringComparison MaleFemaleStringComparison = StringComparison.Ordinal;
         public static bool ShareGNDIfEmpty = true;
@@ -85,17 +81,18 @@ namespace TESV_EspEquipmentGenerator
                 bool Is1stperson = false, IsMaleOrFemale = true;
                 var pathinfo = new PathInfo(path);
 
+                bool IsItemModel = NifUtil.IsGroundItemObject(pathinfo) ||
+                                   pathinfo.Name.Contains("Gnd", "Go", "GND", "GO", "_gnd", "_Gnd", "_GND");
+
                 var nameParts = pathinfo.Name.Split('_').ToList();
                 var key = nameParts[0];
                 if (key.Contains("1stperson",StringComparison.OrdinalIgnoreCase))
                 {
-                    key = key.TrimPrefix("1stperson");
+                    key = key.TrimBeforeLast("1stperson");
                     Is1stperson = true;
                 }
-                bool IsItemModel = NifUtil.IsGroundItemObject(pathinfo) || CheckIsDisplayModel(ref key, "Gnd", "Go", "GND", "GO", "_gnd", "_Gnd", "_GND");
-
                 if (MaleOrFemale == null)
-                {
+                {                    
                     IsMaleOrFemale = !key.EndsWith("F", MaleFemaleStringComparison) ||
                                                         !nameParts.ExistsAny( (ele, arg) =>
                                                         ele.Equals(arg, StringComparison.OrdinalIgnoreCase),
@@ -122,13 +119,15 @@ namespace TESV_EspEquipmentGenerator
         }
         public bool GenerateArmorsBySpeculateFolder(string folderPath, Func<double,bool> progress ) {
             bool canceled = false;
-            var subfolders = Directory.GetDirectories(folderPath, "*");
-            for (int i = 0; i < subfolders.Length; i++)
+            var targetFolders = Directory.GetDirectories(folderPath, "*").ToList();
+            targetFolders.Add(folderPath);
+            for (int i = 0; i < targetFolders.Count; i++)
             {
-                var subfolder = subfolders[i];
-                GenerateArmorsByFolder(subfolder, (p) => {
-                   return progress((i + p) / subfolders.Length);
-                });
+                if (!PathInfo.GetName(targetFolders[i]).MatchAny("f", "m", "female", "male")) 
+                    GenerateArmorsByFolder(targetFolders[i], (p) => {
+                        canceled = progress((i + p) / targetFolders.Count);
+                        return canceled;
+                    });
             }
             return canceled;
         }
@@ -154,7 +153,7 @@ namespace TESV_EspEquipmentGenerator
             }
             catch (Exception error)
             {
-                ("Preparing Keys encountering Exception ->\n" + error.Message).PromptError();
+                ("Preparing Keys encountering Exception ->\n" + error.Message).PopupError();
                 //throw;
             }
             Dictionary<string, Armor> newArmors = new Dictionary<string, Armor>(StringComparer.OrdinalIgnoreCase);
@@ -172,7 +171,7 @@ namespace TESV_EspEquipmentGenerator
                     var keys = item.Key.Split('_').ToList();
                     string key = keys[0];
 
-                    //(item.Key + "::" +key + "\n" + item.Value.male.ToString() + "\n" + item.Value.female.ToString()).PromptInfo();
+                    //(item.Key + "::" +key + "\n" + item.Value.male.ToString() + "\n" + item.Value.female.ToString()).PopupInfo();
                     var editorID = NameSet + item.Key.Capitalize();
                     ArmorAddon newArmorAddon = ArmorAddons.AddNewItem(editorID + "AA");
                     newArmorAddons.Add(newArmorAddon);
@@ -239,7 +238,7 @@ namespace TESV_EspEquipmentGenerator
             }
             catch (Exception error)
             {
-                ("Adding records encountering Exception ->\n"+error.Message).PromptError();
+                ("Adding records encountering Exception ->\n"+error.Message).PopupError();
                 throw;
             }
             if (ShareGNDIfEmpty) {
@@ -271,7 +270,7 @@ namespace TESV_EspEquipmentGenerator
             var nifPathInfo = new PathInfo(nifPath);
             var nifDir = new PathInfo(nifPathInfo.directory);
             var model1stpersonPath = nifDir.CombineWith("1stperson" + nifPathInfo.FileName);
-            if (InformationViewer.IsFileExistElsePrompt(nifPath))
+            if (InformationViewer.IsFileExistElsePopup(nifPath))
             {
                 if (CheckExists)
                 {
@@ -283,7 +282,7 @@ namespace TESV_EspEquipmentGenerator
                             usedArmorAddon = item;
                         if (usedArmorAddon)
                         {
-                            ("Model has already been used by " + usedArmorAddon.ToString()).PromptWarnning();
+                            ("Model has already been used by " + usedArmorAddon.ToString()).PopupWarnning();
                             return null;
                         }
                     }
@@ -350,13 +349,13 @@ namespace TESV_EspEquipmentGenerator
                     }
                     if (allMatch)
                     {
-                        ("Armatures already exists.Which is " + AO.ToString()).PromptWarnning();
+                        ("Armatures already exists.Which is " + AO.ToString()).PopupWarnning();
                         return AO;
                     }
                 }
             }
             var firstArmorAddon = armorAddons.First();
-            newArmorID = newArmorID == "" ? firstArmorAddon.EditorID.RemoveSuffixFromLast("AA") + "AO" : newArmorID;
+            newArmorID = newArmorID == "" ? firstArmorAddon.EditorID.TrimAfterLast("AA") + "AO" : newArmorID;
             var newArmor = Armors.AddNewItem(newArmorID);
             var flags = BipedBodyTemplate.GetPartitionFlags();
             foreach (var item in armorAddons) {
@@ -371,8 +370,8 @@ namespace TESV_EspEquipmentGenerator
             if (armorAddons.Count() == 1)
             {
                 var modelPathInfo = new PathInfo(GetMeshesPath(firstArmorAddon.MaleWorldModel.Model));
-                var gndModelPath = modelPathInfo.ChangeName(modelPathInfo.Name.RemoveSuffixFrom("_") + "gnd");
-                gndModelPath.PromptInfo();
+                var gndModelPath = modelPathInfo.ChangeName(modelPathInfo.Name.TrimAfter("_") + "gnd");
+                gndModelPath.PopupInfo();
             }
             return newArmor;
         }

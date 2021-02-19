@@ -61,7 +61,7 @@ namespace TESV_EspEquipmentGenerator
             }
             catch (Exception error)
             {
-                error.Message.PromptError();
+                error.Message.PopupError();
                 Close();
             }
         }
@@ -89,7 +89,7 @@ namespace TESV_EspEquipmentGenerator
                 }
                 catch (Exception error)
                 {
-                    error.PromptError();
+                    error.PopupError();
                     Close();
                 }
 
@@ -109,12 +109,12 @@ namespace TESV_EspEquipmentGenerator
                 }
                 else
                 {
-                    (GameMode_cb.SelectedItem.ToString() + "'s Game Folder does not exists ! ").PromptWarnning();
+                    (GameMode_cb.SelectedItem.ToString() + "'s Game Folder does not exists ! ").PopupWarnning();
                 }
             }
             catch (Exception error)
             {
-                error.Message.PromptError();
+                error.Message.PopupError();
             }
 
         }
@@ -270,17 +270,17 @@ namespace TESV_EspEquipmentGenerator
             }
             catch (Exception error)
             {
-                error.Message.PromptError();
+                error.Message.PopupError();
             }
         }
-        void LoadPlugin(bool Prompt = true)
+        void LoadPlugin(bool Popup = true)
         {
             if (Plugin_cb.Text == "" ) return;
             string fullPluginPath = Plugin.GetPluginFullPath(Plugin_cb.Text);
             if (!File.Exists(fullPluginPath)) {
-                if (Prompt)
+                if (Popup)
                 {
-                    (fullPluginPath + "\ndoes not exists !").PromptWarnning();
+                    (fullPluginPath + "\ndoes not exists !").PopupWarnning();
                 }
                 return;
             }
@@ -399,7 +399,7 @@ namespace TESV_EspEquipmentGenerator
                     }
                     catch (Exception error)
                     {
-                        error.Message.PromptWarnning();
+                        error.Message.PopupWarnning();
                         throw;
                     }       
                     settings.Save();
@@ -407,7 +407,7 @@ namespace TESV_EspEquipmentGenerator
             }
             catch (Exception error)
             {
-                error.Message.PromptError();                
+                error.Message.PopupError();                
             }
             base.OnClosing(e);
         }

@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using Yu5h1Tools.WPFExtension;
 using System.Linq;
-using Yu5h1Tools.WPFExtension;
 
 namespace TESV_EspEquipmentGenerator
 {
@@ -31,7 +30,7 @@ namespace TESV_EspEquipmentGenerator
                     var InventoryItemModelFolder = new PathInfo(new PathInfo(ModelPathInfo.directory).FindAny("GND", "GO"));
                     if (InventoryItemModelFolder.Exists)
                     {
-                        var IIModel = InventoryItemModelFolder.FindAny(ModelPathInfo.Name.RemoveSuffixFromLast("_1")+".nif");
+                        var IIModel = InventoryItemModelFolder.FindAny(ModelPathInfo.Name.TrimAfterLast("_1")+".nif");
                         if (!IIModel.IsNullOrEmpty()) ItemModel = IIModel;
                     }
                 }
