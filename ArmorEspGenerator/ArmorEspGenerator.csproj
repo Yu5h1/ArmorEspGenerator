@@ -63,7 +63,7 @@
     <Reference Include="WindowsFormsIntegration" />
     <Reference Include="XeLibSharp, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>bin\Release\XeLibSharp.dll</HintPath>
+      <HintPath>..\..\XeLibSharp\XeLibSharp\bin\Release\XeLibSharp.dll</HintPath>
     </Reference>
     <Reference Include="Yu5h1Tools.WPFExtension, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>

@@ -27,7 +27,7 @@ namespace TESV_EspEquipmentGenerator
         }
         public void Set(AlternateTexture data) => Set(data.ShapeName, data.NewTexture);
         public void Set(string shapeName, TextureSet textureSet) => Set(shapeName, textureSet.handle);
-        public void Set(string shapeName, Handle textureSet) => Set(shapeName, textureSet.GetFormID());
+        public void Set(string shapeName, Handle textureSet) => Set(shapeName, textureSet.GetFormId());
         public void Set(string shapeName, string textureSetID)
         {
             if (!ShapesNames.Exists(d => d.Equals(shapeName, System.StringComparison.OrdinalIgnoreCase))) return;
@@ -112,7 +112,7 @@ namespace TESV_EspEquipmentGenerator
         }
         public AlternateTexture(    AlternateTextures alternateTextures, Handle target,
                                     string shapeName, Handle textureSet) :
-                                  this(alternateTextures, target, textureSet.GetFormID())
+                                  this(alternateTextures, target, textureSet.GetFormId())
         {}
         
 

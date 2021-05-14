@@ -1,5 +1,5 @@
 # ArmorEspGenerator
-This program is used to create/modify Armor Type esp
+This program is used for create/modify Armor Type esp
 
 
 **Libraries used:**

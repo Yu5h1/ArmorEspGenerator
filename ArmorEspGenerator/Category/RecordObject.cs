@@ -81,8 +81,8 @@ namespace TESV_EspEquipmentGenerator
     {        
         //public static string Signature { get; set; }
         public static Handle SkyrimESM => Handle.BaseHandle.GetElement("Skyrim.esm");
-        public string FormID => handle.GetFormID();
-        public string EditorID { get => handle.GetEditorID(); set => handle.SetEditorID(value); }
+        public string FormID => handle.GetFormId();
+        public string EditorID { get => handle.GetEditorId(); set => handle.SetEditorID(value); }
         public string RecordHeaderFormID => handle.GetRecordHeaderFormID();
         public RecordElement(Handle Parent,Handle target) : base(Parent, target) { }
         public override string ToString() => handle.GetRecordHeaderFormID();

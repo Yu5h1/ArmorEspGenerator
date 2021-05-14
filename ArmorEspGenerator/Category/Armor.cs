@@ -97,7 +97,7 @@ namespace TESV_EspEquipmentGenerator
                 //PrepareHandle();
                 foreach (var id in EditorIDs)
                 {
-                    var found = Plugin.FindRecord(h => h.GetEditorID().Equals(id), "KYWD", true);
+                    var found = Plugin.FindRecord(h => h.GetEditorId().Equals(id), "KYWD", true);
                     if (found != null)
                     {
                         Add(parent.AddArrayItem(signature, "", found.GetRecordHeaderFormID()));
@@ -126,14 +126,14 @@ namespace TESV_EspEquipmentGenerator
                 var item = items[i];
                 if (Count == 0)//First
                 {
-                    armor.handle.SetValue(@"Armature\MODL", item.handle.GetFormID() );
+                    armor.handle.SetValue(@"Armature\MODL", item.handle.GetEditorId() );
                     Add(handle.GetElement("MODL"));
                 }
                 else
                 {
                     if (!Exists(item))
                     {
-                        Add(Elements.AddArrayItem(handle, "", "", item.handle.GetFormID()));
+                        Add(Elements.AddArrayItem(handle, "", "", item.handle.GetEditorId()));
                         results[i] = true;
                     }
                 }

@@ -218,7 +218,7 @@ namespace TESV_EspEquipmentGenerator
             var result = current.handle.FindRecord(predicate,signature, includeOverrides);
             if (result == null) {
                 var masters = current.fileHeader.masters;
-                var found =GetActivePluginHandle(masters.GetMasterName(0)).FindRecord(d=>d.GetEditorID()== "ArmorHeavy","KYWD",true);
+                var found =GetActivePluginHandle(masters.GetMasterName(0)).FindRecord(d=>d.GetEditorId()== "ArmorHeavy","KYWD",true);
 
                 for (int i = masters.Count - 1; i >= 0; i--)
                 {

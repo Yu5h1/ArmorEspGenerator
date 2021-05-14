@@ -24,7 +24,7 @@ namespace TESV_EspEquipmentGenerator
             }
         }
         public new void Add(Handle handle) {
-            parent.AddArrayItem(signature, "", handle.GetFormID());
+            parent.AddArrayItem(signature, "", handle.GetFormId());
         }
 
     }

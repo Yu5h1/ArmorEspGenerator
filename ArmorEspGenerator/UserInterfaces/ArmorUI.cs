@@ -82,7 +82,7 @@ namespace TESV_EspEquipmentGenerator
                         var textureSets = Plugin.GetActivePluginRecords(pluginName, TextureSet.Signature);
                         foreach (var textureSet in textureSets)
                         {
-                            var curTxtsitem = curPluginMenuItem.AddMenuItem(textureSet.GetEditorID());
+                            var curTxtsitem = curPluginMenuItem.AddMenuItem(textureSet.GetEditorId());
                             curTxtsitem.Click += (ss, ee) =>
                             {
                                 try

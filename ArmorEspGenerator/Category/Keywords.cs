@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using XeLib;
+using XeLib.API;
 
 namespace TESV_EspEquipmentGenerator
 {

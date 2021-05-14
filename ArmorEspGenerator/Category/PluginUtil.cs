@@ -185,10 +185,10 @@ namespace TESV_EspEquipmentGenerator
                     bool useDefaultRaces = true;
                     if (keys.Count > 1)
                     {
-                        var findRaces = defaultRaces.FindAll(d => d.GetEditorID().StartsWith(keys[1], StringComparison.OrdinalIgnoreCase));
+                        var findRaces = defaultRaces.FindAll(d => d.GetEditorId().StartsWith(keys[1], StringComparison.OrdinalIgnoreCase));
                         if (findRaces != null && findRaces.Count > 0)
                         {
-                            newArmorAddon.Race = findRaces.Find(d => !d.GetEditorID().ToLower().Contains("vampire")).GetFormID();
+                            newArmorAddon.Race = findRaces.Find(d => !d.GetEditorId().ToLower().Contains("vampire")).GetFormId();
                             useDefaultRaces = false;
                         }
                     }
